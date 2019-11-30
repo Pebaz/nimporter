@@ -1,3 +1,7 @@
+# Nim
+nimcache/
+nimblecache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
