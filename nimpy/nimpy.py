@@ -11,10 +11,10 @@
 import sys, subprocess
 
 def nim_compile(file_path):
-	# If so, check if meow_hash(module.nim) == module.nim.hash has changed
+	ext = '.pyd' if sys.platform == 'win32' else '.so'
 	cmd = (
 		f'nim c --threads:on --tlsEmulation:off --app:lib '
-		f'--out:{file_path.parent / "__pycache__" / (file_path.stem + ".pyd")} '
+		f'--out:{file_path.parent / "__pycache__" / (file_path.stem + ext)} '
 		f'{file_path}'
 	).split()
 
@@ -60,11 +60,13 @@ import importlib, types, imp
 
 class Nimporter:
 	def __init__(self):
-		pass
+		self.imported = set()
  
 	def find_module(self, fullname, path=None):
 
 		module = fullname.split('.')[-1]
+		if module in self.imported:
+			return None
 		module_file = f'{module}.nim'
 
 		path = path if path else []
@@ -87,13 +89,16 @@ class Nimporter:
 
 						# Only compile if the source text has changed
 						if prev_hash != hash_file(module_path):
+							sys.path.append(str(pycache.absolute()))
 							nim_compile(module_path)
 				else:
+					sys.path.append(str(pycache.absolute()))
 					nim_compile(module_path)
 
 				# TODO(pebaz): Compile here
 				# nim_compile(module_path)
 
+				self.imported.add(module)
 				return self
 
 		print(self.__class__.__name__, 'could not find', fullname, path, f'{module}.nim')
@@ -109,14 +114,15 @@ class Nimporter:
 		# TODO(pebaz): Simply do a programatic import here
 
 		# THIS WILL LOOP FOREVER
-		#return importlib.import_module(name)
-		return imp.load_compiled(name)
+		return importlib.import_module(name)
+		#return imp.load_compiled(name)
 
-importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
+#importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
 sys.meta_path.insert(0, Nimporter())
+#sys.meta_path.append(Nimporter())
 
 print(sys.path)
 import math
