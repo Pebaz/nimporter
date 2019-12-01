@@ -9,9 +9,10 @@ import sys, subprocess
 
 def nim_compile(file_path):
 	ext = '.pyd' if sys.platform == 'win32' else '.so'
+	build_artifact = file_path.parent / "__pycache__" / (file_path.stem + ext)
 	cmd = (
 		f'nim c --threads:on --tlsEmulation:off --app:lib '
-		f'--out:{file_path.parent / "__pycache__" / (file_path.stem + ext)} '
+		f'--out:{build_artifact} '
 		f'{file_path}'
 	).split()
 
@@ -23,6 +24,8 @@ def nim_compile(file_path):
 	hash_filename = file_path.name + '.hash'
 	with (file_path.parent / '__pycache__' / hash_filename).open('w') as file:
 		file.write(hash_file(file_path))
+
+	return build_artifact
 
 import hashlib
 def hash_file(path):
@@ -129,7 +132,7 @@ class Nimfinder:
 		return None
  
 	@classmethod
-	def find_spec(cls, fullname, path=None, target=None):
+	def save_this_IT_WORKS_find_spec(cls, fullname, path=None, target=None):
 		#import ptty; ptty(globs=globals(), locs=locals())
 		#return importlib.util.spec_from_loader(fullname, importlib.machinery.ExtensionFileLoader)
 		# return importlib.machinery.ModuleSpec(
@@ -155,6 +158,52 @@ class Nimfinder:
 		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		# This worked
 		return importlib.util.spec_from_file_location('bitmap', r'C:\Coding\nimpy\nimpy\__pycache__\bitmap.pyd')
+
+
+	@classmethod
+	def find_spec(cls, fullname, path=None, target=None):
+		module = fullname.split('.')[-1]
+		module_file = f'{module}.nim'
+
+		path = path if path else []
+
+		ext = '.pyd' if sys.platform == 'win32' else '.so'
+		build_artifact = None
+
+		for search_path in [Path(i) for i in (path + sys.path + ['.']) if Path(i).is_dir()]:
+			contents = [i.name for i in search_path.iterdir()]
+			# TODO(pebaz): contents.extend([search down the '.'s!!])
+			if module_file in contents:
+				print('Found it in', search_path, module, module_file)
+
+				module_path = search_path / module_file
+				pycache = search_path / '__pycache__'
+				hash_filename = module_file + '.hash'
+
+				if pycache.exists():
+					# Already compiled, check to see if the source is modified
+					hash_filepath = pycache / hash_filename
+					if hash_filepath.exists():
+						prev_hash = hash_filepath.read_text()
+
+						# Only compile if the source text has changed
+						if prev_hash != hash_file(module_path):
+							sys.path.append(str(pycache.absolute()))
+							build_artifact = nim_compile(module_path)
+							break
+						else:
+							build_artifact = pycache / (module + ext)
+				else:
+					sys.path.append(str(pycache.absolute()))
+					nim_compile(module_path)
+					build_artifact = pycache / (module + ext)
+					break
+
+		return importlib.util.spec_from_file_location(
+			fullname,
+			location=str(build_artifact.absolute())
+		)
+		
 
 	def load_module(self, name):
 		raise ImportError("%s is blocked and cannot be imported" % name)
