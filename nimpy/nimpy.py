@@ -232,4 +232,5 @@ import raylib.colors
 
 import bitmap
 print(bitmap.greet('Pebaz'))
+print(dir(bitmap))
 #print(sys.modules)
