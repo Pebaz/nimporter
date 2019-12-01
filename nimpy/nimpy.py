@@ -1,7 +1,4 @@
 """
-"""
-
-"""
 1. Nim Compiler Invoker
 2. Nim Import Hook
 3. Nim Build Artifact Cacher
@@ -59,6 +56,9 @@ from pathlib import Path
 import importlib, types, imp
 
 class Nimporter:
+	"""
+	https://blog.quiltdata.com/import-almost-anything-in-python-an-intro-to-module-loaders-and-finders-f5e7b15cda47
+	"""
 	def __init__(self):
 		self.imported = set()
  
@@ -99,12 +99,29 @@ class Nimporter:
 				# nim_compile(module_path)
 
 				self.imported.add(module)
-				return self
+				#return self
+				# I solved this by compiling `bitmap` and then calling:
+				# util.find_spec('bitmap')
+				return importlib.machinery.ExtensionFileLoader
+				
+	
 
 		print(self.__class__.__name__, 'could not find', fullname, path, f'{module}.nim')
 
 		return None
  
+	@classmethod
+	def find_spec(cls, fullname, path=None, target=None):
+		import ptty; ptty(globs=globals(), locs=locals())
+		"""
+		This functions is what gets executed by the loader.
+		"""
+		name_parts = fullname.split('.')
+		if name_parts[:2] != ['t4', 'data'] or len(name_parts) > 3:
+			return None
+		else:
+			return ModuleSpec(fullname, DataPackageImporter())
+
 	def load_module(self, name):
 		#raise ImportError("%s is blocked and cannot be imported" % name)
 		# m = types.ModuleType(name, f'This is a docstring for {name}')
@@ -121,8 +138,8 @@ class Nimporter:
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
-sys.meta_path.insert(0, Nimporter())
-#sys.meta_path.append(Nimporter())
+#sys.meta_path.insert(0, Nimporter())
+sys.meta_path.append(Nimporter())
 
 print(sys.path)
 import math
