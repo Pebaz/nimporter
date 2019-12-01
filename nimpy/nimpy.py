@@ -53,17 +53,35 @@ def hash_file(path):
 #     print(bitmap.greet('Pebaz'))
 
 from pathlib import Path
-import importlib, types, imp
+import importlib, types
 
 class Nimporter:
+	@classmethod
+	def create_module(cls, spec):
+		#import ptty; ptty(globs=globals(), locs=locals())
+		#return None
+		#spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
+		return importlib.util.module_from_spec(spec)
+
+	@classmethod
+	def exec_module(cls, module):
+		"""
+		Module executor.
+		"""
+		print(module)
+		#import ptty; ptty(globs=globals(), locs=locals())
+		return module
+
+class Nimfinder:
 	"""
+	https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
 	https://blog.quiltdata.com/import-almost-anything-in-python-an-intro-to-module-loaders-and-finders-f5e7b15cda47
 	"""
 	def __init__(self):
 		self.imported = set()
  
-	def find_module(self, fullname, path=None):
-
+	@classmethod
+	def find_module(cls, fullname, path=None):
 		module = fullname.split('.')[-1]
 		if module in self.imported:
 			return None
@@ -112,18 +130,34 @@ class Nimporter:
  
 	@classmethod
 	def find_spec(cls, fullname, path=None, target=None):
-		import ptty; ptty(globs=globals(), locs=locals())
-		"""
-		This functions is what gets executed by the loader.
-		"""
-		name_parts = fullname.split('.')
-		if name_parts[:2] != ['t4', 'data'] or len(name_parts) > 3:
-			return None
-		else:
-			return ModuleSpec(fullname, DataPackageImporter())
+		#import ptty; ptty(globs=globals(), locs=locals())
+		#return importlib.util.spec_from_loader(fullname, importlib.machinery.ExtensionFileLoader)
+		# return importlib.machinery.ModuleSpec(
+		# 	name=fullname,
+		# 	loader=importlib.machinery.ExtensionFileLoader,
+		# 	origin=r'C:\Coding\nimpy\nimpy\__pycache__\bitmap.pyd'
+		# )
+
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		# This worked
+		return importlib.util.spec_from_file_location('bitmap', r'C:\Coding\nimpy\nimpy\__pycache__\bitmap.pyd')
 
 	def load_module(self, name):
-		#raise ImportError("%s is blocked and cannot be imported" % name)
+		raise ImportError("%s is blocked and cannot be imported" % name)
 		# m = types.ModuleType(name, f'This is a docstring for {name}')
 		# sys.modules[name] = m
 
@@ -138,8 +172,8 @@ class Nimporter:
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
-#sys.meta_path.insert(0, Nimporter())
-sys.meta_path.append(Nimporter())
+#sys.meta_path.insert(0, Nimfinder())
+sys.meta_path.append(Nimfinder())
 
 print(sys.path)
 import math
@@ -148,4 +182,5 @@ import tkinter.messagebox
 import raylib.colors
 
 import bitmap
+print(bitmap.greet('Pebaz'))
 #print(sys.modules)
