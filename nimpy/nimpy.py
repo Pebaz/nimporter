@@ -74,6 +74,75 @@ class NimCompiler:
 		return build_artifact
 
 
+class Nimporter:  # TODO(pebaz): Allow for failed compilation
+	@classmethod
+	def find_spec(cls, fullname, path=None, target=None):
+		# TODO(pebaz): Add support for dot importing
+		module = fullname.split('.')[-1]
+		module_file = f'{module}.nim'
+		path = path if path else []  # Ensure that path is always a list
+
+		build_artifact = None
+
+		search_paths = [
+			Path(i)
+			for i in (path + sys.path + ['.'])
+			if Path(i).is_dir()
+		]
+
+		for search_path in search_paths:
+			contents = set(i.name for i in search_path.iterdir())
+
+			# NOTE(pebaz): Found an importable/compileable module
+			if module_file in contents:
+				module_path = search_path / module_file
+				pycache = search_path / '__pycache__'
+				hash_filename = module_file + '.hash'
+
+				# Only recompile if not compiled
+				if NimCompiler.build_artifact(module_path).exists():
+					pass
+
+				if pycache.exists():
+					# Already compiled, check to see if the source is modified
+					hash_filepath = pycache / hash_filename
+					if hash_filepath.exists():
+						prev_hash = hash_filepath.read_text()
+
+						# Only compile if the source text has changed
+						if prev_hash != hash_file(module_path):
+							build_artifact = nim_compile(module_path)
+							break
+						else:
+							build_artifact = pycache / (module + NimCompiler.EXT)
+					else:
+						build_artifact = nim_compile(module_path)
+						break
+				else:
+					nim_compile(module_path)
+					build_artifact = pycache / (module + ext)
+					break
+
+		return importlib.util.spec_from_file_location(
+			fullname,
+			location=str(build_artifact.absolute())
+		)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def hash_file(path):
 	block_size = 65536
 	hasher = hashlib.md5()
@@ -126,22 +195,22 @@ def nim_compile(file_path):
 from pathlib import Path
 import importlib, types
 
-class Nimporter:
-	@classmethod
-	def create_module(cls, spec):
-		#import ptty; ptty(globs=globals(), locs=locals())
-		#return None
-		#spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
-		return importlib.util.module_from_spec(spec)
+# class Nimporter:
+# 	@classmethod
+# 	def create_module(cls, spec):
+# 		#import ptty; ptty(globs=globals(), locs=locals())
+# 		#return None
+# 		#spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
+# 		return importlib.util.module_from_spec(spec)
 
-	@classmethod
-	def exec_module(cls, module):
-		"""
-		Module executor.
-		"""
-		print(module)
-		#import ptty; ptty(globs=globals(), locs=locals())
-		return module
+# 	@classmethod
+# 	def exec_module(cls, module):
+# 		"""
+# 		Module executor.
+# 		"""
+# 		print(module)
+# 		#import ptty; ptty(globs=globals(), locs=locals())
+# 		return module
 
 class Nimfinder:
 	"""
