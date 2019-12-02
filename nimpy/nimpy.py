@@ -258,17 +258,14 @@ class Nimfinder:
 
 						# Only compile if the source text has changed
 						if prev_hash != hash_file(module_path):
-							sys.path.append(str(pycache.absolute()))
 							build_artifact = nim_compile(module_path)
 							break
 						else:
 							build_artifact = pycache / (module + ext)
 					else:
-						sys.path.append(str(pycache.absolute()))
 						build_artifact = nim_compile(module_path)
 						break
 				else:
-					sys.path.append(str(pycache.absolute()))
 					nim_compile(module_path)
 					build_artifact = pycache / (module + ext)
 					break
