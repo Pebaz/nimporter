@@ -6,6 +6,83 @@
 """
 
 import sys, subprocess
+import hashlib
+	
+
+class NimCompiler:
+	EXT = '.pyd' if sys.platform == 'win32' else '.so'
+
+	@classmethod
+	def pycache_dir(cls, module_path):
+		return module_path.parent / '__pycache__'
+
+	@classmethod
+	def hash_filename(cls, module_path):
+		return cls.pycache_dir(module_path) / (module_path.name + '.hash')
+
+	@classmethod
+	def is_hashed(cls, module_path):
+		"""
+		Looks in `path.parent / '__pycache__'` for `path.name + '.hash'`.
+		"""
+		return cls.hash_filename(module_path).exists()
+
+	@classmethod
+	def get_hash(cls, module_path):
+		return cls.hash_filename(module_path).read_bytes()
+
+	@classmethod
+	def hash_changed(cls, module_path):
+		return cls.get_hash(module_path) == cls.hash_file(module_path)
+
+	@classmethod
+	def hash_file(cls, module_path):
+		block_size = 65536
+		hasher = hashlib.md5()
+		with module_path.open('rb') as file:
+			buf = file.read(block_size)
+			while len(buf) > 0:
+				hasher.update(buf)
+				buf = file.read(block_size)
+		return hasher.digest()
+
+	@classmethod
+	def update_hash(cls, module_path):
+		with cls.hash_filename(module_path).open('wb') as file:
+			file.write(cls.hash_file(module_path))
+
+	@classmethod
+	def build_artifact(cls, module_path):
+		return cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
+
+	@classmethod
+	def compile(cls, module_path):
+		build_artifact = cls.build_artifact(module_path)
+
+		nimc_cmd = (
+			f'nim c --threads:on --tlsEmulation:off --app:lib '
+			f'--out:{build_artifact} '
+			f'{file_path}'
+		)
+
+		process = subprocess.Popen(cmd.split(), stderr=subprocess.PIPE)
+		out, err = [i.decode('utf-8') if i else i for i in process.communicate()]
+		if err: raise Exception(err)
+		
+		cls.update_hash(module_path)
+
+		return build_artifact
+
+
+def hash_file(path):
+	block_size = 65536
+	hasher = hashlib.md5()
+	with path.open('rb') as file:
+		buf = file.read(block_size)
+		while len(buf) > 0:
+			hasher.update(buf)
+			buf = file.read(block_size)
+	return hasher.hexdigest()
 
 def nim_compile(file_path):
 	ext = '.pyd' if sys.platform == 'win32' else '.so'
@@ -27,16 +104,7 @@ def nim_compile(file_path):
 
 	return build_artifact
 
-import hashlib
-def hash_file(path):
-	BLOCKSIZE = 65536
-	hasher = hashlib.md5()
-	with path.open('rb') as file:
-		buf = file.read(BLOCKSIZE)
-		while len(buf) > 0:
-			hasher.update(buf)
-			buf = file.read(BLOCKSIZE)
-	return hasher.hexdigest()
+
 
 # ext_name = 'bitmap'
 # cmd = f'nim c --threads:on --tlsEmulation:off --app:lib --out:{ext_name}.pyd {ext_name}.nim'.split()
@@ -111,10 +179,12 @@ class Nimfinder:
 						# Only compile if the source text has changed
 						if prev_hash != hash_file(module_path):
 							sys.path.append(str(pycache.absolute()))
-							nim_compile(module_path)
+							#nim_compile(module_path)
+							NimCompiler.compile(module_path)
 				else:
 					sys.path.append(str(pycache.absolute()))
-					nim_compile(module_path)
+					#nim_compile(module_path)
+					NimCompiler.compile(module_path)
 
 				# TODO(pebaz): Compile here
 				# nim_compile(module_path)
@@ -193,6 +263,10 @@ class Nimfinder:
 							break
 						else:
 							build_artifact = pycache / (module + ext)
+					else:
+						sys.path.append(str(pycache.absolute()))
+						build_artifact = nim_compile(module_path)
+						break
 				else:
 					sys.path.append(str(pycache.absolute()))
 					nim_compile(module_path)
