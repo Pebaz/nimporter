@@ -21,6 +21,10 @@ class NimCompiler:
 		return cls.pycache_dir(module_path) / (module_path.name + '.hash')
 
 	@classmethod
+	def is_cache(cls, module_path):
+		return NimCompiler.pycache_dir(module_path).exists()
+
+	@classmethod
 	def is_hashed(cls, module_path):
 		"""
 		Looks in `path.parent / '__pycache__'` for `path.name + '.hash'`.
@@ -28,12 +32,18 @@ class NimCompiler:
 		return cls.hash_filename(module_path).exists()
 
 	@classmethod
+	def is_built(cls, module_path):
+		return NimCompiler.build_artifact(module_path).exists()
+
+	@classmethod
 	def get_hash(cls, module_path):
 		return cls.hash_filename(module_path).read_bytes()
 
 	@classmethod
 	def hash_changed(cls, module_path):
-		return cls.get_hash(module_path) == cls.hash_file(module_path)
+		if not NimCompiler.is_hashed(module_path):
+			return False
+		return cls.get_hash(module_path) == NimCompiler.hash_file(module_path)
 
 	@classmethod
 	def hash_file(cls, module_path):
@@ -62,10 +72,10 @@ class NimCompiler:
 		nimc_cmd = (
 			f'nim c --threads:on --tlsEmulation:off --app:lib '
 			f'--out:{build_artifact} '
-			f'{file_path}'
+			f'{module_path}'
 		)
 
-		process = subprocess.Popen(cmd.split(), stderr=subprocess.PIPE)
+		process = subprocess.Popen(nimc_cmd.split(), stdout=subprocess.PIPE)
 		out, err = [i.decode('utf-8') if i else i for i in process.communicate()]
 		if err: raise Exception(err)
 		
@@ -96,37 +106,26 @@ class Nimporter:  # TODO(pebaz): Allow for failed compilation
 			# NOTE(pebaz): Found an importable/compileable module
 			if module_file in contents:
 				module_path = search_path / module_file
-				pycache = search_path / '__pycache__'
-				hash_filename = module_file + '.hash'
 
-				# Only recompile if not compiled
-				if NimCompiler.build_artifact(module_path).exists():
-					pass
+				should_compile = any([
+					NimCompiler.hash_changed(module_path),
+					not NimCompiler.is_cache(module_path),
+					not NimCompiler.is_built(module_path)
+				])
 
-				if pycache.exists():
-					# Already compiled, check to see if the source is modified
-					hash_filepath = pycache / hash_filename
-					if hash_filepath.exists():
-						prev_hash = hash_filepath.read_text()
+				print(NimCompiler.hash_changed(module_path),
+					not NimCompiler.is_cache(module_path),
+					not NimCompiler.is_built(module_path))
 
-						# Only compile if the source text has changed
-						if prev_hash != hash_file(module_path):
-							build_artifact = nim_compile(module_path)
-							break
-						else:
-							build_artifact = pycache / (module + NimCompiler.EXT)
-					else:
-						build_artifact = nim_compile(module_path)
-						break
+				if should_compile:
+					build_artifact = NimCompiler.compile(module_path)
 				else:
-					nim_compile(module_path)
-					build_artifact = pycache / (module + ext)
-					break
-
-		return importlib.util.spec_from_file_location(
-			fullname,
-			location=str(build_artifact.absolute())
-		)
+					build_artifact = NimCompiler.build_artifact(module_path)
+				
+				return importlib.util.spec_from_file_location(
+					fullname,
+					location=str(build_artifact.absolute())
+				)
 
 
 
@@ -362,7 +361,8 @@ sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
 #sys.meta_path.insert(0, Nimfinder())
-sys.meta_path.append(Nimfinder())
+#sys.meta_path.append(Nimfinder())
+sys.meta_path.append(Nimporter())
 
 print(sys.path)
 import math
