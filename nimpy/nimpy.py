@@ -43,7 +43,7 @@ class NimCompiler:
 	def hash_changed(cls, module_path):
 		if not NimCompiler.is_hashed(module_path):
 			return False
-		return cls.get_hash(module_path) == NimCompiler.hash_file(module_path)
+		return cls.get_hash(module_path) != NimCompiler.hash_file(module_path)
 
 	@classmethod
 	def hash_file(cls, module_path):
@@ -91,8 +91,6 @@ class Nimporter:  # TODO(pebaz): Allow for failed compilation
 		module = fullname.split('.')[-1]
 		module_file = f'{module}.nim'
 		path = path if path else []  # Ensure that path is always a list
-
-		build_artifact = None
 
 		search_paths = [
 			Path(i)
