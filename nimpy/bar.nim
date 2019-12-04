@@ -1,0 +1,1 @@
+echo "this is a long string" " and this is an error"
