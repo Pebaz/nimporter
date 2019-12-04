@@ -19,10 +19,6 @@ class NimCompilerException(Exception):
         self.error_msg = error_msg
         
     def __str__(self):
-        # TODO(pebaz): Print out the lines of code that messed up
-        # with open(self.nim_module, 'r') as nim:
-        #   print()
-
         message = self.error_msg + '\n'
         
         with open(self.nim_module, 'r') as mod:
@@ -38,7 +34,6 @@ class NimCompilerException(Exception):
                 
                 elif line > self.line - 3:
                     message += f' |  {each_line}'
-
 
         message += f'At {self.nim_module.absolute()} {self.line}:{self.col}'
         return message
@@ -110,10 +105,7 @@ class NimCompiler:
             f'--out:{build_artifact} '
             f'{module_path}'
         )
-
-        #process = subprocess.Popen(nimc_cmd.split(), shell=True, stdout=subprocess.PIPE)
-        #out, err = [i.decode('utf-8') if i else '' for i in process.communicate()]
-
+        
         process = subprocess.run(nimc_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = process.stdout, process.stderr
         out = out.decode() if out else ''

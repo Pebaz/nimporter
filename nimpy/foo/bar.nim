@@ -6,7 +6,7 @@ proc baz(name: string): string {.exportpy.} =
 echo "hi"
 echo "1"
 
-lololol
+#lololol
 
 echo "2"
 echo "3"
