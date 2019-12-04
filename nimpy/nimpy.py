@@ -68,7 +68,10 @@ class NimCompiler:
 
     @classmethod
     def is_cache(cls, module_path):
-        """Return whether or not a given Nim file has already been chached."""
+        """
+        Return whether or not a __pycache__ directory exists to store hashes and
+        build artifacts.
+        """
         return NimCompiler.pycache_dir(module_path).exists()
 
     @classmethod
@@ -83,16 +86,27 @@ class NimCompiler:
 
     @classmethod
     def get_hash(cls, module_path):
+        """Returns the 128 bits of the hash for a given Nim module."""
+        if not cls.is_hashed(module_path):
+            path = module_path.absolute()
+            raise Exception(f'Module {path} has not yet been hashed.')
         return cls.hash_filename(module_path).read_bytes()
 
     @classmethod
     def hash_changed(cls, module_path):
+        """
+        Return whether or not a given Nim file has changed since last hash. If
+        the module has not yet been hashed, returns True.
+        """
         if not NimCompiler.is_hashed(module_path):
             return True
         return cls.get_hash(module_path) != NimCompiler.hash_file(module_path)
 
     @classmethod
     def hash_file(cls, module_path):
+        """
+        Returns a 128 bit non-cryptographic hash of a given file using MD5.
+        """
         block_size = 65536
         hasher = hashlib.md5()
         with module_path.open('rb') as file:
