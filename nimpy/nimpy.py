@@ -9,6 +9,11 @@ import sys, subprocess, importlib, hashlib
 from pathlib import Path
 
 class NimCompilerException(Exception):
+    """
+    Indicates that the invocation of the Nim compiler has failed.
+    Displays the line of code that caused the error as well as the error message
+    returned from Nim as a Python Exception.
+    """
     def __init__(self, msg):
         nim_module, error_msg = msg.split(' Error: ')
         mod, (line_col) = nim_module.split('(')
@@ -19,6 +24,9 @@ class NimCompilerException(Exception):
         self.error_msg = error_msg
         
     def __str__(self):
+        """
+        Return the string representation of the given compiler error.
+        """
         message = self.error_msg + '\n'
         
         with open(self.nim_module, 'r') as mod:
@@ -37,31 +45,40 @@ class NimCompilerException(Exception):
 
         message += f'At {self.nim_module.absolute()} {self.line}:{self.col}'
         return message
-                    
+
+
 class NimCompiler:
+    """
+    Nim compiler invoker. Features:
+     - Compile Nim files and return any failure messages as Python exceptions.
+     - Store hashes of Nim source files to only recompile when module changes.
+     - Stores hash in __pycache__ directory to not clutter up file system.
+    """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
 
     @classmethod
     def pycache_dir(cls, module_path):
+        """Return the __pycache__ directory as a Path."""
         return module_path.parent / '__pycache__'
 
     @classmethod
     def hash_filename(cls, module_path):
+        """Return the hash filename as a Path."""
         return cls.pycache_dir(module_path) / (module_path.name + '.hash')
 
     @classmethod
     def is_cache(cls, module_path):
+        """Return whether or not a given Nim file has already been chached."""
         return NimCompiler.pycache_dir(module_path).exists()
 
     @classmethod
     def is_hashed(cls, module_path):
-        """
-        Looks in `path.parent / '__pycache__'` for `path.name + '.hash'`.
-        """
+        """Return whether or not a given Nim file has already been hashed."""
         return cls.hash_filename(module_path).exists()
 
     @classmethod
     def is_built(cls, module_path):
+        """Return whether or not a given Nim file has already been hashed."""
         return NimCompiler.build_artifact(module_path).exists()
 
     @classmethod
