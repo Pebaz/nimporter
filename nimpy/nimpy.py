@@ -118,15 +118,27 @@ class NimCompiler:
 
     @classmethod
     def update_hash(cls, module_path):
+        """
+        Creates or updates the <mod-name>.nim.hash file within the __pycache__
+        directory.
+        """
         with cls.hash_filename(module_path).open('wb') as file:
             file.write(cls.hash_file(module_path))
 
     @classmethod
     def build_artifact(cls, module_path):
+        """
+        Returns the Path to the built .PYD or .SO. Does not imply it has already
+        been built.
+        """
         return cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
 
     @classmethod
     def compile(cls, module_path, release_mode=False):
+        """
+        Compiles a given Nim module and returns the path to the built artifact.
+        Raises an exception if compilation fails for any reason.
+        """
         build_artifact = cls.build_artifact(module_path)
 
         nimc_cmd = (
@@ -137,7 +149,9 @@ class NimCompiler:
             f'{module_path}'
         )
         
-        process = subprocess.run(nimc_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.run(
+            nimc_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         out, err = process.stdout, process.stderr
         out = out.decode() if out else ''
         err = err.decode() if err else ''
@@ -154,10 +168,22 @@ class NimCompiler:
         return build_artifact
 
 
-class Nimporter:  # TODO(pebaz): Allow for failed compilation
+class Nimporter:
+    """
+    Python module finder purpose-built to find Nim modules on the Python PATH,
+    compile them, hide them within the __pycache__ directory with other compiled
+    Python files, and then return it as a full Python module.
+    This Nimporter can only import Nim modules with procedures exposed via the
+    [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
+    """
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        # TODO(pebaz): Add support for dot importing
+        """
+        Finds a Nim module, compiles it if it has changed.
+        If the Nim module imports other Nim source files and those files change,
+        the Nimporter will not be able to detect them and will reuse the cached
+        version.
+        """
         module = fullname.split('.')[-1]
         module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
@@ -202,6 +228,11 @@ same name somewhere on the path.
 '''
 sys.meta_path.append(Nimporter())
 
+
+
+
+
+# TEMPORARY: FOR TESTING PURPOSES ONLY
 print(sys.path)
 import math
 import esper
