@@ -43,7 +43,7 @@ class NimCompilerException(Exception):
                 elif line > self.line - 3:
                     message += f' |  {each_line}'
 
-        message += f'At {self.nim_module.absolute()} {self.line}:{self.col}'
+        message += f'\n\nAt {self.nim_module.absolute()} {self.line}:{self.col}'
         return message
 
 
@@ -179,14 +179,16 @@ class Nimporter:
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         """
-        Finds a Nim module, compiles it if it has changed.
+        Finds a Nim module and compiles it if it has changed.
         If the Nim module imports other Nim source files and those files change,
         the Nimporter will not be able to detect them and will reuse the cached
         version.
         """
-        module = fullname.split('.')[-1]
+        parts = fullname.split('.')
+        module = parts.pop()
         module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
+        path.extend(parts)
 
         search_paths = [
             Path(i)
@@ -217,9 +219,18 @@ class Nimporter:
                     location=str(build_artifact.absolute())
                 )
 
+    @classmethod
+    def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
+        spec = cls.find_spec(fullname, path)
 
-sys.path_importer_cache.clear()
-importlib.invalidate_caches()
+        # TODO(pebaz): Compile the module anyway if ignore_cache is set.
+        if ignore_cache:
+            'Compile'
+
+        if spec:
+            return importlib.util.module_from_spec(spec)
+        else:
+            raise ImportError(f'No module named {fullname}')
 
 '''
 By putting the Nimpoter at the end of the list of module loaders, it ensures
@@ -228,20 +239,10 @@ same name somewhere on the path.
 '''
 sys.meta_path.append(Nimporter())
 
+# Clear importer caches for best results
+sys.path_importer_cache.clear()
+importlib.invalidate_caches()
 
 
 
 
-# TEMPORARY: FOR TESTING PURPOSES ONLY
-print(sys.path)
-import math
-import esper
-import tkinter.messagebox
-import raylib.colors
-
-import bitmap
-print(bitmap.greet('Pebaz'))
-print(dir(bitmap))
-
-from foo.bar import baz
-print(baz('Purple Boo'))
