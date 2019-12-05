@@ -1,8 +1,6 @@
 """
-1. Nim Compiler Invoker
-2. Nim Import Hook
-3. Nim Build Artifact Cacher
-    Compile and then store in __pycache__
+Contains classes to compile Python-Nim Extension modules, import those modules,
+and generate exceptions where appropriate.
 """
 
 import sys, subprocess, importlib, hashlib
@@ -53,6 +51,9 @@ class NimCompiler:
      - Compile Nim files and return any failure messages as Python exceptions.
      - Store hashes of Nim source files to only recompile when module changes.
      - Stores hash in __pycache__ directory to not clutter up file system.
+    
+    Attributes:
+        EXT(str): the extension to use for the importable build artifact.
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
 
@@ -180,9 +181,19 @@ class Nimporter:
     def find_spec(cls, fullname, path=None, target=None):
         """
         Finds a Nim module and compiles it if it has changed.
+
         If the Nim module imports other Nim source files and those files change,
         the Nimporter will not be able to detect them and will reuse the cached
         version.
+
+        Args:
+            fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
+            path(list): a list of paths to search first.
+            target(str): the target of the import.
+
+        Returns:
+            A useable spec object that will be passed to Python during import to
+            actually create a Python Module object from the spec.
         """
         parts = fullname.split('.')
         module = parts.pop()
@@ -231,7 +242,7 @@ class Nimporter:
         >>> # Rather than:
         >>> import foo
         >>> # You can say:
-        >>> foo = Nimporter.import_nim_module('foo')
+        >>> foo = Nimporter.import_nim_module('foo', ['/some/random/dir'])
 
         Args:
             fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
