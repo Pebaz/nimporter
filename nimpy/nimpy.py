@@ -221,11 +221,32 @@ class Nimporter:
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
+        """
+        Can be used to explicitly import a module rather than using the `import`
+        keyword. Allows the cache to be ignored to solve issues arising from
+        caching one module when 10 other imported Nim libraries have changed.
+
+        Example Use:
+
+        >>> # Rather than:
+        >>> import foo
+        >>> # You can say:
+        >>> foo = Nimporter.import_nim_module('foo')
+
+        Args:
+            fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
+            path(list): a list of paths to search first.
+            ignore_cache(bool): whether or not to use a cached build if found.
+
+        Returns:
+            The Python Module object representing the imported PYD or SO file.            
+        """
         spec = cls.find_spec(fullname, path)
 
         # TODO(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache:
-            'Compile'
+            nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
+            NimCompiler.compile(nim_module)
 
         if spec:
             return importlib.util.module_from_spec(spec)
