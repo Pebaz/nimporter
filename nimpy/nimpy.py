@@ -258,6 +258,11 @@ class Nimporter:
         if ignore_cache:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
             NimCompiler.compile(nim_module)
+            sys.path_importer_cache.clear()
+            importlib.invalidate_caches()
+            if spec.name in sys.modules:
+                sys.modules.pop(spec.name)
+            spec = cls.find_spec(fullname, path)
 
         if spec:
             return importlib.util.module_from_spec(spec)

@@ -13,3 +13,5 @@ print(dir(bitmap))
 
 from foo.bar import baz
 print(baz('Purple Boo'))
+
+import nath

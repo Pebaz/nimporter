@@ -34,4 +34,17 @@ $ nimble install nimpy  # Nimpy library for Nim
 
 ### Examples
 
+```nim
+# nim_math.nim
 
+import nimpy
+
+proc add(a: int, b: int): int {.exportpy.} =
+    return a + b
+```
+
+```python
+import nim_math
+
+print(nim_math.add(2, 4))  # 6
+```
