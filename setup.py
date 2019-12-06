@@ -16,5 +16,5 @@ setup(
 	license="MPL",
 	description='Compile Nim extensions for Python when imported!',
 	author='http://github.com/Pebaz',
-    packages=find_packages()
+    py_modules=['nimporter']
 )
