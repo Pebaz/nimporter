@@ -3,7 +3,7 @@ Usage:
 pip install git+https://github.com/Pebaz/nimporter.git
 
 Please note: In order to use Nimporter, you must have both Nim installed as well
-as the [Nimpy](https://github.com/yglukhov/nimpy) library.
+as the [Nimpy](https://github.com/yglukhov/nimporter) library.
 
 Make sure to star it on GitHub as well while you're up there.
 """

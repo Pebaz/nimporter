@@ -3,7 +3,7 @@
     the Nimpy library.
 ]#
 
-import nimpy
+import nimporter
 
 proc add(a: int, b: int): int {.exportpy.} =
     return a + b

@@ -1,4 +1,4 @@
-import nimpy  # Necessary to import before importing any Nim modules
+import nimporter  # Necessary to import before importing any Nim modules
 
 # TEMPORARY: FOR TESTING PURPOSES ONLY
 print(sys.path)
