@@ -1,6 +1,6 @@
 # Nimporter
 
-![License](https://img.shields.io/github/license/Pebaz/nimporter)
+![License](https://img.shields.io/github/license/Pebaz/Nimporter)
 
 Compile [Nim](<https://nim-lang.org/>) extensions for Python on import automatically!
 
