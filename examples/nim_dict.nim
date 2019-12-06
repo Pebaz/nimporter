@@ -1,9 +1,6 @@
 import nimpy
 import tables
 
-proc add(a: int, b: int): int {.exportpy.} =
-    return a + b
-
 proc getTable(): Table[string, int] {.exportpy.} =
     result = {
         "Hello" : 0,

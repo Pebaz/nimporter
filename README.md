@@ -5,7 +5,11 @@
 Compile Nim extensions for Python on import automatically!
 
 With Nimpy for Python, you can simply import Nim source code files *as if they
-were Python modules*, and use them seamlessly with Python code.
+were Python modules*, and use them seamlessly with Python code. The compiler is
+invoked to build a Python-compatible extension module and it is then placed in
+the `__pycache__` directory, which means that you don't have to add a line to
+your `.gitignore` files because (presumably) Git is already ignoring the
+`__pycache__` directory.
 
 ## Possible Benefits
 
