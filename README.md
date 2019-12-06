@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/Pebaz/nimporter)
 
-Compile Nim extensions for Python on import automatically!
+Compile [Nim](<https://nim-lang.org/>) extensions for Python on import automatically!
 
 With Nimporter, you can simply import Nim source code files *as if they
 were Python modules*, and use them seamlessly with Python code. The compiler is
@@ -20,7 +20,7 @@ your `.gitignore` files because (presumably) Git is already ignoring the
 
 ### Dependencies
 
- 1. Nim Compiler
+ 1. [Nim Compiler](<https://nim-lang.org/install.html>)
  2. [Nimpy library](https://github.com/yglukhov/nimpy)
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (this library).
 
