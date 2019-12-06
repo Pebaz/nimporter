@@ -13,13 +13,18 @@ class NimCompilerException(Exception):
     returned from Nim as a Python Exception.
     """
     def __init__(self, msg):
-        nim_module, error_msg = msg.split(' Error: ')
-        mod, (line_col) = nim_module.split('(')
-        self.nim_module = Path(mod)
-        line, col = line_col.split(',')
-        self.line = int(line)
-        self.col = int(col[:-1])
-        self.error_msg = error_msg
+        try:
+            nim_module, error_msg = msg.split(' Error: ')
+            nim_module = nim_module.splitlines()[-1]
+            mod, (line_col) = nim_module.split('(')
+            self.nim_module = Path(mod)
+            line, col = line_col.split(',')
+            self.line = int(line)
+            self.col = int(col[:-1])
+            self.error_msg = error_msg
+        except Exception as e:
+            # Raise the original exception if anything went wrong during parsing
+            raise Exception(msg).with_traceback(e.__traceback__) from e
         
     def __str__(self):
         """
@@ -41,7 +46,11 @@ class NimCompilerException(Exception):
                 elif line > self.line - 3:
                     message += f' |  {each_line}'
 
-        message += f'\n\nAt {self.nim_module.absolute()} {self.line}:{self.col}'
+        message = message.rstrip() + (
+            f'\n\nAt {self.nim_module.absolute()} '
+            f'{self.line}:{self.col}'
+        )
+        
         return message
 
 
@@ -161,6 +170,8 @@ class NimCompiler:
         NIM_COMPILE_ERROR = ' Error: '
         if NIM_COMPILE_ERROR in err:
             raise NimCompilerException(err)
+        elif err:
+            raise Exception(err)
         elif NIM_COMPILE_ERROR in out:
             raise NimCompilerException(out)
         
