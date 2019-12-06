@@ -41,7 +41,7 @@ $ nimble install nimpy  # Nimpy library
 ```nim
 # nim_math.nim
 
-import nimporter
+import nimpy
 
 proc add(a: int, b: int): int {.exportpy.} =
     return a + b
