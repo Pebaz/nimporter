@@ -52,3 +52,13 @@ import nim_math
 
 print(nim_math.add(2, 4))  # 6
 ```
+
+### Documentation
+
+For tutorials, advanced usage, and more, head over to the [Wiki](<https://github.com/Pebaz/nimporter/wiki>).
+
+### Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/Pebaz/nimporter.svg)](https://starchart.cc/Pebaz/nimporter)
+
+> Made using <https://starchart.cc/>
