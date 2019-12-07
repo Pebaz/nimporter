@@ -48,6 +48,8 @@ proc add(a: int, b: int): int {.exportpy.} =
 ```
 
 ```python
+import nimporter
+
 import nim_math
 
 print(nim_math.add(2, 4))  # 6
