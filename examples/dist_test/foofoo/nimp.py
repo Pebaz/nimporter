@@ -221,13 +221,15 @@ class MyLoader(SourceLoader):
 
 
 loader_details = MyLoader, [".nim"]
-sys.path_hooks.insert(
-    0,
+sys.path_hooks.append(
     FileFinder.path_hook(loader_details
 ))
 
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
-import bar
-print(bar.hello('world'))
+# import bar
+# print(bar.hello('world'))
+
+# import foo
+# import bazzle.buzzle
