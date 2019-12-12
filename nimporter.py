@@ -151,16 +151,15 @@ class NimCompiler:
         """
         build_artifact = cls.build_artifact(module_path)
 
-        nimc_cmd = (
-            f'nim c --threads:on --tlsEmulation:off --app:lib '
-            f'--hints:off --parallelBuild:0 '
-            f'{"-d:release" if release_mode else ""}'
-            f'--out:{build_artifact} '
-            f'{module_path}'
+        nimc_args = (
+            'nim c --threads:on --tlsEmulation:off --app:lib'.split()
+            + '--hints:off --parallelBuild:0'.split()
+            + (['-d:release'] if release_mode else [])
+            + [f'--out:{build_artifact}', f'{module_path}']
         )
         
         process = subprocess.run(
-            nimc_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            nimc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         out, err = process.stdout, process.stderr
         out = out.decode() if out else ''
