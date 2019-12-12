@@ -1,8 +1,7 @@
-import sys, importlib
-from pathlib import Path
-from importlib.abc import SourceLoader
-from importlib.machinery import FileFinder, PathFinder
-
+"""
+Contains classes to compile Python-Nim Extension modules, import those modules,
+and generate exceptions where appropriate.
+"""
 
 import sys, subprocess, importlib, hashlib
 from pathlib import Path
@@ -152,16 +151,15 @@ class NimCompiler:
         """
         build_artifact = cls.build_artifact(module_path)
 
-        nimc_cmd = (
-            f'nim c --threads:on --tlsEmulation:off --app:lib '
-            f'--hints:off --parallelBuild:0 '
-            f'{"-d:release" if release_mode else ""}'
-            f'--out:{build_artifact} '
-            f'{module_path}'
+        nimc_args = (
+            'nim c --threads:on --tlsEmulation:off --app:lib'.split()
+            + '--hints:off --parallelBuild:0'.split()
+            + (['-d:release'] if release_mode else [])
+            + [f'--out:{build_artifact}', f'{module_path}']
         )
         
         process = subprocess.run(
-            nimc_cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            nimc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         out, err = process.stdout, process.stderr
         out = out.decode() if out else ''
@@ -171,7 +169,8 @@ class NimCompiler:
         NIM_COMPILE_ERROR = ' Error: '
         if NIM_COMPILE_ERROR in err:
             raise NimCompilerException(err)
-
+        elif err:
+            raise Exception(err)
         elif NIM_COMPILE_ERROR in out:
             raise NimCompilerException(out)
         
@@ -180,96 +179,113 @@ class NimCompiler:
         return build_artifact
 
 
-
-
-class MyLoader(SourceLoader):
-    def __init__(self, fullname, path):
-        self.fullname = fullname
-        self.path = path
-
-    def get_filename(self, fullname):
-        return self.path
-
-    def get_data(self, filename):
-        """Returns the source code of the Nim file."""
-        return Path(filename).read_text()
-
-    def exec_module(self, module):
-        #importlib.util.source_hash()
-
-        module_path = Path(module.__file__)
-
-        should_compile = any([
-            NimCompiler.hash_changed(module_path),
-            not NimCompiler.is_cache(module_path),
-            not NimCompiler.is_built(module_path)
-        ])
-
-        if should_compile:
-            build_artifact = NimCompiler.compile(module_path)
-        else:
-            build_artifact = NimCompiler.build_artifact(module_path)
-        
-        spec = importlib.util.spec_from_file_location(
-            module.__name__,
-            location=str(build_artifact.absolute())
-        )
-        module = importlib.util.module_from_spec(spec)
-        #spec.loader.exec_module(module)
-        return module
-
-'''
-class SibilantPathFinder(PathFinder):
+class Nimporter:
     """
-    An overridden PathFinder which will hunt for sibilant files in
-    sys.path. Uses storage in this module to avoid conflicts with the
-    original PathFinder
+    Python module finder purpose-built to find Nim modules on the Python PATH,
+    compile them, hide them within the __pycache__ directory with other compiled
+    Python files, and then return it as a full Python module.
+    This Nimporter can only import Nim modules with procedures exposed via the
+    [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
     """
     @classmethod
-    def invalidate_caches(cls):
-        for finder in _path_importer_cache.values():
-            if hasattr(finder, 'invalidate_caches'):
-                finder.invalidate_caches()
+    def find_spec(cls, fullname, path=None, target=None):
+        """
+        Finds a Nim module and compiles it if it has changed.
+
+        If the Nim module imports other Nim source files and those files change,
+        the Nimporter will not be able to detect them and will reuse the cached
+        version.
+
+        Args:
+            fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
+            path(list): a list of paths to search first.
+            target(str): the target of the import.
+
+        Returns:
+            A useable spec object that will be passed to Python during import to
+            actually create a Python Module object from the spec.
+        """
+        parts = fullname.split('.')
+        module = parts.pop()
+        module_file = f'{module}.nim'
+        path = list(path) if path else []  # Ensure that path is always a list
+        path.extend(parts)
+
+        search_paths = [
+            Path(i)
+            for i in (path + sys.path + ['.'])
+            if Path(i).is_dir()
+        ]
+
+        for search_path in search_paths:
+            contents = set(i.name for i in search_path.iterdir())
+
+            # NOTE(pebaz): Found an importable/compileable module
+            if module_file in contents:
+                module_path = search_path / module_file
+
+                should_compile = any([
+                    NimCompiler.hash_changed(module_path),
+                    not NimCompiler.is_cache(module_path),
+                    not NimCompiler.is_built(module_path)
+                ])
+
+                if should_compile:
+                    build_artifact = NimCompiler.compile(module_path)
+                else:
+                    build_artifact = NimCompiler.build_artifact(module_path)
+                    
+                return importlib.util.spec_from_file_location(
+                    fullname,
+                    location=str(build_artifact.absolute())
+                )
 
     @classmethod
-    def _path_hooks(cls, path):
-        for hook in _path_hooks:
-            try:
-                return hook(path)
-            except ImportError:
-                continue
+    def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
+        """
+        Can be used to explicitly import a module rather than using the `import`
+        keyword. Allows the cache to be ignored to solve issues arising from
+        caching one module when 10 other imported Nim libraries have changed.
+
+        Example Use:
+
+        >>> # Rather than:
+        >>> import foo
+        >>> # You can say:
+        >>> foo = Nimporter.import_nim_module('foo', ['/some/random/dir'])
+
+        Args:
+            fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
+            path(list): a list of paths to search first.
+            ignore_cache(bool): whether or not to use a cached build if found.
+
+        Returns:
+            The Python Module object representing the imported PYD or SO file.            
+        """
+        spec = cls.find_spec(fullname, path)
+
+        # TODO(pebaz): Compile the module anyway if ignore_cache is set.
+        if ignore_cache:
+            nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
+            NimCompiler.compile(nim_module)
+            sys.path_importer_cache.clear()
+            importlib.invalidate_caches()
+            if spec.name in sys.modules:
+                sys.modules.pop(spec.name)
+            spec = cls.find_spec(fullname, path)
+
+        if spec:
+            return importlib.util.module_from_spec(spec)
         else:
-            return None
+            raise ImportError(f'No module named {fullname}')
 
-    @classmethod
-    def _path_importer_cache(cls, path):
-        if path == '':
-            try:
-                path = getcwd()
-            except FileNotFoundError:
-                # Don't cache the failure as the cwd can easily change to
-                # a valid directory later on.
-                return None
-        try:
-            finder = _path_importer_cache[path]
-        except KeyError:
-            finder = cls._path_hooks(path)
-            _path_importer_cache[path] = finder
-        return finder
 '''
+By putting the Nimpoter at the end of the list of module loaders, it ensures
+that Nim code files are imported only if there is not a Python module of the
+same name somewhere on the path.
+'''
+sys.meta_path.append(Nimporter())
 
-#importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
-loader_details = MyLoader, ['.nim']
-sys.path_hooks.insert(0,
-    FileFinder.path_hook(loader_details)
-)
-# sys.meta_path.append(SibilantPathFinder)
-
+# Clear importer caches for best results
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
-
-# import bar
-# print(bar.hello('world'))
-
-# import foo
-# import bazzle.buzzle
