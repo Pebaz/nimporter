@@ -218,11 +218,52 @@ class MyLoader(SourceLoader):
         #spec.loader.exec_module(module)
         return module
 
+'''
+class SibilantPathFinder(PathFinder):
+    """
+    An overridden PathFinder which will hunt for sibilant files in
+    sys.path. Uses storage in this module to avoid conflicts with the
+    original PathFinder
+    """
+    @classmethod
+    def invalidate_caches(cls):
+        for finder in _path_importer_cache.values():
+            if hasattr(finder, 'invalidate_caches'):
+                finder.invalidate_caches()
+
+    @classmethod
+    def _path_hooks(cls, path):
+        for hook in _path_hooks:
+            try:
+                return hook(path)
+            except ImportError:
+                continue
+        else:
+            return None
+
+    @classmethod
+    def _path_importer_cache(cls, path):
+        if path == '':
+            try:
+                path = getcwd()
+            except FileNotFoundError:
+                # Don't cache the failure as the cwd can easily change to
+                # a valid directory later on.
+                return None
+        try:
+            finder = _path_importer_cache[path]
+        except KeyError:
+            finder = cls._path_hooks(path)
+            _path_importer_cache[path] = finder
+        return finder
+'''
+
 #importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
-loader_details = MyLoader, [".nim"]
-sys.path_hooks.append(
+loader_details = MyLoader, ['.nim']
+sys.path_hooks.insert(0,
     FileFinder.path_hook(loader_details)
 )
+# sys.meta_path.append(SibilantPathFinder)
 
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
