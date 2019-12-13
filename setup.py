@@ -22,6 +22,6 @@ setup(
 	long_description=open('README.md').read(),
 	long_description_content_type='text/markdown',
 	author='http://github.com/Pebaz',
-	url='http://github.com/Pebaz/Nimporter'
+	url='http://github.com/Pebaz/Nimporter',
     py_modules=['nimporter']
 )
