@@ -1,1 +1,0 @@
-print('Apple Darwin')
