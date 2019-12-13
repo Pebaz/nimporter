@@ -1,6 +1,9 @@
 """
 Usage:
-pip install git+https://github.com/Pebaz/nimporter.git
+	pip install nimporter
+
+Upload to PyPi:
+	twine upload dist/*
 
 Please note: In order to use Nimporter, you must have both Nim installed as well
 as the [Nimpy](https://github.com/yglukhov/nimporter) library.
@@ -15,6 +18,7 @@ setup(
 	version='0.1.1',
 	license="MIT",
 	description='Compile Nim extensions for Python when imported!',
+	long_description=open('README.md').read(),
 	author='http://github.com/Pebaz',
     py_modules=['nimporter']
 )

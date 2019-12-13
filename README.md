@@ -28,11 +28,11 @@ your `.gitignore` files because (presumably) Git is already ignoring the
 
 ```bash
 # Windows
-$ pip install git+https://github.com/Pebaz/nimporter  # Nimporter library
+$ pip install nimporter  # Nimporter library
 $ nimble install nimpy  # Nimpy library
 
 # Everything Else
-$ pip3 install git+https://github.com/Pebaz/nimporter  # Nimporter library
+$ pip3 install nimporter  # Nimporter library
 $ nimble install nimpy  # Nimpy library
 ```
 
