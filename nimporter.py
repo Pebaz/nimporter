@@ -211,10 +211,9 @@ class Nimporter:
         ]
 
         for search_path in search_paths:
-            contents = set(i.name for i in search_path.iterdir())
 
             # NOTE(pebaz): Found an importable/compileable module
-            if module_file in contents:
+            if search_path.glob(module_file):
                 module_path = search_path / module_file
 
                 should_compile = any([
