@@ -96,7 +96,7 @@ class NimCompiler:
 
     @classmethod
     def get_hash(cls, module_path):
-        """Returns the 128 bits of the hash for a given Nim module."""
+        """Returns the bits of the hash for a given Nim module."""
         if not cls.is_hashed(module_path):
             path = module_path.absolute()
             raise Exception(f'Module {path} has not yet been hashed.')
@@ -115,16 +115,9 @@ class NimCompiler:
     @classmethod
     def hash_file(cls, module_path):
         """
-        Returns a 128 bit non-cryptographic hash of a given file using MD5.
+        Returns the hash of the Nim file.
         """
-        block_size = 65536
-        hasher = hashlib.md5()
-        with module_path.open('rb') as file:
-            buf = file.read(block_size)
-            while len(buf) > 0:
-                hasher.update(buf)
-                buf = file.read(block_size)
-        return hasher.digest()
+        return importlib.util.source_hash(module_path.read_bytes())
 
     @classmethod
     def update_hash(cls, module_path):
@@ -218,10 +211,9 @@ class Nimporter:
         ]
 
         for search_path in search_paths:
-            contents = set(i.name for i in search_path.iterdir())
 
             # NOTE(pebaz): Found an importable/compileable module
-            if module_file in contents:
+            if search_path.glob(module_file):
                 module_path = search_path / module_file
 
                 should_compile = any([

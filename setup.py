@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='nimporter',
-	version='0.1',
+	version='0.1.1',
 	license="MPL",
 	description='Compile Nim extensions for Python when imported!',
 	author='http://github.com/Pebaz',
