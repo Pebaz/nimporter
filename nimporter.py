@@ -6,6 +6,37 @@ and generate exceptions where appropriate.
 import sys, subprocess, importlib, hashlib
 from pathlib import Path
 
+
+def package_nim_source():
+    """
+    Use this to distribute your Nim source code to the end user.
+    Please note that in order for the end user to import the Nim module using
+    Nimporter, they must install a C compiler, the Nim compiler, and
+    [Nimpy](https://github.com/yglukhov/nimpy). To include all Nim source files
+    in your application for distribution:
+
+    >>> # setup.py
+    >>> from setuptools import setup
+    >>> setup(
+    >>>     name='Foo',             # Keep your existing arguments
+    >>>     version='0.1.0',
+    >>>     **package_nim_source()  # Distribute Nim source files
+    >>> )
+
+    Note that if `package_nim_source()` won't work for you but you still want to
+    bundle Nim source, add the following arguments to your `setup()` call.
+
+    * package_data = { <your existing args>, '': ['*.nim']}
+    * include_package_data = True
+    * install_requires = ['nimporter']
+    """
+    return dict(
+        package_data={'': ['*.nim']},
+        include_package_data=True,
+        install_requires=['nimporter']
+    )
+
+
 class NimCompilerException(Exception):
     """
     Indicates that the invocation of the Nim compiler has failed.
