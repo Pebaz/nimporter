@@ -7,7 +7,7 @@ Upload to PyPi:
 	twine upload dist/*
 
 Please note: In order to use Nimporter, you must have both Nim installed as well
-as the [Nimpy](https://github.com/yglukhov/nimporter) library.
+as the [Nimpy](https://github.com/yglukhov/nimpy) library.
 
 Make sure to star it on GitHub as well while you're up there. ;)
 """
