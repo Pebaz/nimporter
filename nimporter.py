@@ -17,6 +17,7 @@ def package_nim_source():
 
     >>> # setup.py
     >>> from setuptools import setup
+    >>> from nimporter import package_nim_source
     >>> setup(
     >>>     name='Foo',             # Keep your existing arguments
     >>>     version='0.1.0',
