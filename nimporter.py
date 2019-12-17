@@ -1,6 +1,16 @@
 """
 Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
+
+* Allow you to import Nim files
+	Use SOURCE_SUFFIXES.insert(...)
+* Build them during import
+    Use find_spec
+* Change import to use the PYD instead
+	Use importlib.util.spec_from_file_location(...)
+
+Alternatively, see if you can use the `foo.bar.baz` manually. Am I sure this
+would solve it?
 """
 
 import sys, subprocess, importlib, hashlib
@@ -234,76 +244,87 @@ class Nimporter:
             actually create a Python Module object from the spec.
         """
 
-        module_path = importlib.machinery.PathFinder.find_module(fullname)
-        if not module_path:
-            for path in sys.path:
-                print('!!!!!', path, importlib.machinery.FileFinder(path).find_module(fullname))
+        # if '.' in fullname or path:
+        #     print('!!!!!', fullname, path, target)
+
+        # module_path = importlib.machinery.PathFinder.find_module(fullname.split('.')[-1], path)
+        # if not module_path:
+        #     for path in path or []:
+        #         print('_____>', importlib.machinery.PathFinder.find_module(fullname, path))
+        # if not module_path:
+        #     for path in sys.path:
+        #         print('!!!!!', path, importlib.machinery.FileFinder(path).find_module(fullname))
             
-            raise ImportError(f'Cannot find module {fullname}')
-        else:
-            print('*' * 1000)
-            print(module_path)
-            print(module_path.path)
-        module_path = Path(module_path.path)
+        #     raise ImportError(f'Cannot find module {fullname}')
+        # else:
+        #     print('*' * 1000)
+        #     print(module_path)
+        #     print(module_path.path)
+        # module_path = Path(module_path.path)
         
-        if module_path.suffix != '.nim':
-            return importlib.util.spec_from_file_location(
-                fullname,
-                location=str(module_path)
-            )
+        # if module_path.suffix != '.nim':
+        #     return importlib.util.spec_from_file_location(
+        #         fullname,
+        #         location=str(module_path)
+        #     )
 
-        should_compile = any([
-            NimCompiler.hash_changed(module_path),
-            not NimCompiler.is_cache(module_path),
-            not NimCompiler.is_built(module_path)
-        ])
+        # should_compile = any([
+        #     NimCompiler.hash_changed(module_path),
+        #     not NimCompiler.is_cache(module_path),
+        #     not NimCompiler.is_built(module_path)
+        # ])
 
-        if should_compile:
-            build_artifact = NimCompiler.compile(module_path)
-        else:
-            build_artifact = NimCompiler.build_artifact(module_path)
+        # if should_compile:
+        #     build_artifact = NimCompiler.compile(module_path)
+        # else:
+        #     build_artifact = NimCompiler.build_artifact(module_path)
             
-        return importlib.util.spec_from_file_location(
-            fullname,
-            location=str(build_artifact.absolute())
-        )
+        # return importlib.util.spec_from_file_location(
+        #     fullname,
+        #     location=str(build_artifact.absolute())
+        # )
 
-        # parts = fullname.split('.')
-        # module = parts.pop()
-        # module_file = f'{module}.nim'
-        # path = list(path) if path else []  # Ensure that path is always a list
-        # path.extend(parts)
+        parts = fullname.split('.')
+        module = parts.pop()
+        module_file = f'{module}.nim'
+        path = list(path) if path else []  # Ensure that path is always a list
+        package = '/'.join(parts)
+        #path.extend(parts)
 
-        # search_paths = [
-        #     Path(i)
-        #     for i in (path + sys.path + ['.'])
-        #     if Path(i).is_dir()
-        # ]
+        search_paths = [
+            Path(i)
+            for i in (path + sys.path + ['.'])
+            if Path(i).is_dir()
+        ]
 
-        # for search_path in search_paths:
+        for search_path in search_paths:
 
-        #     # NOTE(pebaz): Found an importable/compileable module
-        #     if search_path.glob(module_file):
-        #         module_path = search_path / module_file
+            if (search_path / package).glob(module_file):
+                print('GOT IT GOT IT', fullname, path, search_path, module_file)
 
-        #         if not module_path.exists():
-        #             continue
+            # NOTE(pebaz): Found an importable/compileable module
+            #if search_path.glob(module_file):
+            if (search_path / package).glob(module_file):
+                module_path = search_path / module_file
 
-        #         should_compile = any([
-        #             NimCompiler.hash_changed(module_path),
-        #             not NimCompiler.is_cache(module_path),
-        #             not NimCompiler.is_built(module_path)
-        #         ])
+                if not module_path.exists():
+                    continue
 
-        #         if should_compile:
-        #             build_artifact = NimCompiler.compile(module_path)
-        #         else:
-        #             build_artifact = NimCompiler.build_artifact(module_path)
+                should_compile = any([
+                    NimCompiler.hash_changed(module_path),
+                    not NimCompiler.is_cache(module_path),
+                    not NimCompiler.is_built(module_path)
+                ])
+
+                if should_compile:
+                    build_artifact = NimCompiler.compile(module_path)
+                else:
+                    build_artifact = NimCompiler.build_artifact(module_path)
                     
-        #         return importlib.util.spec_from_file_location(
-        #             fullname,
-        #             location=str(build_artifact.absolute())
-        #         )
+                return importlib.util.spec_from_file_location(
+                    fullname,
+                    location=str(build_artifact.absolute())
+                )
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
@@ -349,11 +370,11 @@ By putting the Nimpoter at the end of the list of module loaders, it ensures
 that Nim code files are imported only if there is not a Python module of the
 same name somewhere on the path.
 '''
-#sys.meta_path.append(Nimporter())
+sys.meta_path.append(Nimporter())
 
 # Nim modules will be chosen where Python and Nim filenames conflict
-importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
-sys.meta_path.insert(0, Nimporter())
+#importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
+#sys.meta_path.insert(0, Nimporter())
 
 # Ensure that Nim files won't be passed up because of other Importers.
 sys.path_importer_cache.clear()
