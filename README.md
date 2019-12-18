@@ -59,6 +59,25 @@ print(nim_math.add(2, 4))  # 6
 
 For tutorials, advanced usage, and more, head over to the [Wiki](<https://github.com/Pebaz/nimporter/wiki>).
 
+### Distributing Libraries Using Nimporter
+
+Libraries that require Nim source files can easily distribute those files by
+adding the following to their `setup.py` file:
+
+```python
+setup(
+    name='Foo',                     # Keep your existing arguments
+    version='0.1.0',
+    ...,
+    package_data={'': ['*.nim']},   # Distribute Nim source files
+    include_package_data=True,
+    install_requires=['nimporter']  # Depends upon Nimporter
+)
+```
+
+When creating a source distribution, the Nim source files will be included along
+with the normal Python files it uses.
+
 ### Stargazers over time
 
 [![Stargazers over time](https://starchart.cc/Pebaz/nimporter.svg)](https://starchart.cc/Pebaz/nimporter)

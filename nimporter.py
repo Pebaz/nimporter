@@ -13,39 +13,8 @@ Alternatively, see if you can use the `foo.bar.baz` manually. Am I sure this
 would solve it?
 """
 
-import sys, subprocess, importlib, hashlib
+import sys, subprocess, importlib
 from pathlib import Path
-
-
-def package_nim_source():
-    """
-    Use this to distribute your Nim source code to the end user.
-    Please note that in order for the end user to import the Nim module using
-    Nimporter, they must install a C compiler, the Nim compiler, and
-    [Nimpy](https://github.com/yglukhov/nimpy). To include all Nim source files
-    in your application for distribution:
-
-    >>> # setup.py
-    >>> from setuptools import setup
-    >>> from nimporter import package_nim_source
-    >>> setup(
-    >>>     name='Foo',             # Keep your existing arguments
-    >>>     version='0.1.0',
-    >>>     **package_nim_source()  # Distribute Nim source files
-    >>> )
-
-    Note that if `package_nim_source()` won't work for you but you still want to
-    bundle Nim source, add the following arguments to your `setup()` call.
-
-    * package_data = { <your existing args>, '': ['*.nim']}
-    * include_package_data = True
-    * install_requires = ['nimporter']
-    """
-    return dict(
-        package_data={'': ['*.nim']},
-        include_package_data=True,
-        setup_requires=['nimporter']
-    )
 
 
 class NimCompilerException(Exception):
@@ -243,54 +212,11 @@ class Nimporter:
             A useable spec object that will be passed to Python during import to
             actually create a Python Module object from the spec.
         """
-
-        # if '.' in fullname or path:
-        #     print('!!!!!', fullname, path, target)
-
-        # module_path = importlib.machinery.PathFinder.find_module(fullname.split('.')[-1], path)
-        # if not module_path:
-        #     for path in path or []:
-        #         print('_____>', importlib.machinery.PathFinder.find_module(fullname, path))
-        # if not module_path:
-        #     for path in sys.path:
-        #         print('!!!!!', path, importlib.machinery.FileFinder(path).find_module(fullname))
-            
-        #     raise ImportError(f'Cannot find module {fullname}')
-        # else:
-        #     print('*' * 1000)
-        #     print(module_path)
-        #     print(module_path.path)
-        # module_path = Path(module_path.path)
-        
-        # if module_path.suffix != '.nim':
-        #     return importlib.util.spec_from_file_location(
-        #         fullname,
-        #         location=str(module_path)
-        #     )
-
-        # should_compile = any([
-        #     NimCompiler.hash_changed(module_path),
-        #     not NimCompiler.is_cache(module_path),
-        #     not NimCompiler.is_built(module_path)
-        # ])
-
-        # if should_compile:
-        #     build_artifact = NimCompiler.compile(module_path)
-        # else:
-        #     build_artifact = NimCompiler.build_artifact(module_path)
-            
-        # return importlib.util.spec_from_file_location(
-        #     fullname,
-        #     location=str(build_artifact.absolute())
-        # )
-
         parts = fullname.split('.')
         module = parts.pop()
         module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
         package = '/'.join(parts)
-        #path.extend(parts)
-
         search_paths = [
             Path(i)
             for i in (path + sys.path + ['.'])
@@ -303,7 +229,6 @@ class Nimporter:
                 print('GOT IT GOT IT', fullname, path, search_path, module_file)
 
             # NOTE(pebaz): Found an importable/compileable module
-            #if search_path.glob(module_file):
             if (search_path / package).glob(module_file):
                 module_path = search_path / module_file
 
