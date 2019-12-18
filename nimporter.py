@@ -3,39 +3,13 @@ Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
 """
 
-import sys, subprocess, importlib, hashlib
+import sys, subprocess, importlib
 from pathlib import Path
 
 
-def package_nim_source():
-    """
-    Use this to distribute your Nim source code to the end user.
-    Please note that in order for the end user to import the Nim module using
-    Nimporter, they must install a C compiler, the Nim compiler, and
-    [Nimpy](https://github.com/yglukhov/nimpy). To include all Nim source files
-    in your application for distribution:
-
-    >>> # setup.py
-    >>> from setuptools import setup
-    >>> from nimporter import package_nim_source
-    >>> setup(
-    >>>     name='Foo',             # Keep your existing arguments
-    >>>     version='0.1.0',
-    >>>     **package_nim_source()  # Distribute Nim source files
-    >>> )
-
-    Note that if `package_nim_source()` won't work for you but you still want to
-    bundle Nim source, add the following arguments to your `setup()` call.
-
-    * package_data = { <your existing args>, '': ['*.nim']}
-    * include_package_data = True
-    * install_requires = ['nimporter']
-    """
-    return dict(
-        package_data={'': ['*.nim']},
-        include_package_data=True,
-        install_requires=['nimporter']
-    )
+# When True, will always trigger a rebuild of any Nim modules
+# Can be set by the importer of this module
+IGNORE_CACHE = False
 
 
 class NimCompilerException(Exception):
@@ -174,6 +148,9 @@ class NimCompiler:
         Compiles a given Nim module and returns the path to the built artifact.
         Raises an exception if compilation fails for any reason.
         """
+        if not module_path.exists():
+            raise Exception(f'{module_path.absolute()} does not exist.')
+
         build_artifact = cls.build_artifact(module_path)
 
         nimc_args = (
@@ -234,8 +211,7 @@ class Nimporter:
         module = parts.pop()
         module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
-        path.extend(parts)
-
+        package = '/'.join(parts)
         search_paths = [
             Path(i)
             for i in (path + sys.path + ['.'])
@@ -244,11 +220,18 @@ class Nimporter:
 
         for search_path in search_paths:
 
+            if (search_path / package).glob(module_file):
+                print('GOT IT GOT IT', fullname, path, search_path, module_file)
+
             # NOTE(pebaz): Found an importable/compileable module
-            if search_path.glob(module_file):
+            if (search_path / package).glob(module_file):
                 module_path = search_path / module_file
 
+                if not module_path.exists():
+                    continue
+
                 should_compile = any([
+                    IGNORE_CACHE,
                     NimCompiler.hash_changed(module_path),
                     not NimCompiler.is_cache(module_path),
                     not NimCompiler.is_built(module_path)
@@ -310,6 +293,6 @@ same name somewhere on the path.
 '''
 sys.meta_path.append(Nimporter())
 
-# Clear importer caches for best results
+# Ensure that Nim files won't be passed up because of other Importers.
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
