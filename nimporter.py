@@ -297,10 +297,6 @@ same name somewhere on the path.
 '''
 sys.meta_path.append(Nimporter())
 
-# Nim modules will be chosen where Python and Nim filenames conflict
-#importlib.machinery.SOURCE_SUFFIXES.insert(0, '.nim')
-#sys.meta_path.insert(0, Nimporter())
-
 # Ensure that Nim files won't be passed up because of other Importers.
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
