@@ -219,10 +219,6 @@ class Nimporter:
         ]
 
         for search_path in search_paths:
-
-            if (search_path / package).glob(module_file):
-                print('GOT IT GOT IT', fullname, path, search_path, module_file)
-
             # NOTE(pebaz): Found an importable/compileable module
             if (search_path / package).glob(module_file):
                 module_path = search_path / module_file
