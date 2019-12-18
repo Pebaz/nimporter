@@ -1,16 +1,6 @@
 """
 Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
-
-* Allow you to import Nim files
-	Use SOURCE_SUFFIXES.insert(...)
-* Build them during import
-    Use find_spec
-* Change import to use the PYD instead
-	Use importlib.util.spec_from_file_location(...)
-
-Alternatively, see if you can use the `foo.bar.baz` manually. Am I sure this
-would solve it?
 """
 
 import sys, subprocess, importlib
@@ -18,6 +8,7 @@ from pathlib import Path
 
 
 # When True, will always trigger a rebuild of any Nim modules
+# Can be set by the importer of this module
 IGNORE_CACHE = False
 
 
