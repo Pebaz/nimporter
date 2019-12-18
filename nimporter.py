@@ -17,6 +17,10 @@ import sys, subprocess, importlib
 from pathlib import Path
 
 
+# When True, will always trigger a rebuild of any Nim modules
+IGNORE_CACHE = False
+
+
 class NimCompilerException(Exception):
     """
     Indicates that the invocation of the Nim compiler has failed.
@@ -236,6 +240,7 @@ class Nimporter:
                     continue
 
                 should_compile = any([
+                    IGNORE_CACHE,
                     NimCompiler.hash_changed(module_path),
                     not NimCompiler.is_cache(module_path),
                     not NimCompiler.is_built(module_path)
