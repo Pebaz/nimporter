@@ -172,7 +172,10 @@ class NimCompiler:
         if NIM_COMPILE_ERROR in err:
             raise NimCompilerException(err)
         elif err:
-            raise Exception(err)
+            # NOTE(pebaz): On Windows, Nim spits out the MSVC banner to stderr,
+            # causing `err` to not be None. If it built, ignore the error.
+            if not build_artifact.exists():
+                raise Exception(err)
         elif NIM_COMPILE_ERROR in out:
             raise NimCompilerException(out)
         
