@@ -23,6 +23,7 @@ your `.gitignore` files because (presumably) Git is already ignoring the
  1. [Nim Compiler](<https://nim-lang.org/install.html>)
  2. [Nimpy library](https://github.com/yglukhov/nimpy)
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (this library).
+ 4. Python 3.7+
 
 ### Installation
 

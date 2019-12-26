@@ -4,6 +4,7 @@ and generate exceptions where appropriate.
 """
 
 import sys, subprocess, importlib
+from importlib import util # Fix for https://stackoverflow.com/questions/39660934/error-when-using-importlib-util-to-check-for-library/39661116
 from pathlib import Path
 
 
@@ -123,7 +124,7 @@ class NimCompiler:
         """
         Returns the hash of the Nim file.
         """
-        return importlib.util.source_hash(module_path.read_bytes())
+        return util.source_hash(module_path.read_bytes())
 
     @classmethod
     def update_hash(cls, module_path):
@@ -241,7 +242,7 @@ class Nimporter:
                 else:
                     build_artifact = NimCompiler.build_artifact(module_path)
                     
-                return importlib.util.spec_from_file_location(
+                return util.spec_from_file_location(
                     fullname,
                     location=str(build_artifact.absolute())
                 )
@@ -281,7 +282,7 @@ class Nimporter:
             spec = cls.find_spec(fullname, path)
 
         if spec:
-            return importlib.util.module_from_spec(spec)
+            return util.module_from_spec(spec)
         else:
             raise ImportError(f'No module named {fullname}')
 
