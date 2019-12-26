@@ -3,9 +3,11 @@ Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
 """
 
-import sys, subprocess, importlib
-from importlib import util # Fix for https://stackoverflow.com/questions/39660934/error-when-using-importlib-util-to-check-for-library/39661116
+import sys, subprocess, importlib, hashlib
 from pathlib import Path
+
+# NOTE(pebaz): https://stackoverflow.com/questions/39660934/error-when-using-importlib-util-to-check-for-library/39661116
+from importlib import util
 
 
 # When True, will always trigger a rebuild of any Nim modules
@@ -124,7 +126,14 @@ class NimCompiler:
         """
         Returns the hash of the Nim file.
         """
-        return util.source_hash(module_path.read_bytes())
+        block_size = 65536
+        hasher = hashlib.md5()
+        with module_path.open('rb') as file:
+            buf = file.read(block_size)
+            while len(buf) > 0:
+                hasher.update(buf)
+                buf = file.read(block_size)
+        return hasher.digest()
 
     @classmethod
     def update_hash(cls, module_path):
