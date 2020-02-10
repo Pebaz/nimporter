@@ -164,7 +164,7 @@ class NimCompiler:
         build_artifact = cls.build_artifact(module_path)
 
         nimc_args = (
-            'nim c --threads:on --tlsEmulation:off --app:lib'.split()
+            'nim c -w:off --threads:on --tlsEmulation:off --app:lib'.split()
             + '--hints:off --parallelBuild:0'.split()
             + (['-d:release'] if release_mode else [])
             + [f'--out:{build_artifact}', f'{module_path}']
