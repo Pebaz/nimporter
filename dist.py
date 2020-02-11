@@ -7,7 +7,7 @@ Process is as follows:
 4. Append a Python C extension that uses list of C files.
 """
 
-import pathlib, shutil
+import pathlib, subprocess, shutil
 
 def find_nim_std_lib():
     nimexe = pathlib.Path(shutil.which('nim'))
@@ -20,6 +20,33 @@ def find_nim_std_lib():
             return None
     return result.resolve()
 
-print(find_nim_std_lib())
-print(find_nim_std_lib() / 'nimbase.h')
-print((find_nim_std_lib() / 'nimbase.h').exists())
+NIMBASE = 'nimbase.h'
+nimbase = find_nim_std_lib() / NIMBASE
+destination = pathlib.Path('.').resolve() / 'build' / NIMBASE
+
+shutil.copyfile(str(nimbase), str(destination))
+
+nimc_args = "nim cc -c --opt:speed --gc:markAndSweep --app:lib -d:release --nimcache:build dist.nim".split()
+
+process = subprocess.run(
+    nimc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+)
+out, err = process.stdout, process.stderr
+out = out.decode() if out else ''
+err = err.decode() if err else ''
+warnings = [
+    line
+    for line in err.splitlines()
+    if 'Warning:' in line
+]
+hints = [
+    line
+    for line in err.splitlines()
+    if 'Hint:' in line
+]
+
+print(out)
+print(err)
+
+print(hints)
+print(warnings)
