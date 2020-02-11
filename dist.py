@@ -8,6 +8,7 @@ Process is as follows:
 """
 
 import pathlib, subprocess, shutil
+from setuptools import Extension
 
 def find_nim_std_lib():
     nimexe = pathlib.Path(shutil.which('nim'))
@@ -19,12 +20,6 @@ def find_nim_std_lib():
         if not (result / 'system.nim').exists():
             return None
     return result.resolve()
-
-NIMBASE = 'nimbase.h'
-nimbase = find_nim_std_lib() / NIMBASE
-destination = pathlib.Path('.').resolve() / 'build' / NIMBASE
-
-shutil.copyfile(str(nimbase), str(destination))
 
 nimc_args = "nim cc -c --opt:speed --gc:markAndSweep --app:lib -d:release --nimcache:build dist.nim".split()
 
@@ -50,3 +45,27 @@ print(err)
 
 print(hints)
 print(warnings)
+
+NIMBASE = 'nimbase.h'
+nimbase = find_nim_std_lib() / NIMBASE
+build = pathlib.Path('.').resolve() / 'build'
+
+shutil.copyfile(str(nimbase), str(build / NIMBASE))
+
+csources = [str(c) for c in build.iterdir() if c.suffix == '.c']
+
+# Parallel build?
+extension = Extension(
+    name='foo',
+    sources=csources,
+    include_dirs=[str(build)]
+)
+
+print(extension)
+
+# Treat all Nim files as own extension.
+# This closely matches real-world use case: speed
+# However, it means you won't be able to import Nim files...
+
+for nim_file in pathlib.Path().rglob('*.nim'):
+    print(nim_file)
