@@ -71,14 +71,44 @@ for nim_file in pathlib.Path().rglob('*.nim'):
     print(nim_file)
 
 
-def build_nim_extensions():
+def build_nim_extensions(exclude_dirs=[]):
     """
     Compiles Nim files to C and creates Extensions from them for distribution.
     """
+    extensions = []
 
-    return dict(
-        ext_modules=[]
-    )
+    for extension in __find_extensions(exclude_dirs):
+        if extension.is_dir():  # It is known that this dir contains .nimble
+            "`nimble build` should build if it is an extension."
+            "if it fails, perhaps it is a library :D"
+            "run `nimble install`. If that fails, there is a compilation error"
+
+        else:  # This is for sure a Nim extension file
+            pass
+
+    return dict(ext_modules=extensions)
+
+def __find_extensions(exclude_dirs=[]):
+    """
+    Compiles Nim files to C and creates Extensions from them for distribution.
+    """
+    nim_exts = []
+
+    for item in pathlib.Path().iterdir():
+        if item.is_dir() and item.glob('*.nimble'):
+            "Treat directory as one single Extension"
+            # NOTE(pebaz): Folder must contain Nim file of exact same name.
+            nim_exts.append(item)
+
+        elif item.is_dir():
+            "Treat item as directory"
+            nim_exts.extend(__find_extensions(item, exclude_dirs=exclude_dirs))
+
+        else:
+            "Treat item as a Nim Extension."
+            nim_exts.append(item)
+
+    return dict(ext_modules=extensions)
 
 from setuptools import setup
 
