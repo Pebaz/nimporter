@@ -56,7 +56,7 @@ csources = [str(c) for c in build.iterdir() if c.suffix == '.c']
 
 # Parallel build?
 extension = Extension(
-    name='foo',
+    name='dist',
     sources=csources,
     include_dirs=[str(build)]
 )
@@ -69,3 +69,22 @@ print(extension)
 
 for nim_file in pathlib.Path().rglob('*.nim'):
     print(nim_file)
+
+
+def build_nim_extensions():
+    """
+    Compiles Nim files to C and creates Extensions from them for distribution.
+    """
+
+    return dict(
+        ext_modules=[]
+    )
+
+from setuptools import setup
+
+setup(
+    name='pebaz',
+    ext_modules=[extension]
+)
+
+print('done')

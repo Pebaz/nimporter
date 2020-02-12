@@ -296,6 +296,19 @@ class Nimporter:
         else:
             raise ImportError(f'No module named {fullname}')
 
+
+def build_nim_extensions():
+    """
+    Compiles Nim files to C and creates Extensions from them for distribution.
+    """
+
+    
+
+    return dict(
+        ext_modules=[]
+    )
+
+
 '''
 By putting the Nimpoter at the end of the list of module loaders, it ensures
 that Nim code files are imported only if there is not a Python module of the
