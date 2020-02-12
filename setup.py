@@ -21,30 +21,63 @@ from setuptools import setup
 # When Nim installed, create SourceDist
 # When Nim not installed, user is trying to Pip install.
 
+"""
+
+
+Computer with Nim Installed
+
+    pip install meowhash-nim                               # Works
+    pip install git+https://github.com/Pebaz/meowhash-nim  # Works
+
+Computer without Nim Installed
+
+    pip install meowhash-nim                               # Works
+    pip install git+https://github.com/Pebaz/meowhash-nim  # Fails (Cannot run Nim)
+
+"""
+
+def check():
+	pip_install = '--python-tag' in sys.argv
+
+	if pip_install:
+		...
+	else:
+		...
+
+	return {}
+
 def check():
 	"""
-	Only compile extension modules when 'sdist', 'bdist', or 'bdist_wheel' are
-	in sys.argv.
+	Check to see if an end-user is installing a library with Nim extensions, or
+	if the library maintainer is creating a bundle containing Nim extensions
+	compiled to C for compilation on the end user's machine.
+
+	Either way, the C extensions are 
 	"""
 	pip_install = '--python-tag' in sys.argv
 	nim_installed = bool(shutil.which('nim'))
-	add_list_of_extensions = False
 	acceptable_cmds = 'sdist', 'bdist', 'bdist_wheel'
+	add_list_of_extensions = False
+	bundle_extensions = False
 
+	kwarguments = {}
+
+	# Build Extensions
 	if not pip_install and any(cmd in sys.argv for cmd in acceptable_cmds):
-		add_list_of_extensions = True
+		if not nim_installed:
+			raise Exception(
+				'Cannot build extensions. Nim not installed or not on path.'
+			)
+		kwarguments['ext_modules'] = [
 
-	with open('/Users/wildsamu/coding/github/nimporter/foo.txt', 'w') as file:
-		file.write(shutil.which('nim') or 'Nim Not Installed.')
-		file.writelines(i + '\n' for i in sys.argv)
-		file.write('add_list_of_extensions: ' + str(add_list_of_extensions))
+		]
 
-	#if not nim_installed:
-	#	raise Exception('Nim must be installed to build Nim extensions.')
+	# with open('/Users/wildsamu/coding/github/nimporter/foo.txt', 'w') as file:
+	# 	file.write(shutil.which('nim') or 'Nim Not Installed.')
+	# 	file.writelines(i + '\n' for i in sys.argv)
+	# 	file.write('add_list_of_extensions: ' + str(add_list_of_extensions))
 
-	return {
-		'ext_modules' : []
-	}
+	return kwarguments
 
 setup(
 	name='nimporter',
