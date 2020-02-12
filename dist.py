@@ -71,50 +71,62 @@ for nim_file in pathlib.Path().rglob('*.nim'):
     print(nim_file)
 
 
+def __find_extensions(path, exclude_dirs=[]):
+    """
+    Compiles Nim files to C and creates Extensions from them for distribution.
+    """
+    nim_exts = []
+
+    for item in path.iterdir():
+        if item.is_dir() and list(item.glob('*.nimble')):
+            "Treat directory as one single Extension"
+            (nimble_file,) = item.glob('*.nimble')
+            nim_file = nimble_file.parent / (nimble_file.stem + '.nim')
+
+            # NOTE(pebaz): Folder must contain Nim file of exact same name.
+            if nim_file.exists():
+                nim_exts.append(item)
+
+        elif item.is_dir():
+            "Treat item as directory"
+            nim_exts.extend(__find_extensions(item, exclude_dirs=exclude_dirs))
+
+        elif item.suffix == '.nim':
+            "Treat item as a Nim Extension."
+            nim_exts.append(item)
+
+    return nim_exts
+
+def build_nim_extension(path):
+    if extension.is_dir():  # It is known that this dir contains .nimble
+        "`nimble build` should build if it is an extension."
+        "if it fails, perhaps it is a library :D"
+        "run `nimble install`. If that fails, there is a compilation error"
+
+    else:  # This is for sure a Nim extension file
+        pass
+
 def build_nim_extensions(exclude_dirs=[]):
     """
     Compiles Nim files to C and creates Extensions from them for distribution.
     """
     extensions = []
 
-    for extension in __find_extensions(exclude_dirs):
-        if extension.is_dir():  # It is known that this dir contains .nimble
-            "`nimble build` should build if it is an extension."
-            "if it fails, perhaps it is a library :D"
-            "run `nimble install`. If that fails, there is a compilation error"
-
-        else:  # This is for sure a Nim extension file
-            pass
+    for extension in __find_extensions(pathlib.Path(), exclude_dirs):
+        extensions.append(build_nim_extension(extension))
 
     return dict(ext_modules=extensions)
 
-def __find_extensions(exclude_dirs=[]):
-    """
-    Compiles Nim files to C and creates Extensions from them for distribution.
-    """
-    nim_exts = []
 
-    for item in pathlib.Path().iterdir():
-        if item.is_dir() and item.glob('*.nimble'):
-            "Treat directory as one single Extension"
-            # NOTE(pebaz): Folder must contain Nim file of exact same name.
-            nim_exts.append(item)
 
-        elif item.is_dir():
-            "Treat item as directory"
-            nim_exts.extend(__find_extensions(item, exclude_dirs=exclude_dirs))
+# from setuptools import setup
+# setup(
+#     name='pebaz',
+#     ext_modules=[extension]
+# )
 
-        else:
-            "Treat item as a Nim Extension."
-            nim_exts.append(item)
-
-    return dict(ext_modules=extensions)
-
-from setuptools import setup
-
-setup(
-    name='pebaz',
-    ext_modules=[extension]
-)
+print('-' * 40)
+for file in __find_extensions(pathlib.Path()):
+    print(file)
 
 print('done')
