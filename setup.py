@@ -23,5 +23,10 @@ setup(
 	long_description_content_type='text/markdown',
 	author='http://github.com/Pebaz',
 	url='http://github.com/Pebaz/Nimporter',
-    py_modules=['nimporter']
+    py_modules=['nimporter'],
+	entry_points={
+		'console_scripts' : [
+			'nimporter=nimporter_cli:main'
+		]
+	}
 )
