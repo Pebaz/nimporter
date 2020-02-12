@@ -91,7 +91,7 @@ class NimCompiler:
         Return whether or not a __pycache__ directory exists to store hashes and
         build artifacts.
         """
-        return NimCompiler.pycache_dir(module_path).exists()
+        return cls.pycache_dir(module_path).exists()
 
     @classmethod
     def is_hashed(cls, module_path):
@@ -101,7 +101,7 @@ class NimCompiler:
     @classmethod
     def is_built(cls, module_path):
         """Return whether or not a given Nim file has already been hashed."""
-        return NimCompiler.build_artifact(module_path).exists()
+        return cls.build_artifact(module_path).exists()
 
     @classmethod
     def get_hash(cls, module_path):
@@ -117,9 +117,9 @@ class NimCompiler:
         Return whether or not a given Nim file has changed since last hash. If
         the module has not yet been hashed, returns True.
         """
-        if not NimCompiler.is_hashed(module_path):
+        if not cls.is_hashed(module_path):
             return True
-        return cls.get_hash(module_path) != NimCompiler.hash_file(module_path)
+        return cls.get_hash(module_path) != cls.hash_file(module_path)
 
     @classmethod
     def hash_file(cls, module_path):
@@ -194,6 +194,13 @@ class NimCompiler:
 
         return build_artifact
 
+    @classmethod
+    def compile_library(cls, library_path):
+        pass
+
+    @classmethod
+    def compile_extension(cls, module_path):
+        pass
 
 class Nimporter:
     """
@@ -302,7 +309,7 @@ def build_nim_extensions():
     Compiles Nim files to C and creates Extensions from them for distribution.
     """
 
-    
+
 
     return dict(
         ext_modules=[]
