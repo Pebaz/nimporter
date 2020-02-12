@@ -3,8 +3,9 @@ Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
 """
 
-import sys, subprocess, importlib, hashlib
+import sys, subprocess, importlib, hashlib, tempfile
 from pathlib import Path
+from setuptools import Extension
 
 # NOTE(pebaz): https://stackoverflow.com/questions/39660934/error-when-using-importlib-util-to-check-for-library/39661116
 from importlib import util
@@ -195,12 +196,35 @@ class NimCompiler:
         return build_artifact
 
     @classmethod
+    def find_nim_std_lib(cls):
+        nimexe = Path(shutil.which('nim'))
+        if not nimexe:
+            return None
+        result = nimexe.parent / '../lib'
+        if not (result / 'system.nim').exists():
+            result = nimexe.resolve().parent / '../lib'
+            if not (result / 'system.nim').exists():
+                return None
+        return result.resolve()
+
+    @classmethod
     def compile_library(cls, library_path):
         pass
 
     @classmethod
     def compile_extension(cls, module_path):
-        pass
+        "Compile Nim to C and return Extension pointing to the C source files."
+
+        module_name = module_path.stem
+        build_dir = Path(tempfile.mktemp())
+        nimc_args = (
+            'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+            '-d:release'.split() +
+            [f'--nimcache:{build_dir}', f'{module_path}']
+        )
+
+        return Extension()
+
 
 class Nimporter:
     """
