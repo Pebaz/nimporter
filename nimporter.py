@@ -16,6 +16,19 @@ from importlib import util
 IGNORE_CACHE = False
 
 
+'''
+TODO:
+
+[ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
+[ ] Create one single compile() method for Nimporter.
+[ ] Create compile_extension() method using compile() with different arguments.
+[ ] Create compile_module() method using compile() with different arguments.
+[ ] Create compile_library() method using compile() with different arguments.
+    [ ] nimble install --accept
+'''
+
+
+
 class NimCompilerException(Exception):
     """
     Indicates that the invocation of the Nim compiler has failed.
@@ -75,6 +88,35 @@ class NimCompiler:
         EXT(str): the extension to use for the importable build artifact.
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
+    STDOUT = 1
+    STDERR = 2
+
+    @classmethod
+    def __compile(cls, nim_args: list, scan_file_handle=STDERR):
+        """
+        Returns a tuple containing any errors, warnings, or hints from the
+        compilation process.
+        """
+        process = subprocess.run(
+            nim_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, err = process.stdout, process.stderr
+        out = out.decode() if out else ''
+        err = err.decode() if err else ''
+
+        if scan_file_handle == cls.STDOUT:
+            handle = out
+        elif scan_file_handle == cls.STDERR:
+            handle = err
+
+        lines = handle.splitlines()
+
+        errors = [line for line in lines if 'Error:' in line]
+        warnings = [line for line in lines if 'Warning:' in line]
+        hints = [line for line in lines if 'Hint:' in line]
+
+        return errors, warnings, hints
+
 
     @classmethod
     def pycache_dir(cls, module_path):
