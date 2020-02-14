@@ -25,8 +25,8 @@ TODO:
 [ ] Create compile_module() method using compile() with different arguments.
 [ ] Create compile_library() method using compile() with different arguments.
     [ ] nimble build
-        [ ] Libs are installed as dependencies
-        [ ] Bins must be named exactly the same as package
+        [ ] Libs are installed as dependencies (must have packagename.nim)
+        [ ] Bins must be named exactly "main.nim"
     [x] nimble install --accept
 [ ] Search for folders with .nimble treat them as one single extension. This is
     the only supported way for nim modules to import each other within a Python
@@ -181,8 +181,7 @@ class NimCompiler:
             os.chdir(cwd)
 
             for warn in warnings: print(warn)
-
-            # 3. At this point, it's an error with the code itself
+            
             if errors:
                 output, errors, warnings, hints = cls.__compile(
                     nim_args, scan_file_handle=cls.STDOUT
@@ -221,8 +220,10 @@ class NimCompiler:
 
         # Improperly formatted extension/library (no main.nim or package.nim)
         else:
-            import pdb; pdb.set_trace()
-            raise Exception(f'WUT: {library_path}')
+            raise Exception(
+                f'Error: {library_path} is not formatted properly. '
+                f'No main.nim or {library_path.resolve().name}.nim found.'
+            )
 
     @classmethod
     def pycache_dir(cls, module_path):

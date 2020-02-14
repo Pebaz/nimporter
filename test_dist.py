@@ -4,8 +4,11 @@ from nimporter import NimCompiler
 #e = NimCompiler.compile_extension(Path('dist.nim'))
 #print(e)
 
-el = NimCompiler.compile_library(Path('mylib'))
-print(el)
+print(NimCompiler.compile_library(Path('mylib')))
 
-ex = NimCompiler.compile_library(Path('myext'))
-print(ex)
+print(NimCompiler.compile_library(Path('myext')))
+
+try:
+    NimCompiler.compile_library(Path('mynot'))
+except Exception as e:
+    print(e)
