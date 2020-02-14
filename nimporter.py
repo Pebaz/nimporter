@@ -20,17 +20,10 @@ IGNORE_CACHE = False
 TODO:
 
 [ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
-[ ] Create one single compile() method for Nimporter.
+[x] Create one single compile() method for Nimporter.
 [x] Create compile_extension() method using compile() with different arguments.
-[ ] Create compile_module() method using compile() with different arguments.
-[ ] Create compile_library() method using compile() with different arguments.
-    [ ] nimble build
-        [ ] Libs are installed as dependencies (must have packagename.nim)
-        [ ] Bins must be named exactly "main.nim"
-    [x] nimble install --accept
-[ ] Search for folders with .nimble treat them as one single extension. This is
-    the only supported way for nim modules to import each other within a Python
-    project. All other Nim files are treated as single extensions.
+[x] Create compile_module() method using compile() with different arguments.
+[x] Create compile_library() method using compile() with different arguments.
 [ ] Modify the import system to be able to install dependencies from .nimble and
     make it so that Folders themselves can be imported.
 
@@ -125,7 +118,7 @@ class NimCompiler:
 
     @classmethod
     def compile_extension_module(cls, module_path, module_name_override=None):
-        "Compile Nim to C and return Extension pointing to the C source files."
+        """Compile Nim to C and return Extension pointing to the C source files."""
 
         module_name = module_name_override or module_path.stem
         build_dir = Path(tempfile.mktemp())
@@ -204,63 +197,6 @@ class NimCompiler:
             f'contain any of these top-level filenames: '
             f'{[i + ".nim" for i in useable_mod_names]}'
         )
-
-        # # Install global library dependency
-        # if (library_path / f'{library_path.name}.nim').exists():
-        #     cwd = Path().cwd()
-        #     os.chdir(library_path)
-        #     lib_args = 'nimble install --accept'.split()
-
-        #     output, errors, warnings, hints = cls.__compile(
-        #         lib_args, scan_file_handle=cls.STDOUT
-        #     )
-
-        #     os.chdir(cwd)
-
-        #     for warn in warnings: print(warn)
-
-        #     if errors:
-        #         output, errors, warnings, hints = cls.__compile(
-        #             nim_args, scan_file_handle=cls.STDOUT
-        #         )
-
-        #         raise Exception(errors[0].split('Error:')[1].strip())
-
-        #     return
-
-        # # Compile and return Extension
-        # elif (library_path / 'main.nim').exists():
-        #     module_name = library_path.resolve().name
-        #     module_path = library_path / 'main.nim'
-        #     build_dir = Path(tempfile.mktemp())
-
-        #     nim_args = (
-        #         'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-        #         '-d:release'.split() +
-        #         [f'--nimcache:{build_dir}', f'{module_path}']
-        #     )
-
-        #     output, errors, warnings, hints = cls.__compile(nim_args)
-
-        #     for warn in warnings:
-        #         print(warn)
-
-        #     if errors: raise NimCompilerException(errors[0])
-
-        #     csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
-
-        #     return Extension(
-        #         name=module_name,
-        #         sources=csources,
-        #         include_dirs=[str(build_dir)]
-        #     )
-
-        # # Improperly formatted extension/library (no main.nim or package.nim)
-        # else:
-        #     raise Exception(
-        #         f'Error: {library_path} is not formatted properly. '
-        #         f'No main.nim or {library_path.resolve().name}.nim found.'
-        #     )
 
     @classmethod
     def pycache_dir(cls, module_path):
@@ -495,6 +431,12 @@ class Nimporter:
         else:
             raise ImportError(f'No module named {fullname}')
 
+    @classmethod
+    def compile_nim_module(cls, fullname, path:list=None, cli_args:list=None):
+        """
+        Import a Nim module after compiling it using exact command line given in
+        the cli_args variable.
+        """
 
 def build_nim_extensions():
     """
