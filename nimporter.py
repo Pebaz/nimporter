@@ -178,11 +178,12 @@ class NimCompiler:
                 lib_args, scan_file_handle=cls.STDOUT
             )
 
+            os.chdir(cwd)
+
             for warn in warnings: print(warn)
 
             # 3. At this point, it's an error with the code itself
             if errors:
-                os.chdir(cwd)
                 output, errors, warnings, hints = cls.__compile(
                     nim_args, scan_file_handle=cls.STDOUT
                 )
@@ -192,10 +193,36 @@ class NimCompiler:
             return
 
         # Compile and return Extension
-        else:
+        elif (library_path / 'main.nim').exists():
             module_name = library_path.resolve().name
             module_path = library_path / 'main.nim'
-            return cls.compile_extension(module_path, module_name)
+            build_dir = Path(tempfile.mktemp())
+
+            nim_args = (
+                'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+                '-d:release'.split() +
+                [f'--nimcache:{build_dir}', f'{module_path}']
+            )
+
+            output, errors, warnings, hints = cls.__compile(nim_args)
+
+            for warn in warnings:
+                print(warn)
+
+            if errors: raise NimCompilerException(errors[0])
+
+            csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+
+            return Extension(
+                name=module_name,
+                sources=csources,
+                include_dirs=[str(build_dir)]
+            )
+
+        # Improperly formatted extension/library (no main.nim or package.nim)
+        else:
+            import pdb; pdb.set_trace()
+            raise Exception(f'WUT: {library_path}')
 
     @classmethod
     def pycache_dir(cls, module_path):

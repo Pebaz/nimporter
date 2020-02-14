@@ -1,3 +1,6 @@
+# MacOS
+*.DS_STORE
+
 # Nim
 nimcache/
 nimblecache/

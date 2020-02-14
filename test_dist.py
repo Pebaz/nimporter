@@ -6,3 +6,6 @@ from nimporter import NimCompiler
 
 el = NimCompiler.compile_library(Path('mylib'))
 print(el)
+
+ex = NimCompiler.compile_library(Path('myext'))
+print(ex)
