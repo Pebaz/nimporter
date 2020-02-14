@@ -132,7 +132,7 @@ class NimCompiler:
         return out, errors, warnings, hints
 
     @classmethod
-    def compile_extension(cls, module_path, module_name_override=None):
+    def compile_extension_module(cls, module_path, module_name_override=None):
         "Compile Nim to C and return Extension pointing to the C source files."
 
         module_name = module_name_override or module_path.stem
@@ -159,14 +159,19 @@ class NimCompiler:
         )
 
     @classmethod
-    def compile_library(cls, library_path):
+    def compile_extension_library(cls, library_path):
         """
-        If there is package.nim, it's definitely a library (nimble install).
-        If there is a main.nim, it's definitely a DLL (nimble cc).
+        Compiles and returns an Extension and installs dependencies in .nimble.
 
-        Extensions MUST have a Nim file named "main.nim" at the project root.
+        Libraries MUST have a Nim file named "main.nim" or "library.nim" at the
+        project root as well as a file ending with ".nimble".
 
-        This method has the added bonus of installing any Nimble dependencies.
+        Returns:
+            An Extension upon successful compilation, else None.
+
+        Raises:
+            Exception if the library path does not contain the files listed
+            above or any other compilation error.
         """
 
         library_path = library_path.resolve()
@@ -195,6 +200,8 @@ class NimCompiler:
 
                 for warn in warnings:
                     print(warn)
+                else:
+                    print(output)
 
                 if errors: raise NimCompilerException(errors[0])
 
