@@ -198,7 +198,8 @@ class NimCompiler:
                 shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
 
                 return Extension(
-                    name=module_name,
+                    NOTE MAKE SURE TO CHANGE THIS TO NOT BE 'MYPACKAGE'
+                    name='mypackage.' + module_name,
                     sources=csources,
                     include_dirs=[str(build_dir)]
                 )
