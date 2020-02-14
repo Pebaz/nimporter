@@ -3,7 +3,7 @@ Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
 """
 
-import sys, subprocess, importlib, hashlib, tempfile
+import sys, os, subprocess, importlib, hashlib, tempfile
 from pathlib import Path
 from setuptools import Extension
 
@@ -21,9 +21,12 @@ TODO:
 
 [ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
 [ ] Create one single compile() method for Nimporter.
-[ ] Create compile_extension() method using compile() with different arguments.
+[x] Create compile_extension() method using compile() with different arguments.
 [ ] Create compile_module() method using compile() with different arguments.
 [ ] Create compile_library() method using compile() with different arguments.
+    [ ] nimble build
+        [ ] Libs are installed as dependencies
+        [ ] Bins must be named exactly the same as package
     [ ] nimble install --accept
 [ ] Search for folders with .nimble treat them as one single extension. This is
     the only supported way for nim modules to import each other within a Python
@@ -157,7 +160,61 @@ class NimCompiler:
 
     @classmethod
     def compile_library(cls, library_path):
-        pass
+        ""
+        module_name = library_path.resolve().name
+        module_path = library_path / 'main.nim'
+        print(module_path, 123123123)
+        build_dir = Path(tempfile.mktemp())
+        nim_args = (
+            'nimble cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+            '-d:release'.split() +
+            [f'--nimcache:{build_dir}', f'{module_path}']
+        )
+
+        output, errors, warnings, hints = cls.__compile(
+            nim_args, scan_file_handle=cls.STDOUT
+        )
+
+        for warn in warnings:
+            print(warn)
+
+        # 1. Compile once and return
+        # 2. If error, Install as Library
+        # 3. If error, compile again and raise NimCompilerException with trace
+
+        if errors:
+            print(1, 'compile errors')
+
+            cwd = Path().cwd()
+            os.chdir(library_path)
+            lib_args = 'nimble install --accept'.split()
+
+            output, errors, warnings, hints = cls.__compile(
+                lib_args, scan_file_handle=cls.STDOUT
+            )
+
+            if errors:
+                print(2, 'library errors')
+                
+                os.chdir(cwd)
+                
+                output, errors, warnings, hints = cls.__compile(
+                    nim_args, scan_file_handle=cls.STDOUT
+                )
+
+                if errors:
+                    print(3, 'compile errors again')
+                    raise Exception(errors[0].split('Error:')[1].strip())
+            else:
+                return
+
+        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+
+        return Extension(
+            name=module_name,
+            sources=csources,
+            include_dirs=[str(build_dir)]
+        )
 
     @classmethod
     def pycache_dir(cls, module_path):
