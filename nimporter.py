@@ -102,11 +102,9 @@ class NimCompiler:
         EXT(str): the extension to use for the importable build artifact.
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
-    STDOUT = 1
-    STDERR = 2
 
     @classmethod
-    def __compile(cls, nim_args: list, scan_file_handle=STDERR):
+    def __compile(cls, nim_args: list):
         """
         Returns a tuple containing any errors, warnings, or hints from the
         compilation process.
@@ -117,17 +115,11 @@ class NimCompiler:
         out, err = process.stdout, process.stderr
         out = out.decode() if out else ''
         err = err.decode() if err else ''
+        lines = (out + err).splitlines()
 
-        if scan_file_handle == cls.STDOUT:
-            handle = out
-        elif scan_file_handle == cls.STDERR:
-            handle = err
-
-        lines = handle.splitlines()
-
-        errors = [line for line in lines if 'Error:' in line]
+        errors   = [line for line in lines if 'Error:' in line]
         warnings = [line for line in lines if 'Warning:' in line]
-        hints = [line for line in lines if 'Hint:' in line]
+        hints    = [line for line in lines if 'Hint:' in line]
 
         return out, errors, warnings, hints
 
@@ -191,17 +183,11 @@ class NimCompiler:
 
                 cwd = Path().cwd()
                 os.chdir(library_path)
-
-                output, errors, warnings, hints = cls.__compile(
-                    nim_args, scan_file_handle=cls.STDOUT
-                )
-
+                output, errors, warnings, hints = cls.__compile(nim_args)
                 os.chdir(cwd)
 
                 for warn in warnings:
                     print(warn)
-                else:
-                    print(output)
 
                 if errors: raise NimCompilerException(errors[0])
 
