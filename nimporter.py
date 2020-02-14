@@ -168,62 +168,106 @@ class NimCompiler:
 
         This method has the added bonus of installing any Nimble dependencies.
         """
-        # Install global library dependency
-        if (library_path / f'{library_path.name}.nim').exists():
-            cwd = Path().cwd()
-            os.chdir(library_path)
-            lib_args = 'nimble install --accept'.split()
 
-            output, errors, warnings, hints = cls.__compile(
-                lib_args, scan_file_handle=cls.STDOUT
-            )
+        library_path = library_path.resolve()
+        useable_mod_names = 'main', library_path.name
 
-            os.chdir(cwd)
+        for module_name in useable_mod_names:
+            module_path = library_path / (module_name + '.nim')
 
-            for warn in warnings: print(warn)
-            
-            if errors:
+            if module_path.exists():
+                build_dir = Path(tempfile.mktemp())
+
+                nim_args = (
+                    'nimble cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+                    '-d:release'.split() +
+                    [f'--nimcache:{build_dir}', f'{module_path}']
+                )
+
+                cwd = Path().cwd()
+                os.chdir(library_path)
+
                 output, errors, warnings, hints = cls.__compile(
                     nim_args, scan_file_handle=cls.STDOUT
                 )
 
-                raise Exception(errors[0].split('Error:')[1].strip())
+                os.chdir(cwd)
 
-            return
+                for warn in warnings:
+                    print(warn)
 
-        # Compile and return Extension
-        elif (library_path / 'main.nim').exists():
-            module_name = library_path.resolve().name
-            module_path = library_path / 'main.nim'
-            build_dir = Path(tempfile.mktemp())
+                if errors: raise NimCompilerException(errors[0])
 
-            nim_args = (
-                'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-                '-d:release'.split() +
-                [f'--nimcache:{build_dir}', f'{module_path}']
-            )
+                csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
-            output, errors, warnings, hints = cls.__compile(nim_args)
+                return Extension(
+                    name=module_name,
+                    sources=csources,
+                    include_dirs=[str(build_dir)]
+                )
 
-            for warn in warnings:
-                print(warn)
+        raise Exception(
+            f'Error: {library_path} is not formatted properly. It did not '
+            f'contain any of these top-level filenames: '
+            f'{[i + ".nim" for i in useable_mod_names]}'
+        )
 
-            if errors: raise NimCompilerException(errors[0])
+        # # Install global library dependency
+        # if (library_path / f'{library_path.name}.nim').exists():
+        #     cwd = Path().cwd()
+        #     os.chdir(library_path)
+        #     lib_args = 'nimble install --accept'.split()
 
-            csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+        #     output, errors, warnings, hints = cls.__compile(
+        #         lib_args, scan_file_handle=cls.STDOUT
+        #     )
 
-            return Extension(
-                name=module_name,
-                sources=csources,
-                include_dirs=[str(build_dir)]
-            )
+        #     os.chdir(cwd)
 
-        # Improperly formatted extension/library (no main.nim or package.nim)
-        else:
-            raise Exception(
-                f'Error: {library_path} is not formatted properly. '
-                f'No main.nim or {library_path.resolve().name}.nim found.'
-            )
+        #     for warn in warnings: print(warn)
+
+        #     if errors:
+        #         output, errors, warnings, hints = cls.__compile(
+        #             nim_args, scan_file_handle=cls.STDOUT
+        #         )
+
+        #         raise Exception(errors[0].split('Error:')[1].strip())
+
+        #     return
+
+        # # Compile and return Extension
+        # elif (library_path / 'main.nim').exists():
+        #     module_name = library_path.resolve().name
+        #     module_path = library_path / 'main.nim'
+        #     build_dir = Path(tempfile.mktemp())
+
+        #     nim_args = (
+        #         'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+        #         '-d:release'.split() +
+        #         [f'--nimcache:{build_dir}', f'{module_path}']
+        #     )
+
+        #     output, errors, warnings, hints = cls.__compile(nim_args)
+
+        #     for warn in warnings:
+        #         print(warn)
+
+        #     if errors: raise NimCompilerException(errors[0])
+
+        #     csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+
+        #     return Extension(
+        #         name=module_name,
+        #         sources=csources,
+        #         include_dirs=[str(build_dir)]
+        #     )
+
+        # # Improperly formatted extension/library (no main.nim or package.nim)
+        # else:
+        #     raise Exception(
+        #         f'Error: {library_path} is not formatted properly. '
+        #         f'No main.nim or {library_path.resolve().name}.nim found.'
+        #     )
 
     @classmethod
     def pycache_dir(cls, module_path):
