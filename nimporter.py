@@ -210,6 +210,64 @@ class NimCompiler:
         )
 
     @classmethod
+    def __find_extensions(cls, path, exclude_dirs=[]):
+        """
+        Compiles Nim files to C and creates Extensions from them for distribution.
+        """
+        nim_exts = []
+
+        for item in path.iterdir():
+            if item.is_dir() and list(item.glob('*.nimble')):
+                "Treat directory as one single Extension"
+                (nimble_file,) = item.glob('*.nimble')
+                nim_file = nimble_file.parent / (nimble_file.stem + '.nim')
+
+                # NOTE(pebaz): Folder must contain Nim file of exact same name.
+                if nim_file.exists():
+                    nim_exts.append(item)
+
+            elif item.is_dir():
+                "Treat item as directory"
+                nim_exts.extend(__find_extensions(item, exclude_dirs=exclude_dirs))
+
+            elif item.suffix == '.nim':
+                "Treat item as a Nim Extension."
+                nim_exts.append(item)
+
+        return nim_exts
+
+    @classmethod
+    def build_nim_extension(cls, path):
+        # It is known that this dir contains .nimble
+        if extension.is_dir():
+            return cls.compile_extension_library(path)
+            
+        # This is for sure a Nim extension file
+        else:
+            return cls.compile_extension_module(path)
+
+    @classmethod
+    def build_nim_extensions(cls, exclude_dirs=[]):
+        """
+        Compiles Nim modules and libraries to C and creates Extensions from them
+        for source, binary, or wheel distribution.
+
+        Automatically recurses through the project directory to find all the Nim
+        modules and Nim libraries.
+
+        Returns:
+            A list of Extensions that can be added to the setup() function's
+            "ext_modules" keyword argument.
+        """
+        extensions = []
+
+        for extension in cls.__find_extensions(pathlib.Path(), exclude_dirs):
+            ext = build_nim_extension(extension)
+            if ext: extensions.append(ext)
+
+        return extensions
+
+    @classmethod
     def pycache_dir(cls, module_path):
         """Return the __pycache__ directory as a Path."""
         return module_path.parent / '__pycache__'
