@@ -3,7 +3,7 @@ Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
 """
 
-import sys, os, subprocess, importlib, hashlib, tempfile
+import sys, os, subprocess, importlib, hashlib, tempfile, shutil
 from pathlib import Path
 from setuptools import Extension
 
@@ -228,7 +228,7 @@ class NimCompiler:
 
             elif item.is_dir():
                 "Treat item as directory"
-                nim_exts.extend(__find_extensions(item, exclude_dirs=exclude_dirs))
+                nim_exts.extend(cls.__find_extensions(item, exclude_dirs=exclude_dirs))
 
             elif item.suffix == '.nim':
                 "Treat item as a Nim Extension."
@@ -239,7 +239,7 @@ class NimCompiler:
     @classmethod
     def build_nim_extension(cls, path):
         # It is known that this dir contains .nimble
-        if extension.is_dir():
+        if path.is_dir():
             return cls.compile_extension_library(path)
             
         # This is for sure a Nim extension file
@@ -261,8 +261,8 @@ class NimCompiler:
         """
         extensions = []
 
-        for extension in cls.__find_extensions(pathlib.Path(), exclude_dirs):
-            ext = build_nim_extension(extension)
+        for extension in cls.__find_extensions(Path(), exclude_dirs):
+            ext = cls.build_nim_extension(extension)
             if ext: extensions.append(ext)
 
         return extensions
