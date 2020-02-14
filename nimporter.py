@@ -25,10 +25,17 @@ TODO:
 [ ] Create compile_module() method using compile() with different arguments.
 [ ] Create compile_library() method using compile() with different arguments.
     [ ] nimble install --accept
+[ ] Search for folders with .nimble treat them as one single extension. This is
+    the only supported way for nim modules to import each other within a Python
+    project. All other Nim files are treated as single extensions.
+[ ] Modify the import system to be able to install dependencies from .nimble and
+    make it so that Folders themselves can be imported.
+
 [ ] Allow fine-grained control over compiler switches. This can be configured by
     placing a `module-name.cfg` right next to the `.nimble` file. Single modules
     do not have the option of configuring compiler switches.
 [ ] Add API to programatically import Nim file with exact compilation switches.
+    [ ] Internally calls __compile()
 '''
 
 
