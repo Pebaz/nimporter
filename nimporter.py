@@ -126,8 +126,33 @@ class NimCompiler:
         warnings = [line for line in lines if 'Warning:' in line]
         hints = [line for line in lines if 'Hint:' in line]
 
-        return errors, warnings, hints
+        return out, errors, warnings, hints
 
+    @classmethod
+    def compile_extension(cls, module_path):
+        "Compile Nim to C and return Extension pointing to the C source files."
+
+        module_name = module_path.stem
+        build_dir = Path(tempfile.mktemp())
+        nim_args = (
+            'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
+            '-d:release'.split() +
+            [f'--nimcache:{build_dir}', f'{module_path}']
+        )
+
+        output, errors, warnings, hints = cls.__compile(nim_args)
+
+        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+
+        return Extension(
+            name=module_name,
+            sources=csources,
+            include_dirs=[str(build_dir)]
+        )
+
+    @classmethod
+    def compile_library(cls, library_path):
+        pass
 
     @classmethod
     def pycache_dir(cls, module_path):
@@ -259,24 +284,6 @@ class NimCompiler:
             if not (result / 'system.nim').exists():
                 return None
         return result.resolve()
-
-    @classmethod
-    def compile_library(cls, library_path):
-        pass
-
-    @classmethod
-    def compile_extension(cls, module_path):
-        "Compile Nim to C and return Extension pointing to the C source files."
-
-        module_name = module_path.stem
-        build_dir = Path(tempfile.mktemp())
-        nimc_args = (
-            'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-            '-d:release'.split() +
-            [f'--nimcache:{build_dir}', f'{module_path}']
-        )
-
-        return Extension()
 
 
 class Nimporter:
