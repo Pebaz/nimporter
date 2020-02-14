@@ -5,7 +5,7 @@ author      = "Pebaz"
 description = "Example .nimble file."
 license     = "MIT"
 
-bin = @["main"]
+#bin = @["main"]
 
 # Deps
 

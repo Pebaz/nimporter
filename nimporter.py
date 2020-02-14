@@ -27,7 +27,7 @@ TODO:
     [ ] nimble build
         [ ] Libs are installed as dependencies
         [ ] Bins must be named exactly the same as package
-    [ ] nimble install --accept
+    [x] nimble install --accept
 [ ] Search for folders with .nimble treat them as one single extension. This is
     the only supported way for nim modules to import each other within a Python
     project. All other Nim files are treated as single extensions.
@@ -132,10 +132,10 @@ class NimCompiler:
         return out, errors, warnings, hints
 
     @classmethod
-    def compile_extension(cls, module_path):
+    def compile_extension(cls, module_path, module_name_override=None):
         "Compile Nim to C and return Extension pointing to the C source files."
 
-        module_name = module_path.stem
+        module_name = module_name_override or module_path.stem
         build_dir = Path(tempfile.mktemp())
         nim_args = (
             'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
@@ -160,31 +160,16 @@ class NimCompiler:
 
     @classmethod
     def compile_library(cls, library_path):
-        ""
-        module_name = library_path.resolve().name
-        module_path = library_path / 'main.nim'
-        print(module_path, 123123123)
-        build_dir = Path(tempfile.mktemp())
-        nim_args = (
-            'nimble cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-            '-d:release'.split() +
-            [f'--nimcache:{build_dir}', f'{module_path}']
-        )
+        """
+        If there is package.nim, it's definitely a library (nimble install).
+        If there is a main.nim, it's definitely a DLL (nimble cc).
 
-        output, errors, warnings, hints = cls.__compile(
-            nim_args, scan_file_handle=cls.STDOUT
-        )
+        Extensions MUST have a Nim file named "main.nim" at the project root.
 
-        for warn in warnings:
-            print(warn)
-
-        # 1. Compile once and return
-        # 2. If error, Install as Library
-        # 3. If error, compile again and raise NimCompilerException with trace
-
-        if errors:
-            print(1, 'compile errors')
-
+        This method has the added bonus of installing any Nimble dependencies.
+        """
+        # Install global library dependency
+        if (library_path / f'{library_path.name}.nim').exists():
             cwd = Path().cwd()
             os.chdir(library_path)
             lib_args = 'nimble install --accept'.split()
@@ -193,28 +178,24 @@ class NimCompiler:
                 lib_args, scan_file_handle=cls.STDOUT
             )
 
+            for warn in warnings: print(warn)
+
+            # 3. At this point, it's an error with the code itself
             if errors:
-                print(2, 'library errors')
-                
                 os.chdir(cwd)
-                
                 output, errors, warnings, hints = cls.__compile(
                     nim_args, scan_file_handle=cls.STDOUT
                 )
 
-                if errors:
-                    print(3, 'compile errors again')
-                    raise Exception(errors[0].split('Error:')[1].strip())
-            else:
-                return
+                raise Exception(errors[0].split('Error:')[1].strip())
 
-        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+            return
 
-        return Extension(
-            name=module_name,
-            sources=csources,
-            include_dirs=[str(build_dir)]
-        )
+        # Compile and return Extension
+        else:
+            module_name = library_path.resolve().name
+            module_path = library_path / 'main.nim'
+            return cls.compile_extension(module_path, module_name)
 
     @classmethod
     def pycache_dir(cls, module_path):
