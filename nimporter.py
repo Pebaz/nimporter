@@ -142,6 +142,11 @@ class NimCompiler:
 
         output, errors, warnings, hints = cls.__compile(nim_args)
 
+        for warn in warnings:
+            print(warn)
+
+        if errors: raise NimCompilerException(errors[0])
+
         csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
         return Extension(
