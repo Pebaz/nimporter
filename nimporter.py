@@ -137,6 +137,11 @@ class NimCompiler:
 
         csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
+        # Copy over needed header(s)
+        NIMBASE = 'nimbase.h'
+        nimbase = cls.find_nim_std_lib() / NIMBASE
+        shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
+
         return Extension(
             name=module_name,
             sources=csources,
@@ -164,8 +169,9 @@ class NimCompiler:
 
         for module_name in useable_mod_names:
             module_path = library_path / (module_name + '.nim')
+            dot_nimble = library_path / (module_name + '.nimble')
 
-            if module_path.exists():
+            if module_path.exists() and dot_nimble.exists():
                 build_dir = Path(tempfile.mktemp())
 
                 nim_args = (
@@ -186,6 +192,11 @@ class NimCompiler:
 
                 csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
+                # Copy over needed header(s)
+                NIMBASE = 'nimbase.h'
+                nimbase = cls.find_nim_std_lib() / NIMBASE
+                shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
+
                 return Extension(
                     name=module_name,
                     sources=csources,
@@ -195,7 +206,7 @@ class NimCompiler:
         raise Exception(
             f'Error: {library_path} is not formatted properly. It did not '
             f'contain any of these top-level filenames: '
-            f'{[i + ".nim" for i in useable_mod_names]}'
+            f'{[i + ".nim" for i in useable_mod_names] + [dot_nimble.name]}'
         )
 
     @classmethod

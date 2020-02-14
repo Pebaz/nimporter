@@ -9,6 +9,7 @@ Process is as follows:
 
 import pathlib, subprocess, shutil
 from setuptools import Extension
+from nimporter import NimCompiler
 
 def find_nim_std_lib():
     nimexe = pathlib.Path(shutil.which('nim'))
@@ -29,19 +30,17 @@ process = subprocess.run(
 out, err = process.stdout, process.stderr
 out = out.decode() if out else ''
 err = err.decode() if err else ''
+output = out + err
 warnings = [
     line
-    for line in err.splitlines()
+    for line in output.splitlines()
     if 'Warning:' in line
 ]
 hints = [
     line
-    for line in err.splitlines()
+    for line in output.splitlines()
     if 'Hint:' in line
 ]
-
-print(out)
-print(err)
 
 print(hints)
 print(warnings)
@@ -98,13 +97,13 @@ def __find_extensions(path, exclude_dirs=[]):
     return nim_exts
 
 def build_nim_extension(path):
-    if extension.is_dir():  # It is known that this dir contains .nimble
-        "`nimble build` should build if it is an extension."
-        "if it fails, perhaps it is a library :D"
-        "run `nimble install`. If that fails, there is a compilation error"
-
-    else:  # This is for sure a Nim extension file
-        pass
+    # It is known that this dir contains .nimble
+    if extension.is_dir():
+        return NimCompiler.compile_extension_library(path)
+        
+    # This is for sure a Nim extension file
+    else:
+        return NimCompiler.compile_extension_module(path)
 
 def build_nim_extensions(exclude_dirs=[]):
     """
@@ -113,7 +112,8 @@ def build_nim_extensions(exclude_dirs=[]):
     extensions = []
 
     for extension in __find_extensions(pathlib.Path(), exclude_dirs):
-        extensions.append(build_nim_extension(extension))
+        ext = build_nim_extension(extension)
+        if ext: extensions.append(ext)
 
     return dict(ext_modules=extensions)
 
