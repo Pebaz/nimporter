@@ -25,6 +25,10 @@ TODO:
 [ ] Create compile_module() method using compile() with different arguments.
 [ ] Create compile_library() method using compile() with different arguments.
     [ ] nimble install --accept
+[ ] Allow fine-grained control over compiler switches. This can be configured by
+    placing a `module-name.cfg` right next to the `.nimble` file. Single modules
+    do not have the option of configuring compiler switches.
+[ ] Add API to programatically import Nim file with exact compilation switches.
 '''
 
 
