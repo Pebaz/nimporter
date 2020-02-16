@@ -19,6 +19,7 @@ IGNORE_CACHE = False
 '''
 TODO:
 
+[ ] Ensure module and library extensions are properly namespaced.
 [ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
 [x] Create one single compile() method for Nimporter.
 [x] Create compile_extension() method using compile() with different arguments.
@@ -116,11 +117,21 @@ class NimCompiler:
 
         return out, errors, warnings, hints
 
+    @staticmethod
+    def get_import_prefix(module_path, root):
+        "Returns tuple of packages containing the given module."
+        root_path = root.resolve()
+        full_path = module_path.resolve()
+
+        assert full_path >= root_path, 'Extension path is not within root dir.'
+
+        return full_path.parts[len(root_path.parts):]
+
     @classmethod
-    def compile_extension_module(cls, module_path, module_name_override=None):
+    def compile_extension_module(cls, module_path, root):
         """Compile Nim to C and return Extension pointing to the C source files."""
 
-        module_name = module_name_override or module_path.stem
+        module_name = module_path.stem
         build_dir = Path(tempfile.mktemp())
         nim_args = (
             'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
@@ -130,8 +141,7 @@ class NimCompiler:
 
         output, errors, warnings, hints = cls.__compile(nim_args)
 
-        for warn in warnings:
-            print(warn)
+        for warn in warnings: print(warn)
 
         if errors: raise NimCompilerException(errors[0])
 
@@ -142,14 +152,18 @@ class NimCompiler:
         nimbase = cls.find_nim_std_lib() / NIMBASE
         shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
 
+        # Coerce proper import path using root path
+        import_prefix = cls.get_import_prefix(module_path.parent, root)
+        import_path = '.'.join(import_prefix + (module_name,))
+
         return Extension(
-            name=module_name,
+            name=import_path,
             sources=csources,
             include_dirs=[str(build_dir)]
         )
 
     @classmethod
-    def compile_extension_library(cls, library_path):
+    def compile_extension_library(cls, library_path, root):
         """
         Compiles and returns an Extension and installs dependencies in .nimble.
 
@@ -185,8 +199,7 @@ class NimCompiler:
                 output, errors, warnings, hints = cls.__compile(nim_args)
                 os.chdir(cwd)
 
-                for warn in warnings:
-                    print(warn)
+                for warn in warnings: print(warn)
 
                 if errors: raise NimCompilerException(errors[0])
 
@@ -197,9 +210,12 @@ class NimCompiler:
                 nimbase = cls.find_nim_std_lib() / NIMBASE
                 shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
 
+                # Coerce proper import path using root path
+                import_prefix = cls.get_import_prefix(library_path.parent, root)
+                import_path = '.'.join(import_prefix + (module_name,))
+
                 return Extension(
-                    NOTE MAKE SURE TO CHANGE THIS TO NOT BE 'MYPACKAGE'
-                    name='mypackage.' + module_name,
+                    name=import_path,
                     sources=csources,
                     include_dirs=[str(build_dir)]
                 )
@@ -229,7 +245,9 @@ class NimCompiler:
 
             elif item.is_dir():
                 "Treat item as directory"
-                nim_exts.extend(cls.__find_extensions(item, exclude_dirs=exclude_dirs))
+                nim_exts.extend(
+                    cls.__find_extensions(item, exclude_dirs=exclude_dirs)
+                )
 
             elif item.suffix == '.nim':
                 "Treat item as a Nim Extension."
@@ -238,14 +256,14 @@ class NimCompiler:
         return nim_exts
 
     @classmethod
-    def build_nim_extension(cls, path):
+    def build_nim_extension(cls, path, root):
         # It is known that this dir contains .nimble
         if path.is_dir():
-            return cls.compile_extension_library(path)
+            return cls.compile_extension_library(path, root)
             
         # This is for sure a Nim extension file
         else:
-            return cls.compile_extension_module(path)
+            return cls.compile_extension_module(path, root)
 
     @classmethod
     def build_nim_extensions(cls, exclude_dirs=[]):
@@ -261,9 +279,10 @@ class NimCompiler:
             "ext_modules" keyword argument.
         """
         extensions = []
+        root = Path()
 
-        for extension in cls.__find_extensions(Path(), exclude_dirs):
-            ext = cls.build_nim_extension(extension)
+        for extension in cls.__find_extensions(root, exclude_dirs):
+            ext = cls.build_nim_extension(extension, root)
             if ext: extensions.append(ext)
 
         return extensions
@@ -507,6 +526,7 @@ class Nimporter:
         Import a Nim module after compiling it using exact command line given in
         the cli_args variable.
         """
+
 
 def build_nim_extensions():
     """
