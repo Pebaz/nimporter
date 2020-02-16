@@ -454,11 +454,17 @@ class Nimporter:
 
         for search_path in search_paths:
             # NOTE(pebaz): Found an importable/compileable module
-            if any((search_path / package).glob(module_file)):
+            spath = search_path / package
+
+            print(search_path)
+
+            if any(spath.glob(module_file)) and not spath.glob(module_file).is_dir():
                 module_path = search_path / module_file
 
                 if not module_path.exists():
                     continue
+
+                print('!', module_path)
 
                 should_compile = any([
                     IGNORE_CACHE,
