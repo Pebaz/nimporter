@@ -94,8 +94,18 @@ class NimCompiler:
     
     Attributes:
         EXT(str): the extension to use for the importable build artifact.
+        NIM_CLI_ARGS(list): compiler switches common to all builds.
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
+    NIM_CLI_ARGS = [
+        '--opt:speed',
+        '--parallelBuild:0',
+        '--gc:markAndSweep',
+        '--threads:on',
+        '--app:lib',
+        '-d:release',
+        '-d:ssl'
+    ]
 
     @classmethod
     def invoke_compiler(cls, nim_args: list):
@@ -133,9 +143,10 @@ class NimCompiler:
 
         module_name = module_path.stem
         build_dir = Path(tempfile.mktemp())
+
+        exe = 'nim cc -c'.split()
         nim_args = (
-            'nim cc -c'.split() +
-            '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
+            exe + cls.NIM_CLI_ARGS +
             [f'--nimcache:{build_dir}', f'{module_path}']
         )
 
@@ -188,9 +199,9 @@ class NimCompiler:
             if module_path.exists() and dot_nimble.exists():
                 build_dir = Path(tempfile.mktemp())
 
+                exe = 'nimble cc -c'.split()
                 nim_args = (
-                    'nimble cc -c'.split() +
-                    '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
+                    exe + cls.NIM_CLI_ARGS +
                     [f'--nimcache:{build_dir}', f'{module_path}']
                 )
 
@@ -298,9 +309,9 @@ class NimCompiler:
 
         build_artifact = Nimporter.build_artifact(module_path)
 
+        exe = 'nim c'.split()
         nim_args = (
-            'nim c'.split() +
-            '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
+            exe + cls.NIM_CLI_ARGS +
             [f'--out:{build_artifact}', f'{module_path}']
         )
 
