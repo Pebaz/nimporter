@@ -20,7 +20,7 @@ IGNORE_CACHE = False
 TODO:
 
 [x] Ensure module and library extensions are properly namespaced.
-[ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
+[x] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
 [x] Create one single compile() method for Nimporter.
 [x] Create compile_extension() method using compile() with different arguments.
 [x] Create compile_module() method using compile() with different arguments.
@@ -454,7 +454,7 @@ class Nimporter:
 
         for search_path in search_paths:
             # NOTE(pebaz): Found an importable/compileable module
-            if (search_path / package).glob(module_file):
+            if any((search_path / package).glob(module_file)):
                 module_path = search_path / module_file
 
                 if not module_path.exists():
@@ -477,6 +477,20 @@ class Nimporter:
                     fullname,
                     location=str(build_artifact.absolute())
                 )
+
+            # TODO(pebaz): Check each search path for a library (not module)
+            else:
+                spath = search_path / package
+                useable_mod_names = 'main', module
+                for module_name in useable_mod_names:
+                    module_file = module_name + '.nim'
+                    library_exists = any(spath.glob(module))
+                    module_exists = any((spath / module).glob(module_file))
+                    nimble_exists = any((spath / module).glob('*.nimble'))
+                    
+                    # TODO(pebaz): FOUND A LIBRARY! :D
+                    if library_exists and module_exists and nimble_exists:
+                        print('FOUND A LIBRARY:', spath / module / module_file)
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
