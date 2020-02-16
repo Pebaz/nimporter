@@ -27,6 +27,8 @@ TODO:
 [x] Create compile_library() method using compile() with different arguments.
 [ ] Modify the import system to be able to install dependencies from .nimble and
     make it so that Folders themselves can be imported.
+[ ] Don't support multiple library module names: (main.nim/lib.nim)
+
 
 [ ] Allow fine-grained control over compiler switches. This can be configured by
     placing a `module-name.cfg` right next to the `.nimble` file. Single modules
@@ -456,15 +458,10 @@ class Nimporter:
             # NOTE(pebaz): Found an importable/compileable module
             spath = search_path / package
 
-            print(search_path)
-
-            if any(spath.glob(module_file)) and not spath.glob(module_file).is_dir():
+            if any(spath.glob(module_file)):
                 module_path = search_path / module_file
 
-                if not module_path.exists():
-                    continue
-
-                print('!', module_path)
+                if not module_path.exists(): continue
 
                 should_compile = any([
                     IGNORE_CACHE,
@@ -484,19 +481,36 @@ class Nimporter:
                     location=str(build_artifact.absolute())
                 )
 
-            # TODO(pebaz): Check each search path for a library (not module)
             else:
-                spath = search_path / package
-                useable_mod_names = 'main', module
-                for module_name in useable_mod_names:
-                    module_file = module_name + '.nim'
-                    library_exists = any(spath.glob(module))
-                    module_exists = any((spath / module).glob(module_file))
-                    nimble_exists = any((spath / module).glob('*.nimble'))
-                    
-                    # TODO(pebaz): FOUND A LIBRARY! :D
-                    if library_exists and module_exists and nimble_exists:
-                        print('FOUND A LIBRARY:', spath / module / module_file)
+                module_file = module + '.nim'
+
+                if not any(spath.glob(module)): continue
+
+                module_path = list((spath / module).glob(module_file))
+                nimble_path = list((spath / module).glob('*.nimble'))
+                
+                # TODO(pebaz): FOUND A LIBRARY! :D
+                if module_path and nimble_path:
+                    (module_path,) = module_path
+                    (nimble_path,) = nimble_path
+
+                    should_compile = any([
+                        IGNORE_CACHE,
+                        cls.hash_changed(module_path),
+                        not cls.is_cache(module_path),
+                        not cls.is_built(module_path)
+                    ])
+
+                    build_artifact = cls.build_artifact(module_path)
+
+                    if should_compile:
+                        NimCompiler.try_compile(module_path, build_artifact)
+                        cls.update_hash(module_path)
+                        
+                    return util.spec_from_file_location(
+                        fullname,
+                        location=str(build_artifact.absolute())
+                    )
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
@@ -551,7 +565,8 @@ By putting the Nimpoter at the end of the list of module loaders, it ensures
 that Nim code files are imported only if there is not a Python module of the
 same name somewhere on the path.
 '''
-sys.meta_path.append(Nimporter())
+#sys.meta_path.append(Nimporter())
+sys.meta_path.insert(0, Nimporter())
 
 # Ensure that Nim files won't be passed up because of other Importers.
 sys.path_importer_cache.clear()
