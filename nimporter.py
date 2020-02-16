@@ -19,7 +19,7 @@ IGNORE_CACHE = False
 '''
 TODO:
 
-[ ] Ensure module and library extensions are properly namespaced.
+[x] Ensure module and library extensions are properly namespaced.
 [ ] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
 [x] Create one single compile() method for Nimporter.
 [x] Create compile_extension() method using compile() with different arguments.
@@ -98,7 +98,7 @@ class NimCompiler:
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
 
     @classmethod
-    def __compile(cls, nim_args: list):
+    def invoke_compiler(cls, nim_args: list):
         """
         Returns a tuple containing any errors, warnings, or hints from the
         compilation process.
@@ -134,12 +134,12 @@ class NimCompiler:
         module_name = module_path.stem
         build_dir = Path(tempfile.mktemp())
         nim_args = (
-            'nim cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-            '-d:release'.split() +
+            'nim cc -c'.split() +
+            '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
             [f'--nimcache:{build_dir}', f'{module_path}']
         )
 
-        output, errors, warnings, hints = cls.__compile(nim_args)
+        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
 
         for warn in warnings: print(warn)
 
@@ -189,14 +189,14 @@ class NimCompiler:
                 build_dir = Path(tempfile.mktemp())
 
                 nim_args = (
-                    'nimble cc -c --opt:speed --gc:markAndSweep --app:lib'.split() +
-                    '-d:release'.split() +
+                    'nimble cc -c'.split() +
+                    '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
                     [f'--nimcache:{build_dir}', f'{module_path}']
                 )
 
                 cwd = Path().cwd()
                 os.chdir(library_path)
-                output, errors, warnings, hints = cls.__compile(nim_args)
+                output, errors, warnings, hints = cls.invoke_compiler(nim_args)
                 os.chdir(cwd)
 
                 for warn in warnings: print(warn)
@@ -288,6 +288,52 @@ class NimCompiler:
         return extensions
 
     @classmethod
+    def try_compile(cls, module_path, build_artifact):
+        """
+        Compiles a given Nim module and returns the path to the built artifact.
+        Raises an exception if compilation fails for any reason.
+        """
+        if not module_path.exists():
+            raise Exception(f'{module_path.absolute()} does not exist.')
+
+        build_artifact = Nimporter.build_artifact(module_path)
+
+        nim_args = (
+            'nim c'.split() +
+            '--opt:speed --parallelBuild:0 --gc:markAndSweep --threads:on --app:lib -d:release -d:ssl'.split() +
+            [f'--out:{build_artifact}', f'{module_path}']
+        )
+
+        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        for warn in warnings: print(warn)
+
+        if errors: raise NimCompilerException(errors[0])
+
+        return build_artifact
+
+    @classmethod
+    def find_nim_std_lib(cls):
+        nimexe = Path(shutil.which('nim'))
+        if not nimexe:
+            return None
+        result = nimexe.parent / '../lib'
+        if not (result / 'system.nim').exists():
+            result = nimexe.resolve().parent / '../lib'
+            if not (result / 'system.nim').exists():
+                return None
+        return result.resolve()
+
+
+class Nimporter:
+    """
+    Python module finder purpose-built to find Nim modules on the Python PATH,
+    compile them, hide them within the __pycache__ directory with other compiled
+    Python files, and then return it as a full Python module.
+    This Nimporter can only import Nim modules with procedures exposed via the
+    [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
+    """
+    @classmethod
     def pycache_dir(cls, module_path):
         """Return the __pycache__ directory as a Path."""
         return module_path.parent / '__pycache__'
@@ -362,71 +408,10 @@ class NimCompiler:
         Returns the Path to the built .PYD or .SO. Does not imply it has already
         been built.
         """
-        return cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
-
-    @classmethod
-    def compile(cls, module_path, release_mode=False):
-        """
-        Compiles a given Nim module and returns the path to the built artifact.
-        Raises an exception if compilation fails for any reason.
-        """
-        if not module_path.exists():
-            raise Exception(f'{module_path.absolute()} does not exist.')
-
-        build_artifact = cls.build_artifact(module_path)
-
-        nimc_args = (
-            # -d:ssl
-            'nim c -w:off --opt:speed --threads:on --tlsEmulation:off --app:lib'.split()
-            + '--hints:off --parallelBuild:0 --opt:speed'.split()
-            + (['-d:release'] if release_mode else [])
-            + [f'--out:{build_artifact}', f'{module_path}']
+        return (
+            cls.pycache_dir(module_path) / (module_path.stem + NimCompiler.EXT)
         )
-        
-        process = subprocess.run(
-            nimc_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        out, err = process.stdout, process.stderr
-        out = out.decode() if out else ''
-        err = err.decode() if err else ''
 
-        # Handle any compiler errors
-        NIM_COMPILE_ERROR = ' Error: '
-        if NIM_COMPILE_ERROR in err:
-            raise NimCompilerException(err)
-        elif err:
-            # NOTE(pebaz): On Windows, Nim spits out the MSVC banner to stderr,
-            # causing `err` to not be None. If it built, ignore the error.
-            if not build_artifact.exists():
-                raise Exception(err)
-        elif NIM_COMPILE_ERROR in out:
-            raise NimCompilerException(out)
-        
-        cls.update_hash(module_path)
-
-        return build_artifact
-
-    @classmethod
-    def find_nim_std_lib(cls):
-        nimexe = Path(shutil.which('nim'))
-        if not nimexe:
-            return None
-        result = nimexe.parent / '../lib'
-        if not (result / 'system.nim').exists():
-            result = nimexe.resolve().parent / '../lib'
-            if not (result / 'system.nim').exists():
-                return None
-        return result.resolve()
-
-
-class Nimporter:
-    """
-    Python module finder purpose-built to find Nim modules on the Python PATH,
-    compile them, hide them within the __pycache__ directory with other compiled
-    Python files, and then return it as a full Python module.
-    This Nimporter can only import Nim modules with procedures exposed via the
-    [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
-    """
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         """
@@ -466,15 +451,16 @@ class Nimporter:
 
                 should_compile = any([
                     IGNORE_CACHE,
-                    NimCompiler.hash_changed(module_path),
-                    not NimCompiler.is_cache(module_path),
-                    not NimCompiler.is_built(module_path)
+                    cls.hash_changed(module_path),
+                    not cls.is_cache(module_path),
+                    not cls.is_built(module_path)
                 ])
 
+                build_artifact = cls.build_artifact(module_path)
+
                 if should_compile:
-                    build_artifact = NimCompiler.compile(module_path)
-                else:
-                    build_artifact = NimCompiler.build_artifact(module_path)
+                    NimCompiler.try_compile(module_path, build_artifact)
+                    cls.update_hash(module_path)
                     
                 return util.spec_from_file_location(
                     fullname,
@@ -508,7 +494,8 @@ class Nimporter:
         # TODO(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
-            NimCompiler.compile(nim_module)
+            build_artifact = cls.build_artifact(module_path)
+            NimCompiler.try_compile(nim_module, build_artifact)
             sys.path_importer_cache.clear()
             importlib.invalidate_caches()
             if spec.name in sys.modules:
@@ -526,18 +513,6 @@ class Nimporter:
         Import a Nim module after compiling it using exact command line given in
         the cli_args variable.
         """
-
-
-def build_nim_extensions():
-    """
-    Compiles Nim files to C and creates Extensions from them for distribution.
-    """
-
-
-
-    return dict(
-        ext_modules=[]
-    )
 
 
 '''
