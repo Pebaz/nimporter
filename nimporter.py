@@ -324,6 +324,42 @@ class NimCompiler:
         if errors: raise NimCompilerException(errors[0])
 
         return build_artifact
+    
+    @classmethod
+    def try_compile_library(cls, library_path, build_artifact):
+        """
+        Compiles a given Nim library and returns the path to the built artifact.
+        Raises an exception if compilation fails for any reason.
+        """
+        library_path = library_path.resolve()
+        module_name = library_path.name
+        module_path = library_path / (module_name + '.nim')
+        dot_nimble = library_path / (module_name + '.nimble')
+
+        if not module_path.exists() or not dot_nimble.exists():
+            raise Exception(
+                f"{library_path} doesn't contain a .nimble or {module_name}.nim"
+            )
+
+        build_artifact = Nimporter.build_artifact(module_path)
+
+        exe = 'nimble c'.split()
+        nim_args = (
+            exe + cls.NIM_CLI_ARGS +
+            [f'--out:{build_artifact}', f'{module_path}']
+        )
+
+        cwd = Path().cwd()
+        os.chdir(library_path)
+        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+        os.chdir(cwd)
+
+        for warn in warnings: print(warn)
+
+        if errors: raise NimCompilerException(errors[0])
+
+        return build_artifact
+
 
     @classmethod
     def find_nim_std_lib(cls):
@@ -504,7 +540,10 @@ class Nimporter:
                     build_artifact = cls.build_artifact(module_path)
 
                     if should_compile:
-                        NimCompiler.try_compile(module_path, build_artifact)
+                        NimCompiler.try_compile_library(
+                            module_path.parent, build_artifact
+                        )
+
                         cls.update_hash(module_path)
                         
                     return util.spec_from_file_location(
