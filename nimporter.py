@@ -483,11 +483,11 @@ class Nimporter:
         module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
         package = '/'.join(parts)
-        search_paths = [
+        search_paths = {
             Path(i)
             for i in (path + sys.path + ['.'])
             if Path(i).is_dir()
-        ]
+        }
 
         for search_path in search_paths:
             # NOTE(pebaz): Found an importable/compileable module
@@ -609,11 +609,11 @@ class NimLibImporter:
         #module_file = f'{module}.nim'
         path = list(path) if path else []  # Ensure that path is always a list
         package = '/'.join(parts)
-        search_paths = [
+        search_paths = {
             Path(i)
             for i in (path + sys.path + ['.'])
             if Path(i).is_dir()
-        ]
+        }
 
         for search_path in search_paths:
             spath = search_path / package
@@ -622,8 +622,32 @@ class NimLibImporter:
                 module = parts[-1] + '.nim'
 
                 # NOTE(pebaz): Found a Nim extension library
-                if any(spath.glob('*.nimble')) and any(spath.glob(module)):
-                    print(spath / module)
+                if not any(spath.glob('*.nimble')) and not any(spath.glob(module)):
+                    continue
+
+                module_path = spath / module
+                print(module_path)
+
+                should_compile = any([
+                    IGNORE_CACHE,
+                    Nimporter.hash_changed(module_path),
+                    not Nimporter.is_cache(module_path),
+                    not Nimporter.is_built(module_path)
+                ])
+
+                build_artifact = Nimporter.build_artifact(module_path)
+
+                if should_compile:
+                    NimCompiler.try_compile_library(
+                        module_path.parent, build_artifact
+                    )
+
+                    Nimporter.update_hash(module_path)
+                    
+                return util.spec_from_file_location(
+                    fullname,
+                    location=str(build_artifact.absolute())
+                )
 
 
 '''
