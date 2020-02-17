@@ -25,7 +25,7 @@ TODO:
 [x] Create compile_extension() method using compile() with different arguments.
 [x] Create compile_module() method using compile() with different arguments.
 [x] Create compile_library() method using compile() with different arguments.
-[ ] Modify the import system to be able to install dependencies from .nimble and
+[x] Modify the import system to be able to install dependencies from .nimble and
     make it so that Folders themselves can be imported.
 [ ] Don't support multiple library module names: (main.nim/lib.nim)
 
@@ -192,46 +192,44 @@ class NimCompiler:
         """
 
         library_path = library_path.resolve()
-        useable_mod_names = 'main', library_path.name
+        module_name = library_path.name
+        module_path = library_path / (module_name + '.nim')
+        dot_nimble = library_path / (module_name + '.nimble')
 
-        for module_name in useable_mod_names:
-            module_path = library_path / (module_name + '.nim')
-            dot_nimble = library_path / (module_name + '.nimble')
+        if module_path.exists() and dot_nimble.exists():
+            build_dir = Path(tempfile.mktemp())
 
-            if module_path.exists() and dot_nimble.exists():
-                build_dir = Path(tempfile.mktemp())
+            exe = 'nimble cc -c'.split()
+            nim_args = (
+                exe + cls.NIM_CLI_ARGS +
+                [f'--nimcache:{build_dir}', f'{module_path}']
+            )
 
-                exe = 'nimble cc -c'.split()
-                nim_args = (
-                    exe + cls.NIM_CLI_ARGS +
-                    [f'--nimcache:{build_dir}', f'{module_path}']
-                )
+            cwd = Path().cwd()
+            os.chdir(library_path)
+            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+            os.chdir(cwd)
 
-                cwd = Path().cwd()
-                os.chdir(library_path)
-                output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-                os.chdir(cwd)
+            for warn in warnings: print(warn)
 
-                for warn in warnings: print(warn)
+            if errors: raise NimCompilerException(errors[0])
 
-                if errors: raise NimCompilerException(errors[0])
+            csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
-                csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+            # Copy over needed header(s)
+            NIMBASE = 'nimbase.h'
+            nimbase = cls.find_nim_std_lib() / NIMBASE
+            shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
 
-                # Copy over needed header(s)
-                NIMBASE = 'nimbase.h'
-                nimbase = cls.find_nim_std_lib() / NIMBASE
-                shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
+            # Coerce proper import path using root path
+            import_prefix = cls.get_import_prefix(library_path.parent, root)
+            import_path = '.'.join(import_prefix + (module_name,))
 
-                # Coerce proper import path using root path
-                import_prefix = cls.get_import_prefix(library_path.parent, root)
-                import_path = '.'.join(import_prefix + (module_name,))
-
-                return Extension(
-                    name=import_path,
-                    sources=csources,
-                    include_dirs=[str(build_dir)]
-                )
+            return Extension(
+                name=import_path,
+                sources=csources,
+                include_dirs=[str(build_dir)]
+            )
 
         raise Exception(
             f'Error: {library_path} is not formatted properly. It did not '
@@ -629,7 +627,6 @@ class NimLibImporter:
                     continue
 
                 module_path = spath / module
-                print(module_path)
 
                 should_compile = any([
                     IGNORE_CACHE,
