@@ -27,7 +27,8 @@ TODO:
 [x] Create compile_library() method using compile() with different arguments.
 [x] Modify the import system to be able to install dependencies from .nimble and
     make it so that Folders themselves can be imported.
-[ ] Don't support multiple library module names: (main.nim/lib.nim)
+[x] Don't support multiple library module names: (main.nim/lib.nim)
+[ ] Cleanup and consolidate code
 
 
 [ ] Allow fine-grained control over compiler switches. This can be configured by
