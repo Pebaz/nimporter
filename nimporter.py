@@ -576,7 +576,7 @@ class Nimporter:
         """
         spec = cls.find_spec(fullname, path)
 
-        # TODO(pebaz): Compile the module anyway if ignore_cache is set.
+        # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
             build_artifact = cls.build_artifact(module_path)
