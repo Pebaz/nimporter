@@ -360,7 +360,6 @@ class NimCompiler:
 
         return build_artifact
 
-
     @classmethod
     def find_nim_std_lib(cls):
         nimexe = Path(shutil.which('nim'))
@@ -604,6 +603,27 @@ class NimLibImporter:
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         print('!', fullname, path, target)
+
+        parts = fullname.split('.')
+        #module = parts.pop()
+        #module_file = f'{module}.nim'
+        path = list(path) if path else []  # Ensure that path is always a list
+        package = '/'.join(parts)
+        search_paths = [
+            Path(i)
+            for i in (path + sys.path + ['.'])
+            if Path(i).is_dir()
+        ]
+
+        for search_path in search_paths:
+            spath = search_path / package
+
+            if spath.exists():
+                module = parts[-1] + '.nim'
+
+                # NOTE(pebaz): Found a Nim extension library
+                if any(spath.glob('*.nimble')) and any(spath.glob(module)):
+                    print(spath / module)
 
 
 '''
