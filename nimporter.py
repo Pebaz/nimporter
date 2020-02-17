@@ -478,6 +478,8 @@ class Nimporter:
             A useable spec object that will be passed to Python during import to
             actually create a Python Module object from the spec.
         """
+        print('⭐️', fullname, path, target)
+
         parts = fullname.split('.')
         module = parts.pop()
         module_file = f'{module}.nim'
@@ -491,12 +493,21 @@ class Nimporter:
 
         for search_path in search_paths:
             # NOTE(pebaz): Found an importable/compileable module
-            spath = search_path / package
+            spath = (search_path / package).resolve()
 
-            if any(spath.glob(module_file)):
-                module_path = search_path / module_file
+            print(spath)
+            module_path = list(spath.glob(module_file))
+            print(module_path)
+
+            if module_path:
+                print(0, 'here', module_path, *module_path)
+                #module_path = search_path / module_file
+                (module_path,) = module_path
+                print(1, module_path)
 
                 if not module_path.exists(): continue
+
+                print(2, module_path)
 
                 should_compile = any([
                     IGNORE_CACHE,
@@ -506,6 +517,8 @@ class Nimporter:
                 ])
 
                 build_artifact = cls.build_artifact(module_path)
+
+                print(1, 2, 3, 4, 5)
 
                 if should_compile:
                     NimCompiler.try_compile(module_path, build_artifact)
@@ -519,36 +532,36 @@ class Nimporter:
             else:
                 module_file = module + '.nim'
 
-                if not any(spath.glob(module)): continue
+                # if not any(spath.glob(module)): continue
 
-                module_path = list((spath / module).glob(module_file))
-                nimble_path = list((spath / module).glob('*.nimble'))
+                # module_path = list((spath / module).glob(module_file))
+                # nimble_path = list((spath / module).glob('*.nimble'))
                 
-                # TODO(pebaz): FOUND A LIBRARY! :D
-                if module_path and nimble_path:
-                    (module_path,) = module_path
-                    (nimble_path,) = nimble_path
+                # # TODO(pebaz): FOUND A LIBRARY! :D
+                # if module_path and nimble_path:
+                #     (module_path,) = module_path
+                #     (nimble_path,) = nimble_path
 
-                    should_compile = any([
-                        IGNORE_CACHE,
-                        cls.hash_changed(module_path),
-                        not cls.is_cache(module_path),
-                        not cls.is_built(module_path)
-                    ])
+                #     should_compile = any([
+                #         IGNORE_CACHE,
+                #         cls.hash_changed(module_path),
+                #         not cls.is_cache(module_path),
+                #         not cls.is_built(module_path)
+                #     ])
 
-                    build_artifact = cls.build_artifact(module_path)
+                #     build_artifact = cls.build_artifact(module_path)
 
-                    if should_compile:
-                        NimCompiler.try_compile_library(
-                            module_path.parent, build_artifact
-                        )
+                #     if should_compile:
+                #         NimCompiler.try_compile_library(
+                #             module_path.parent, build_artifact
+                #         )
 
-                        cls.update_hash(module_path)
+                #         cls.update_hash(module_path)
                         
-                    return util.spec_from_file_location(
-                        fullname,
-                        location=str(build_artifact.absolute())
-                    )
+                #     return util.spec_from_file_location(
+                #         fullname,
+                #         location=str(build_artifact.absolute())
+                #     )
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
