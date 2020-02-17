@@ -494,20 +494,12 @@ class Nimporter:
         for search_path in search_paths:
             # NOTE(pebaz): Found an importable/compileable module
             spath = (search_path / package).resolve()
-
-            print(spath)
             module_path = list(spath.glob(module_file))
-            print(module_path)
 
             if module_path:
-                print(0, 'here', module_path, *module_path)
-                #module_path = search_path / module_file
                 (module_path,) = module_path
-                print(1, module_path)
 
                 if not module_path.exists(): continue
-
-                print(2, module_path)
 
                 should_compile = any([
                     IGNORE_CACHE,
@@ -517,8 +509,6 @@ class Nimporter:
                 ])
 
                 build_artifact = cls.build_artifact(module_path)
-
-                print(1, 2, 3, 4, 5)
 
                 if should_compile:
                     NimCompiler.try_compile(module_path, build_artifact)
