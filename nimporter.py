@@ -5,6 +5,7 @@ and generate exceptions where appropriate.
 
 import sys, os, subprocess, importlib, hashlib, tempfile, shutil
 from pathlib import Path
+from contextlib import contextmanager
 from setuptools import Extension
 
 # NOTE(pebaz): https://stackoverflow.com/questions/39660934/error-when-using-importlib-util-to-check-for-library/39661116
@@ -14,6 +15,17 @@ from importlib import util
 # When True, will always trigger a rebuild of any Nim modules
 # Can be set by the importer of this module
 IGNORE_CACHE = False
+
+
+@contextmanager
+def cd(path):
+    "Convenience function to step in and out of a directory temporarily."
+    cwd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield path
+    finally:
+        os.chdir(cwd)
 
 
 class NimporterException(Exception):
@@ -80,10 +92,13 @@ class NimInvokeException(NimporterException):
 
     def __str__(self):
         cmd = self.cmd_line[0]
-        message = f'Failed to run command: {cmd}\n'
-        message += f'Current Directory:\n    {self.cwd}\n'
-        message += f'Error Message:\n    "{self.err_msg.strip()}"\n'
-        message += f'Command Line Arguments:\n    {" ".join(self.cmd_line)}'
+        message = f'Failed to run command: {cmd}\n\n'
+        message += f'Current Directory:\n    {self.cwd}\n\n'
+        message += f'Error Message:\n    "{self.err_msg.strip()}"\n\n'
+        #message += f'Command Line Arguments:\n    {" ".join(self.cmd_line)}'
+        message += f'Command Line Arguments:\n    {cmd}\n'
+        for arg in self.cmd_line[1:]:
+            message += f'        {arg}\n'
         return message
 
 
@@ -205,14 +220,12 @@ class NimCompiler:
                 ['--accept', f'--nimcache:{build_dir}', f'{module_path}']
             )
 
-            cwd = Path().cwd()
-            os.chdir(library_path)
-            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-            os.chdir(cwd)
+            with cd(library_path) as tmp_cwd:
+                output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+            if errors: raise NimInvokeException(tmp_cwd, nim_args, errors[0])
 
             for warn in warnings: print(warn)
-
-            if errors: raise NimCompileException(errors[0])
 
             csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
@@ -335,7 +348,7 @@ class NimCompiler:
         dot_nimble = library_path / (module_name + '.nimble')
 
         if not module_path.exists() or not dot_nimble.exists():
-            raise Exception(
+            raise NimporterException(
                 f"{library_path} doesn't contain a .nimble or {module_name}.nim"
             )
 
@@ -347,14 +360,12 @@ class NimCompiler:
             ['--accept', f'--out:{build_artifact}', f'{module_path}']
         )
 
-        cwd = Path().cwd()
-        os.chdir(library_path)
-        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-        os.chdir(cwd)
+        with cd(library_path) as tmp_cwd:
+            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        if errors: raise NimInvokeException(tmp_cwd, nim_args, errors[0])
 
         for warn in warnings: print(warn)
-
-        if errors: raise NimCompileException(errors[0])
 
         return build_artifact
 
@@ -516,40 +527,6 @@ class Nimporter:
                     fullname,
                     location=str(build_artifact.absolute())
                 )
-
-            else:
-                module_file = module + '.nim'
-
-                # if not any(spath.glob(module)): continue
-
-                # module_path = list((spath / module).glob(module_file))
-                # nimble_path = list((spath / module).glob('*.nimble'))
-                
-                # # TODO(pebaz): FOUND A LIBRARY! :D
-                # if module_path and nimble_path:
-                #     (module_path,) = module_path
-                #     (nimble_path,) = nimble_path
-
-                #     should_compile = any([
-                #         IGNORE_CACHE,
-                #         cls.hash_changed(module_path),
-                #         not cls.is_cache(module_path),
-                #         not cls.is_built(module_path)
-                #     ])
-
-                #     build_artifact = cls.build_artifact(module_path)
-
-                #     if should_compile:
-                #         NimCompiler.try_compile_library(
-                #             module_path.parent, build_artifact
-                #         )
-
-                #         cls.update_hash(module_path)
-                        
-                #     return util.spec_from_file_location(
-                #         fullname,
-                #         location=str(build_artifact.absolute())
-                #     )
 
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
