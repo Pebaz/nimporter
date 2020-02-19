@@ -16,30 +16,6 @@ from importlib import util
 IGNORE_CACHE = False
 
 
-'''
-TODO:
-
-[x] Ensure module and library extensions are properly namespaced.
-[x] Move hashing/etc. methods to Nimporter class (it's the only one that needs).
-[x] Create one single compile() method for Nimporter.
-[x] Create compile_extension() method using compile() with different arguments.
-[x] Create compile_module() method using compile() with different arguments.
-[x] Create compile_library() method using compile() with different arguments.
-[x] Modify the import system to be able to install dependencies from .nimble and
-    make it so that Folders themselves can be imported.
-[x] Don't support multiple library module names: (main.nim/lib.nim)
-[ ] Cleanup and consolidate code
-
-
-[ ] Allow fine-grained control over compiler switches. This can be configured by
-    placing a `module-name.cfg` right next to the `.nimble` file. Single modules
-    do not have the option of configuring compiler switches.
-[ ] Add API to programatically import Nim file with exact compilation switches.
-    [ ] Internally calls __compile()
-'''
-
-
-
 class NimCompilerException(Exception):
     """
     Indicates that the invocation of the Nim compiler has failed.
@@ -203,7 +179,7 @@ class NimCompiler:
             exe = 'nimble cc -c'.split()
             nim_args = (
                 exe + cls.NIM_CLI_ARGS +
-                [f'--nimcache:{build_dir}', f'{module_path}']
+                ['--accept', f'--nimcache:{build_dir}', f'{module_path}']
             )
 
             cwd = Path().cwd()
@@ -345,7 +321,7 @@ class NimCompiler:
         exe = 'nimble c'.split()
         nim_args = (
             exe + cls.NIM_CLI_ARGS +
-            [f'--out:{build_artifact}', f'{module_path}']
+            ['--accept', f'--out:{build_artifact}', f'{module_path}']
         )
 
         cwd = Path().cwd()
