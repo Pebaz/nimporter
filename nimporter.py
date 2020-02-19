@@ -63,6 +63,27 @@ class NimCompilerException(Exception):
         
         return message
 
+class NimporterException(Exception):
+    "Catch-all for Nimporter exceptions"
+
+class NimInvokeException(NimporterException):
+    def __init__(self, cwd, cmd_line, err_msg, out=''):
+        self.cwd = Path(cwd).resolve()
+        self.cmd_line = cmd_line
+        self.err_msg = err_msg
+        self.out = ''
+
+    def get_output(self):
+        return self.out
+
+    def __str__(self):
+        cmd = self.cmd_line[0]
+        message = f'Failed to run command: {cmd}\n'
+        message += f'Current Directory:\n    {self.cwd}\n'
+        message += f'Error Message:\n    "{self.err_msg.strip()}"\n'
+        message += f'Command Line Arguments:\n    {" ".join(self.cmd_line)}'
+        return message
+
 
 class NimCompiler:
     """
