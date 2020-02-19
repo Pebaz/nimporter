@@ -16,25 +16,27 @@ from importlib import util
 IGNORE_CACHE = False
 
 
-class NimCompilerException(Exception):
+class NimporterException(Exception):
+    "Catch-all for Nimporter exceptions"
+
+
+class NimCompileException(NimporterException):
     """
     Indicates that the invocation of the Nim compiler has failed.
     Displays the line of code that caused the error as well as the error message
     returned from Nim as a Python Exception.
+
+    NOTE: The provided message must contain the string: 'Error:'
     """
     def __init__(self, msg):
-        try:
-            nim_module, error_msg = msg.split(' Error: ')
-            nim_module = nim_module.splitlines()[-1]
-            mod, (line_col) = nim_module.split('(')
-            self.nim_module = Path(mod)
-            line, col = line_col.split(',')
-            self.line = int(line)
-            self.col = int(col[:-1])
-            self.error_msg = error_msg
-        except Exception as e:
-            # Raise the original exception if anything went wrong during parsing
-            raise Exception(msg).with_traceback(e.__traceback__) from e
+        nim_module, error_msg = msg.split('Error:')
+        nim_module = nim_module.splitlines()[-1]
+        mod, (line_col) = nim_module.split('(')
+        self.nim_module = Path(mod)
+        line, col = line_col.split(',')
+        self.line = int(line)
+        self.col = int(col[:-1])
+        self.error_msg = error_msg
         
     def __str__(self):
         """
@@ -63,10 +65,10 @@ class NimCompilerException(Exception):
         
         return message
 
-class NimporterException(Exception):
-    "Catch-all for Nimporter exceptions"
 
 class NimInvokeException(NimporterException):
+    "Exception for when a given CLI command fails."
+
     def __init__(self, cwd, cmd_line, err_msg, out=''):
         self.cwd = Path(cwd).resolve()
         self.cmd_line = cmd_line
@@ -154,7 +156,7 @@ class NimCompiler:
 
         for warn in warnings: print(warn)
 
-        if errors: raise NimCompilerException(errors[0])
+        if errors: raise NimCompileException(errors[0])
 
         csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
@@ -210,7 +212,7 @@ class NimCompiler:
 
             for warn in warnings: print(warn)
 
-            if errors: raise NimCompilerException(errors[0])
+            if errors: raise NimCompileException(errors[0])
 
             csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
 
@@ -317,7 +319,7 @@ class NimCompiler:
 
         for warn in warnings: print(warn)
 
-        if errors: raise NimCompilerException(errors[0])
+        if errors: raise NimCompileException(errors[0])
 
         return build_artifact
     
@@ -352,7 +354,7 @@ class NimCompiler:
 
         for warn in warnings: print(warn)
 
-        if errors: raise NimCompilerException(errors[0])
+        if errors: raise NimCompileException(errors[0])
 
         return build_artifact
 

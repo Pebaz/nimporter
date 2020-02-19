@@ -1070,11 +1070,11 @@ table {
 
         </li>
         <li class="mono">
-        <span class="class_name"><a href="#nimporter.NimCompilerException">NimCompilerException</a></span>
+        <span class="class_name"><a href="#nimporter.NimCompileException">NimCompileException</a></span>
         
           
   <ul>
-    <li class="mono"><a href="#nimporter.NimCompilerException.__init__">__init__</a></li>
+    <li class="mono"><a href="#nimporter.NimCompileException.__init__">__init__</a></li>
   </ul>
 
         </li>
@@ -1169,7 +1169,7 @@ and generate exceptions where appropriate.</p>
 
 
 
-<span class="k">class</span> <span class="nc">NimCompilerException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">NimCompileException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Indicates that the invocation of the Nim compiler has failed.</span>
 <span class="sd">    Displays the line of code that caused the error as well as the error message</span>
@@ -1286,7 +1286,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
 
@@ -1344,7 +1344,7 @@ and generate exceptions where appropriate.</p>
 
                 <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
                 <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
 
@@ -1451,7 +1451,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">build_artifact</span>
     
@@ -1486,7 +1486,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">build_artifact</span>
 
@@ -1865,7 +1865,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
 
@@ -1923,7 +1923,7 @@ and generate exceptions where appropriate.</p>
 
                 <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
                 <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
 
@@ -2030,7 +2030,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">build_artifact</span>
     
@@ -2065,7 +2065,7 @@ and generate exceptions where appropriate.</p>
 
         <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">build_artifact</span>
 
@@ -2263,7 +2263,7 @@ project root as well as a file ending with ".nimble".</p>
             <span class="n">output</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">warnings</span><span class="p">,</span> <span class="n">hints</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="n">nim_args</span><span class="p">)</span>
             <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
             <span class="c1"># Copy over needed header(s)</span>
             <span class="n">NIMBASE</span> <span class="o">=</span> <span class="s1">&#39;nimbase.h&#39;</span>
@@ -2314,7 +2314,7 @@ project root as well as a file ending with ".nimble".</p>
     <span class="p">)</span>
     <span class="n">output</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">warnings</span><span class="p">,</span> <span class="n">hints</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="n">nim_args</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">csources</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">build_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s1">&#39;.c&#39;</span><span class="p">]</span>
     <span class="c1"># Copy over needed header(s)</span>
     <span class="n">NIMBASE</span> <span class="o">=</span> <span class="s1">&#39;nimbase.h&#39;</span>
@@ -2433,7 +2433,7 @@ Raises an exception if compilation fails for any reason.</p></div>
     <span class="p">)</span>
     <span class="n">output</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">warnings</span><span class="p">,</span> <span class="n">hints</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="n">nim_args</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">build_artifact</span>
 </pre></div>
 
@@ -2481,7 +2481,7 @@ Raises an exception if compilation fails for any reason.</p></div>
     <span class="n">output</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">warnings</span><span class="p">,</span> <span class="n">hints</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="n">nim_args</span><span class="p">)</span>
     <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">warn</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">warn</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompilerException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span> <span class="k">raise</span> <span class="n">NimCompileException</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">build_artifact</span>
 </pre></div>
 
@@ -2494,16 +2494,16 @@ Raises an exception if compilation fails for any reason.</p></div>
       </div>
       
       <div class="item">
-      <p id="nimporter.NimCompilerException" class="name">class <span class="ident">NimCompilerException</span></p>
+      <p id="nimporter.NimCompileException" class="name">class <span class="ident">NimCompileException</span></p>
       
   
     <div class="desc"><p>Indicates that the invocation of the Nim compiler has failed.
 Displays the line of code that caused the error as well as the error message
 returned from Nim as a Python Exception.</p></div>
   <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompilerException', this);">Show source &equiv;</a></p>
-  <div id="source-nimporter.NimCompilerException" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">NimCompilerException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompileException', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompileException" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">NimCompileException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Indicates that the invocation of the Nim compiler has failed.</span>
 <span class="sd">    Displays the line of code that caused the error as well as the error message</span>
@@ -2558,14 +2558,14 @@ returned from Nim as a Python Exception.</p></div>
       <div class="class">
           <h3>Ancestors (in MRO)</h3>
           <ul class="class_list">
-          <li><a href="#nimporter.NimCompilerException">NimCompilerException</a></li>
+          <li><a href="#nimporter.NimCompileException">NimCompileException</a></li>
           <li>builtins.Exception</li>
           <li>builtins.BaseException</li>
           <li>builtins.object</li>
           </ul>
           <h3>Class variables</h3>
             <div class="item">
-            <p id="nimporter.NimCompilerException.args" class="name">var <span class="ident">args</span></p>
+            <p id="nimporter.NimCompileException.args" class="name">var <span class="ident">args</span></p>
             
 
             
@@ -2577,7 +2577,7 @@ returned from Nim as a Python Exception.</p></div>
           <h3>Static methods</h3>
             
   <div class="item">
-    <div class="name def" id="nimporter.NimCompilerException.__init__">
+    <div class="name def" id="nimporter.NimCompileException.__init__">
     <p>def <span class="ident">__init__</span>(</p><p>self, msg)</p>
     </div>
     
@@ -2586,8 +2586,8 @@ returned from Nim as a Python Exception.</p></div>
   
     <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
   <div class="source_cont">
-  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompilerException.__init__', this);">Show source &equiv;</a></p>
-  <div id="source-nimporter.NimCompilerException.__init__" class="source">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompileException.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompileException.__init__" class="source">
     <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">nim_module</span><span class="p">,</span> <span class="n">error_msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; Error: &#39;</span><span class="p">)</span>
