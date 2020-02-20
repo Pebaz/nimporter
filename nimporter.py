@@ -575,6 +575,67 @@ class Nimporter:
         the cli_args variable.
         """
 
+    @classmethod
+    def import_nim_code(cls, fullname, path, *, library: bool):
+        "Search for, compile, and return Spec for module loaders."
+        print('🐝', fullname, path, library)
+        parts = fullname.split('.')
+        module = parts[-1] if library else parts.pop()
+        module_file = f'{module}.nim'
+        path = list(path) if path else []  # Ensure that path is always a list
+
+        # NOTE(pebaz): Package is different based only on `library`
+        package = '/'.join(parts)
+
+        search_paths = {
+            Path(i)
+            for i in (path + sys.path + ['.'])
+            if Path(i).is_dir()
+        }
+
+        for search_path in search_paths:
+            spath = (search_path / package).resolve()
+
+            # Derive module path regardless of library or module
+
+            if library and not any(spath.glob('*.nimble')): continue
+
+            module_path = spath / module_file
+
+            if not module_path.exists(): continue
+
+            build_artifact = Nimporter.build_artifact(module_path)
+
+            if cls.should_compile(module_path):
+                if library:
+                    compiler = NimCompiler.try_compile_library
+                else:
+                    compiler = NimCompiler.try_compile
+
+                compiler(
+                    module_path.parent if library else module_path,
+                    build_artifact
+                )
+
+                Nimporter.update_hash(module_path)
+                
+            return util.spec_from_file_location(
+                fullname,
+                location=str(build_artifact.absolute())
+            )
+
+    @classmethod
+    def should_compile(cls, module_path):
+        return any([
+            IGNORE_CACHE,
+            cls.hash_changed(module_path),
+            not cls.is_cache(module_path),
+            not cls.is_built(module_path)
+        ])
+
+
+class NimModImporter:
+    "Directly import Nim modules by compiling them at the same time."
 
 
 class NimLibImporter:
