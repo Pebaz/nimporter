@@ -635,7 +635,16 @@ class Nimporter:
 
 
 class NimModImporter:
-    "Directly import Nim modules by compiling them at the same time."
+    """
+    Extends Python import machinery to be able to import Nim modules.
+
+    NOTE: Must be placed at the back of `sys.meta_path` because Python modules
+    should be given precedence over Nim modules.
+
+    Nim Modules can be placed anywhere that Python modules can. However, if a
+    Python module and a Nim module with the same name are in the same package,
+    the Python module will be imported.
+    """
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
@@ -643,53 +652,29 @@ class NimModImporter:
 
 
 class NimLibImporter:
-    @classmethod
-    def find_spec(cls, fullname, path=None, target=None):
-        print('!', fullname, path, target)
+    """
+    Extends Python import machinery to be able to import Nim libraries.
 
-        parts = fullname.split('.')
-        #module = parts.pop()
-        #module_file = f'{module}.nim'
-        path = list(path) if path else []  # Ensure that path is always a list
-        package = '/'.join(parts)
-        search_paths = {
-            Path(i)
-            for i in (path + sys.path + ['.'])
-            if Path(i).is_dir()
-        }
+    NOTE: Must be placed at the front of `sys.meta_path` because of how Python
+    treats folders when imported.
 
-        for search_path in search_paths:
-            spath = search_path / package
+    Before NimLibImporter can attempt to find a folder containing a Nimble file
+    containing dependency info and a corresponding Nim module, Python's import
+    machinery imports the folder as a `namspace` type.
 
-            if spath.exists():
-                module = parts[-1] + '.nim'
+    The only way to allow NimLibImporter to get a chance to import Nim libraries
+    is to put it at the front of `sys.meta_path`. However, this has a small side
+    effect of making Nim libraries have precedence over Python namespaces.
 
-                # NOTE(pebaz): Found a Nim extension library
-                if not any(spath.glob('*.nimble')) and not any(spath.glob(module)):
-                    continue
+    This should never have any adverse effects since the criterion for a Nim
+    library in relation to Nimporter is to have a folder containing a Nim module
+    and a Nimble file with the same name as the folder. By placing both of those
+    files into a directory, it should be extremely clear that the given folder
+    is a Nim library.
 
-                module_path = spath / module
-
-                should_compile = any([
-                    IGNORE_CACHE,
-                    Nimporter.hash_changed(module_path),
-                    not Nimporter.is_cache(module_path),
-                    not Nimporter.is_built(module_path)
-                ])
-
-                build_artifact = Nimporter.build_artifact(module_path)
-
-                if should_compile:
-                    NimCompiler.try_compile_library(
-                        module_path.parent, build_artifact
-                    )
-
-                    Nimporter.update_hash(module_path)
-                    
-                return util.spec_from_file_location(
-                    fullname,
-                    location=str(build_artifact.absolute())
-                )
+    Additionally, this also means that a Nim library cannot contain any Python
+    modules.
+    """
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
