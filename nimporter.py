@@ -28,6 +28,29 @@ def cd(path):
         os.chdir(cwd)
 
 
+def register_importer(list_position):
+    """
+    Adds a given importer class to `sys.meta_path` at a given position.
+
+    NOTE: The position in `sys.meta_path` is extremely relevant.
+    """
+    def decorator(importer):
+        nonlocal list_position
+
+        # Make the list_position act like how a list is normally indexed
+        if list_position < 0:
+            list_position = len(sys.meta_path) + 1 - list_position
+ 
+        sys.meta_path.insert(list_position, importer)
+
+        # Ensure that Nim files won't be passed up because of other Importers.
+        sys.path_importer_cache.clear()
+        importlib.invalidate_caches()
+
+        return importer
+    return decorator
+
+
 class NimporterException(Exception):
     "Catch-all for Nimporter exceptions"
 
@@ -634,6 +657,7 @@ class Nimporter:
         ])
 
 
+@register_importer(-1)
 class NimModImporter:
     """
     Extends Python import machinery to be able to import Nim modules.
@@ -651,6 +675,7 @@ class NimModImporter:
         return Nimporter.import_nim_code(fullname, path, library=False)
 
 
+@register_importer(0)
 class NimLibImporter:
     """
     Extends Python import machinery to be able to import Nim libraries.
@@ -685,10 +710,10 @@ By putting the Nimpoter at the end of the list of module loaders, it ensures
 that Nim code files are imported only if there is not a Python module of the
 same name somewhere on the path.
 '''
-sys.meta_path.insert(0, NimLibImporter())
+#sys.meta_path.insert(0, NimLibImporter())
 #sys.meta_path.append(Nimporter())
-sys.meta_path.append(NimModImporter())
+#sys.meta_path.append(NimModImporter())
 
 # Ensure that Nim files won't be passed up because of other Importers.
-sys.path_importer_cache.clear()
-importlib.invalidate_caches()
+#sys.path_importer_cache.clear()
+#importlib.invalidate_caches()
