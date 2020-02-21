@@ -637,6 +637,10 @@ class Nimporter:
 class NimModImporter:
     "Directly import Nim modules by compiling them at the same time."
 
+    @classmethod
+    def find_spec(cls, fullname, path=None, target=None):
+        return Nimporter.import_nim_code(fullname, path, library=False)
+
 
 class NimLibImporter:
     @classmethod
@@ -693,7 +697,8 @@ By putting the Nimpoter at the end of the list of module loaders, it ensures
 that Nim code files are imported only if there is not a Python module of the
 same name somewhere on the path.
 '''
-sys.meta_path.append(Nimporter())
+#sys.meta_path.append(Nimporter())
+sys.meta_path.append(NimModImporter())
 sys.meta_path.insert(0, NimLibImporter())
 
 # Ensure that Nim files won't be passed up because of other Importers.
