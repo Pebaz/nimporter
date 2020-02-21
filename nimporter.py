@@ -381,6 +381,22 @@ class NimCompiler:
                 return None
         return result.resolve()
 
+    @classmethod
+    def compile_nim_code(cls, module_path, *, library: bool, extension: bool):
+        # Return either an Extension or the path to the build artifact
+
+        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        for warn in warnings: print(warn)
+
+        if errors:
+            if library:
+                raise NimInvokeException(errors[0])
+            else:
+                raise NimCompileException(errors[0])
+
+
+
 
 class Nimporter:
     """
