@@ -28,29 +28,6 @@ def cd(path):
         os.chdir(cwd)
 
 
-def register_importer(list_position):
-    """
-    Adds a given importer class to `sys.meta_path` at a given position.
-
-    NOTE: The position in `sys.meta_path` is extremely relevant.
-    """
-    def decorator(importer):
-        nonlocal list_position
-
-        # Make the list_position act like how a list is normally indexed
-        if list_position < 0:
-            list_position = len(sys.meta_path) + 1 - list_position
- 
-        sys.meta_path.insert(list_position, importer)
-
-        # Ensure that Nim files won't be passed up because of other Importers.
-        sys.path_importer_cache.clear()
-        importlib.invalidate_caches()
-
-        return importer
-    return decorator
-
-
 class NimporterException(Exception):
     "Catch-all for Nimporter exceptions"
 
@@ -493,65 +470,6 @@ class Nimporter:
         )
 
     @classmethod
-    def find_spec(cls, fullname, path=None, target=None):
-        """
-        Finds a Nim module and compiles it if it has changed.
-
-        If the Nim module imports other Nim source files and those files change,
-        the Nimporter will not be able to detect them and will reuse the cached
-        version.
-
-        Args:
-            fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
-            path(list): a list of paths to search first.
-            target(str): the target of the import.
-
-        Returns:
-            A useable spec object that will be passed to Python during import to
-            actually create a Python Module object from the spec.
-        """
-        print('⭐️', fullname, path, target)
-
-        parts = fullname.split('.')
-        module = parts.pop()
-        module_file = f'{module}.nim'
-        path = list(path) if path else []  # Ensure that path is always a list
-        package = '/'.join(parts)
-        search_paths = {
-            Path(i)
-            for i in (path + sys.path + ['.'])
-            if Path(i).is_dir()
-        }
-
-        for search_path in search_paths:
-            # NOTE(pebaz): Found an importable/compileable module
-            spath = (search_path / package).resolve()
-            module_path = list(spath.glob(module_file))
-
-            if module_path:
-                (module_path,) = module_path
-
-                if not module_path.exists(): continue
-
-                should_compile = any([
-                    IGNORE_CACHE,
-                    cls.hash_changed(module_path),
-                    not cls.is_cache(module_path),
-                    not cls.is_built(module_path)
-                ])
-
-                build_artifact = cls.build_artifact(module_path)
-
-                if should_compile:
-                    NimCompiler.try_compile(module_path, build_artifact)
-                    cls.update_hash(module_path)
-                    
-                return util.spec_from_file_location(
-                    fullname,
-                    location=str(build_artifact.absolute())
-                )
-
-    @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
         """
         Can be used to explicitly import a module rather than using the `import`
@@ -649,12 +567,36 @@ class Nimporter:
 
     @classmethod
     def should_compile(cls, module_path):
+        "Determine if a module should be rebuilt using only the path to it."
         return any([
             IGNORE_CACHE,
             cls.hash_changed(module_path),
             not cls.is_cache(module_path),
             not cls.is_built(module_path)
         ])
+
+
+def register_importer(list_position):
+    """
+    Adds a given importer class to `sys.meta_path` at a given position.
+
+    NOTE: The position in `sys.meta_path` is extremely relevant.
+    """
+    def decorator(importer):
+        nonlocal list_position
+
+        # Make the list_position act like how a list is normally indexed
+        if list_position < 0:
+            list_position = len(sys.meta_path) + 1 - list_position
+ 
+        sys.meta_path.insert(list_position, importer)
+
+        # Ensure that Nim files won't be passed up because of other Importers.
+        sys.path_importer_cache.clear()
+        importlib.invalidate_caches()
+
+        return importer
+    return decorator
 
 
 @register_importer(-1)
@@ -704,16 +646,3 @@ class NimLibImporter:
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         return Nimporter.import_nim_code(fullname, path, library=True)
-
-'''
-By putting the Nimpoter at the end of the list of module loaders, it ensures
-that Nim code files are imported only if there is not a Python module of the
-same name somewhere on the path.
-'''
-#sys.meta_path.insert(0, NimLibImporter())
-#sys.meta_path.append(Nimporter())
-#sys.meta_path.append(NimModImporter())
-
-# Ensure that Nim files won't be passed up because of other Importers.
-#sys.path_importer_cache.clear()
-#importlib.invalidate_caches()
