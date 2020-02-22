@@ -382,7 +382,7 @@ class NimCompiler:
         return result.resolve()
 
     @classmethod
-    def compile_nim_extension(cls, module_path, *, library: bool):
+    def compile_nim_extension(cls, module_path, root, *, library: bool):
         "Returns an Extension object so it can be bundled."
 
         if not module_path.exists():
@@ -390,10 +390,51 @@ class NimCompiler:
                 f'{module_path.absolute()} does not exist.'
             )
 
-        '''Combine:
-         * compile_extension_module
-         * compile_extension_library
-        '''
+        module_name = module_path.stem
+        build_dir = Path(tempfile.mktemp())
+
+        if library:
+            if module_path.is_file():
+                library_path = module_path.parent
+            else:
+                library_path = module_path
+                
+            if not any(library_path.glob('*.nimble')):
+                raise NimporterException(
+                f"Library: {library_path} doesn't contain a .nimble file"
+            )
+
+        build_dir = Path(tempfile.mktemp())
+        exe = ['nimble' if library else 'nim', 'cc', '-c']
+        nim_args = (
+            exe + cls.NIM_CLI_ARGS +
+            [f'--nimcache:{build_dir}', f'{module_path}'] +
+            (['--accept'] if library else [])
+        )
+
+        with cd(library_path if library else Path('.')) as tmp_cwd:
+            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        if errors: raise NimInvokeException(errors[0])
+
+        for warn in warnings: print(warn)
+
+        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+
+        # Copy over needed header(s)
+        NIMBASE = 'nimbase.h'
+        nimbase = cls.find_nim_std_lib() / NIMBASE
+        shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
+
+        # Coerce proper import path using root path
+        import_prefix = cls.get_import_prefix(module_path.parent, root)
+        import_path = '.'.join(import_prefix + (module_name,))
+
+        return Extension(
+            name=import_path,
+            sources=csources,
+            include_dirs=[str(build_dir)]
+        )
 
     @classmethod
     def compile_nim_code(cls, module_path, build_artifact, *, library: bool):
@@ -412,15 +453,12 @@ class NimCompiler:
                 f'{module_path.absolute()} does not exist.'
             )
 
-        '''Combine:
-         * try_compile
-         * try_compile_library
-        '''
-
-        "Return a path to the build_artifact"
-
         if library:
-            library_path = module_path.parent
+            if module_path.is_file():
+                library_path = module_path.parent
+            else:
+                library_path = module_path
+
             if not any(library_path.glob('*.nimble')):
                 raise NimporterException(
                 f"Library: {library_path} doesn't contain a .nimble file"
@@ -434,9 +472,6 @@ class NimCompiler:
             [f'--out:{build_artifact}', f'{module_path}'] +
             (['--accept'] if library else [])
         )
-
-        print('!' * 100)
-        print(nim_args)
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
