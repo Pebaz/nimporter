@@ -382,20 +382,72 @@ class NimCompiler:
         return result.resolve()
 
     @classmethod
-    def compile_nim_code(cls, module_path, *, library: bool, extension: bool):
-        # Return either an Extension or the path to the build artifact
+    def compile_nim_extension(cls, module_path, *, library: bool):
+        "Returns an Extension object so it can be bundled."
 
-        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+        if not module_path.exists():
+            raise NimporterException(
+                f'{module_path.absolute()} does not exist.'
+            )
+
+        '''Combine:
+         * compile_extension_module
+         * compile_extension_library
+        '''
+
+    @classmethod
+    def compile_nim_code(cls, module_path, build_artifact, *, library: bool):
+        """
+        Returns a Spect object so it can be imported.
+
+        NOTE: The `module_path` keyword argument can be either a path to a Nim
+        file (in the case of `library=False`) or a path to a directory (in the
+        case of `library=True`). However, it has a third supported usage. It can
+        be a Nim module when `library=True` and this method will search for the
+        Nimble file alongside the given path. In addition
+        """
+
+        if not module_path.exists():
+            raise NimporterException(
+                f'{module_path.absolute()} does not exist.'
+            )
+
+        '''Combine:
+         * try_compile
+         * try_compile_library
+        '''
+
+        "Return a path to the build_artifact"
+
+        if library:
+            library_path = module_path.parent
+            if not any(library_path.glob('*.nimble')):
+                raise NimporterException(
+                f"Library: {library_path} doesn't contain a .nimble file"
+            )
+
+        build_artifact = Nimporter.build_artifact(module_path)
+
+        exe = [('nimble' if library else 'nim'), 'c']
+        nim_args = (
+            exe + cls.NIM_CLI_ARGS +
+            [f'--out:{build_artifact}', f'{module_path}'] +
+            (['--accept'] if library else [])
+        )
+
+        print('!' * 100)
+        print(nim_args)
+
+        with cd(library_path if library else Path('.')) as tmp_cwd:
+            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        exception_class = NimInvokeException if library else NimCompileException
+
+        if errors: raise exception_class(errors[0])
 
         for warn in warnings: print(warn)
 
-        if errors:
-            if library:
-                raise NimInvokeException(errors[0])
-            else:
-                raise NimCompileException(errors[0])
-
-
+        return build_artifact
 
 
 class Nimporter:
@@ -452,8 +504,8 @@ class Nimporter:
             return True
         return cls.get_hash(module_path) != cls.hash_file(module_path)
 
-    @classmethod
-    def hash_file(cls, module_path):
+    @staticmethod
+    def hash_file(module_path):
         """
         Returns the hash of the Nim file.
         """
@@ -564,18 +616,12 @@ class Nimporter:
             build_artifact = Nimporter.build_artifact(module_path)
 
             if cls.should_compile(module_path):
-                if library:
-                    compiler = NimCompiler.try_compile_library
-                else:
-                    compiler = NimCompiler.try_compile
-
-                compiler(
-                    module_path.parent if library else module_path,
-                    build_artifact
+                NimCompiler.compile_nim_code(
+                    module_path, build_artifact, library=library
                 )
 
                 Nimporter.update_hash(module_path)
-                
+            
             return util.spec_from_file_location(
                 fullname,
                 location=str(build_artifact.absolute())
