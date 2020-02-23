@@ -1,0 +1,5 @@
+[run]
+omit =
+    tests/*
+    nimporter_cli.py
+    setup.py
