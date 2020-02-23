@@ -146,6 +146,7 @@ class NimCompiler:
 
     @classmethod
     def ensure_nimpy(cls):
+        "Makes sure that the Nimpy Nim library is installed."
         out, errors, _, _ = cls.invoke_compiler('nimble path nimpy'.split())
 
         if not out or errors:
@@ -153,7 +154,6 @@ class NimCompiler:
             out, errors, _, _ = cls.invoke_compiler(nimble_args)
 
         if errors: raise NimInvokeException(Path(), nimble_args, errors[0], out)
-
 
     @staticmethod
     def get_import_prefix(module_path, root):
@@ -164,102 +164,6 @@ class NimCompiler:
         assert full_path >= root_path, 'Extension path is not within root dir.'
 
         return full_path.parts[len(root_path.parts):]
-
-    @classmethod
-    def compile_extension_module(cls, module_path, root):
-        """Compile Nim to C and return Extension pointing to the C source files."""
-
-        module_name = module_path.stem
-        build_dir = Path(tempfile.mktemp())
-
-        exe = 'nim cc -c'.split()
-        nim_args = (
-            exe + cls.NIM_CLI_ARGS +
-            [f'--nimcache:{build_dir}', f'{module_path}']
-        )
-
-        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-
-        for warn in warnings: print(warn)
-
-        if errors: raise NimCompileException(errors[0])
-
-        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
-
-        # Copy over needed header(s)
-        NIMBASE = 'nimbase.h'
-        nimbase = cls.find_nim_std_lib() / NIMBASE
-        shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
-
-        # Coerce proper import path using root path
-        import_prefix = cls.get_import_prefix(module_path.parent, root)
-        import_path = '.'.join(import_prefix + (module_name,))
-
-        return Extension(
-            name=import_path,
-            sources=csources,
-            include_dirs=[str(build_dir)]
-        )
-
-    @classmethod
-    def compile_extension_library(cls, library_path, root):
-        """
-        Compiles and returns an Extension and installs dependencies in .nimble.
-
-        Libraries MUST have a Nim file named "main.nim" or "library.nim" at the
-        project root as well as a file ending with ".nimble".
-
-        Returns:
-            An Extension upon successful compilation, else None.
-
-        Raises:
-            Exception if the library path does not contain the files listed
-            above or any other compilation error.
-        """
-
-        library_path = library_path.resolve()
-        module_name = library_path.name
-        module_path = library_path / (module_name + '.nim')
-        dot_nimble = library_path / (module_name + '.nimble')
-
-        if module_path.exists() and dot_nimble.exists():
-            build_dir = Path(tempfile.mktemp())
-
-            exe = 'nimble cc -c'.split()
-            nim_args = (
-                exe + cls.NIM_CLI_ARGS +
-                ['--accept', f'--nimcache:{build_dir}', f'{module_path}']
-            )
-
-            with cd(library_path) as tmp_cwd:
-                output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-
-            if errors: raise NimInvokeException(tmp_cwd, nim_args, errors[0])
-
-            for warn in warnings: print(warn)
-
-            csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
-
-            # Copy over needed header(s)
-            NIMBASE = 'nimbase.h'
-            nimbase = cls.find_nim_std_lib() / NIMBASE
-            shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
-
-            # Coerce proper import path using root path
-            import_prefix = cls.get_import_prefix(library_path.parent, root)
-            import_path = '.'.join(import_prefix + (module_name,))
-
-            return Extension(
-                name=import_path,
-                sources=csources,
-                include_dirs=[str(build_dir)]
-            )
-
-        raise Exception(
-            f'Error: {library_path} is not formatted properly. It did not '
-            f'contain any of these top-level filenames: '
-            f'{[i + ".nim" for i in useable_mod_names] + [dot_nimble.name]}'
-        )
 
     @classmethod
     def __find_extensions(cls, path, exclude_dirs=[]):
@@ -317,64 +221,6 @@ class NimCompiler:
         return extensions
 
     @classmethod
-    def try_compile(cls, module_path, build_artifact):
-        """
-        Compiles a given Nim module and returns the path to the built artifact.
-        Raises an exception if compilation fails for any reason.
-        """
-        if not module_path.exists():
-            raise Exception(f'{module_path.absolute()} does not exist.')
-
-        build_artifact = Nimporter.build_artifact(module_path)
-
-        exe = 'nim c'.split()
-        nim_args = (
-            exe + cls.NIM_CLI_ARGS +
-            [f'--out:{build_artifact}', f'{module_path}']
-        )
-
-        output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-
-        for warn in warnings: print(warn)
-
-        if errors: raise NimCompileException(errors[0])
-
-        return build_artifact
-    
-    @classmethod
-    def try_compile_library(cls, library_path, build_artifact):
-        """
-        Compiles a given Nim library and returns the path to the built artifact.
-        Raises an exception if compilation fails for any reason.
-        """
-        library_path = library_path.resolve()
-        module_name = library_path.name
-        module_path = library_path / (module_name + '.nim')
-        dot_nimble = library_path / (module_name + '.nimble')
-
-        if not module_path.exists() or not dot_nimble.exists():
-            raise NimporterException(
-                f"{library_path} doesn't contain a .nimble or {module_name}.nim"
-            )
-
-        build_artifact = Nimporter.build_artifact(module_path)
-
-        exe = 'nimble c'.split()
-        nim_args = (
-            exe + cls.NIM_CLI_ARGS +
-            ['--accept', f'--out:{build_artifact}', f'{module_path}']
-        )
-
-        with cd(library_path) as tmp_cwd:
-            output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-
-        if errors: raise NimInvokeException(tmp_cwd, nim_args, errors[0])
-
-        for warn in warnings: print(warn)
-
-        return build_artifact
-
-    @classmethod
     def find_nim_std_lib(cls):
         nimexe = Path(shutil.which('nim'))
         if not nimexe:
@@ -388,7 +234,27 @@ class NimCompiler:
 
     @classmethod
     def compile_nim_extension(cls, module_path, root, *, library: bool):
-        "Returns an Extension object so it can be bundled."
+        """
+        Compiles/returns an Extension and installs `.nimble` dependencies.
+
+        Libraries MUST have a Nim file named "<library name>.nim" at the project
+        root as well as a file ending with ".nimble".
+
+        NOTE: The library parameter signifies (albeit subtly) that the given Nim
+        library has (can have) dependencies (Nimble file).
+
+        Args:
+            module_path(Path): the path to the library directory or a Nim file.
+            root(Path): the path to the directory containing the entire project.
+            library(bool): hint as to how to treat the `module_path` parameter.
+
+        Returns:
+            An Extension upon successful compilation, else None.
+
+        Raises:
+            Exception if the library path does not contain the files listed
+            above or any other compilation error.
+        """
 
         if not module_path.exists():
             raise NimporterException(
@@ -451,13 +317,16 @@ class NimCompiler:
     @classmethod
     def compile_nim_code(cls, module_path, build_artifact, *, library: bool):
         """
-        Returns a Spec object so it can be imported.
+        Returns a Spec object so a Nim module/library can be directly imported.
 
         NOTE: The `module_path` keyword argument can be either a path to a Nim
         file (in the case of `library=False`) or a path to a directory (in the
         case of `library=True`). However, it has a third supported usage. It can
         be a Nim module when `library=True` and this method will search for the
-        Nimble file alongside the given path. In addition
+        Nimble file alongside the given path.
+
+        NOTE: The library parameter signifies (albeit subtly) that the given Nim
+        library has (can have) dependencies (Nimble file).
         """
 
         if not module_path.exists():
@@ -616,7 +485,11 @@ class Nimporter:
         if ignore_cache:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
             build_artifact = cls.build_artifact(module_path)
-            NimCompiler.try_compile(nim_module, build_artifact)
+            NimCompiler.compile_nim_code(
+                nim_module,
+                build_artifact,
+                library=any(nim_module.parent.glob('*.nimble'))
+            )
             sys.path_importer_cache.clear()
             importlib.invalidate_caches()
             if spec.name in sys.modules:
