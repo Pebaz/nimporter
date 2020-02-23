@@ -144,6 +144,18 @@ class NimCompiler:
 
         return out, errors, warnings, hints
 
+    @classmethod
+    def ensure_nimpy(cls):
+        out, errors, _, _ = cls.invoke_compiler('nimble path nimpy'.split())
+
+        if not out or errors:
+            out, errors, _, _ = cls.invoke_compiler(
+                'nimble install nimpy --accept'.split()
+            )
+
+        if errors: raise NimInvokeException(errors[0])
+
+
     @staticmethod
     def get_import_prefix(module_path, root):
         "Returns tuple of packages containing the given module."
@@ -281,13 +293,7 @@ class NimCompiler:
 
     @classmethod
     def build_nim_extension(cls, path, root):
-        # It is known that this dir contains .nimble
-        if path.is_dir():
-            return cls.compile_extension_library(path, root)
-            
-        # This is for sure a Nim extension file
-        else:
-            return cls.compile_extension_module(path, root)
+        return cls.compile_nim_extension(path, root, library=path.is_dir())
 
     @classmethod
     def build_nim_extensions(cls, exclude_dirs=[]):
