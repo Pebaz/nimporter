@@ -3,15 +3,14 @@ Iterates through all sub directories and removes any build artifacts and hashes.
 """
 
 import sys, pathlib, argparse
-
-EXT = '.pyd' if sys.platform == 'win32' else '.so'
+from nimporter import NimCompiler
 
 def clean(dir=pathlib.Path()):
     "Recursively clear hash files and extensions stored in __pycache__ folders."
     for folder in filter(lambda p: p.is_dir(), dir.iterdir()):
         if folder.name == '__pycache__':
             for item in folder.iterdir():
-                if item.suffix in ('.hash', EXT):
+                if item.suffix in ('.hash', NimCompiler.EXT):
                     print('Deleted:'.ljust(19), item.resolve())
                     item.unlink()
         else:
