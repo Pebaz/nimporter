@@ -149,11 +149,10 @@ class NimCompiler:
         out, errors, _, _ = cls.invoke_compiler('nimble path nimpy'.split())
 
         if not out or errors:
-            out, errors, _, _ = cls.invoke_compiler(
-                'nimble install nimpy --accept'.split()
-            )
+            nimble_args = 'nimble install nimpy --accept'.split()
+            out, errors, _, _ = cls.invoke_compiler(nimble_args)
 
-        if errors: raise NimInvokeException(errors[0])
+        if errors: raise NimInvokeException(Path(), nimble_args, errors[0], out)
 
 
     @staticmethod
@@ -401,14 +400,17 @@ class NimCompiler:
 
         if library:
             if module_path.is_file():
-                library_path = module_path.parent
+                library_path = module_path.parent.resolve()
             else:
-                library_path = module_path
+                library_path = module_path.resolve()
+                module_path = library_path / (library_path.name + '.nim')
                 
             if not any(library_path.glob('*.nimble')):
                 raise NimporterException(
                 f"Library: {library_path} doesn't contain a .nimble file"
             )
+
+        cls.ensure_nimpy()
 
         build_dir = Path(tempfile.mktemp())
         exe = ['nimble' if library else 'nim', 'cc', '-c']
@@ -421,7 +423,11 @@ class NimCompiler:
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
 
-        if errors: raise NimInvokeException(errors[0])
+        if errors:
+            if library:
+                raise NimInvokeException(Path(), nim_args, errors[0], output)
+            else:
+                raise NimCompileException(errors[0])
 
         for warn in warnings: print(warn)
 
@@ -445,7 +451,7 @@ class NimCompiler:
     @classmethod
     def compile_nim_code(cls, module_path, build_artifact, *, library: bool):
         """
-        Returns a Spect object so it can be imported.
+        Returns a Spec object so it can be imported.
 
         NOTE: The `module_path` keyword argument can be either a path to a Nim
         file (in the case of `library=False`) or a path to a directory (in the
@@ -470,6 +476,8 @@ class NimCompiler:
                 f"Library: {library_path} doesn't contain a .nimble file"
             )
 
+        cls.ensure_nimpy()
+
         build_artifact = Nimporter.build_artifact(module_path)
 
         exe = [('nimble' if library else 'nim'), 'c']
@@ -482,9 +490,11 @@ class NimCompiler:
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
 
-        exception_class = NimInvokeException if library else NimCompileException
-
-        if errors: raise exception_class(errors[0])
+        if errors:
+            if library:
+                raise NimInvokeException(nim_args, errors[0])
+            else:
+                raise NimCompileException(errors[0])
 
         for warn in warnings: print(warn)
 
@@ -628,7 +638,6 @@ class Nimporter:
     @classmethod
     def import_nim_code(cls, fullname, path, *, library: bool):
         "Search for, compile, and return Spec for module loaders."
-        print('🐝', fullname, path, library)
         parts = fullname.split('.')
         module = parts[-1] if library else parts.pop()
         module_file = f'{module}.nim'
