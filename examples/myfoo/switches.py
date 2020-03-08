@@ -1,7 +1,5 @@
 import sys
 
-print('!', MODULE_PATH)
-
 if sys.platform == 'win32':
     __switches__ = {
         'import' : [
@@ -15,7 +13,14 @@ if sys.platform == 'win32':
             f'--out:{BUILD_ARTIFACT}',
             f'{MODULE_PATH}'
         ],
-        'bundle' : ['nimble', 'cc', 'c', '--accept']
+        'bundle' : [
+            'nimble' if IS_LIBRARY else 'nim',
+            'cc',
+            '-c',
+            '--accept',
+            f'--nimcache:{BUILD_DIR}',
+            f'{MODULE_PATH}'
+        ]
     }
 
 else:
@@ -31,5 +36,12 @@ else:
             f'--out:{BUILD_ARTIFACT}',
             f'{MODULE_PATH}'
         ],
-        'bundle' : ['nimble', 'cc', 'c', '--accept']
+        'bundle' : [
+            'nimble' if IS_LIBRARY else 'nim',
+            'cc',
+            '-c',
+            '--accept',
+            f'--nimcache:{BUILD_DIR}',
+            f'{MODULE_PATH}'
+        ]
     }
