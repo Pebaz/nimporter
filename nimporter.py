@@ -228,22 +228,17 @@ class NimCompiler:
         module_name = module_path.stem
         build_dir = Path(tempfile.mktemp())
 
-        if library:
-            if module_path.is_file():
-                library_path = module_path.parent.resolve()
-            else:
-                library_path = module_path.resolve()
-                module_path = library_path / (library_path.name + '.nim')
-                
-            if not any(library_path.glob('*.nimble')):
-                raise NimporterException(
-                f"Library: {library_path} doesn't contain a .nimble file"
-            )
-        else:
-            if module_path.is_file():
-                library_path = module_path.parent
-            else:
-                library_path = module_path
+        if module_path.is_file():
+            library_path = module_path.parent.resolve()
+            
+        elif module_path.is_dir():
+            library_path = module_path.resolve()
+            module_path = library_path / (library_path.name + '.nim')
+
+        if library and not any(library_path.glob('*.nimble')):
+            raise NimporterException(
+            f"Library: {library_path} doesn't contain a .nimble file"
+        )
 
         cls.ensure_nimpy()
 
@@ -318,21 +313,17 @@ class NimCompiler:
                 f'{module_path.absolute()} does not exist.'
             )
 
-        if library:
-            if module_path.is_file():
-                library_path = module_path.parent
-            else:
-                library_path = module_path
+        if module_path.is_file():
+            library_path = module_path.parent.resolve()
 
-            if not any(library_path.glob('*.nimble')):
-                raise NimporterException(
-                f"Library: {library_path} doesn't contain a .nimble file"
-            )
-        else:
-            if module_path.is_file():
-                library_path = module_path.parent
-            else:
-                library_path = module_path
+        elif module_path.is_dir():
+            library_path = module_path.resolve()
+            module_path = library_path / (library_path.name + '.nim')
+
+        if library and not any(library_path.glob('*.nimble')):
+            raise NimporterException(
+            f"Library: {library_path} doesn't contain a .nimble file"
+        )
 
         cls.ensure_nimpy()
 
