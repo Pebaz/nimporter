@@ -1,6 +1,10 @@
 """
 Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
+
+In addition, distribution of libraries using Nim code via Nimporter can easily
+compile those modules to C and bundle into a source or binary distribution so
+users of the library don't have to install a Nim compiler.
 """
 
 import sys, os, subprocess, importlib, hashlib, tempfile, shutil
@@ -125,6 +129,21 @@ class NimCompiler:
     ]
 
     @classmethod
+    def build_artifact(cls, module_path):
+        """
+        Returns the Path to the built .PYD or .SO. Does not imply it has already
+        been built.
+        """
+        return (
+            cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
+        )
+
+    @classmethod
+    def pycache_dir(cls, module_path):
+        """Return the __pycache__ directory as a Path."""
+        return module_path.parent / '__pycache__'
+
+    @classmethod
     def invoke_compiler(cls, nim_args: list):
         """
         Returns a tuple containing any errors, warnings, or hints from the
@@ -164,61 +183,6 @@ class NimCompiler:
         assert full_path >= root_path, 'Extension path is not within root dir.'
 
         return full_path.parts[len(root_path.parts):]
-
-    @classmethod
-    def __find_extensions(cls, path, exclude_dirs=[]):
-        """
-        Compiles Nim files to C and creates Extensions from them for distribution.
-        """
-        nim_exts = []
-
-        for item in path.iterdir():
-            if item.is_dir() and list(item.glob('*.nimble')):
-                "Treat directory as one single Extension"
-                (nimble_file,) = item.glob('*.nimble')
-                nim_file = nimble_file.parent / (nimble_file.stem + '.nim')
-
-                # NOTE(pebaz): Folder must contain Nim file of exact same name.
-                if nim_file.exists():
-                    nim_exts.append(item)
-
-            elif item.is_dir():
-                "Treat item as directory"
-                nim_exts.extend(
-                    cls.__find_extensions(item, exclude_dirs=exclude_dirs)
-                )
-
-            elif item.suffix == '.nim':
-                "Treat item as a Nim Extension."
-                nim_exts.append(item)
-
-        return nim_exts
-
-    @classmethod
-    def build_nim_extension(cls, path, root):
-        return cls.compile_nim_extension(path, root, library=path.is_dir())
-
-    @classmethod
-    def build_nim_extensions(cls, exclude_dirs=[]):
-        """
-        Compiles Nim modules and libraries to C and creates Extensions from them
-        for source, binary, or wheel distribution.
-
-        Automatically recurses through the project directory to find all the Nim
-        modules and Nim libraries.
-
-        Returns:
-            A list of Extensions that can be added to the setup() function's
-            "ext_modules" keyword argument.
-        """
-        extensions = []
-        root = Path()
-
-        for extension in cls.__find_extensions(root, exclude_dirs):
-            ext = cls.build_nim_extension(extension, root)
-            if ext: extensions.append(ext)
-
-        return extensions
 
     @classmethod
     def find_nim_std_lib(cls):
@@ -362,7 +326,7 @@ class NimCompiler:
 
         cls.ensure_nimpy()
 
-        build_artifact = Nimporter.build_artifact(module_path)
+        build_artifact = cls.build_artifact(module_path)
         switch_file = library_path / 'switches.py'
 
         # Switches file found
@@ -399,6 +363,61 @@ class NimCompiler:
 
         return build_artifact
 
+    @classmethod
+    def __find_extensions(cls, path, exclude_dirs=[]):
+        """
+        Compiles Nim files to C and creates Extensions from them for distribution.
+        """
+        nim_exts = []
+
+        for item in path.iterdir():
+            if item.is_dir() and list(item.glob('*.nimble')):
+                "Treat directory as one single Extension"
+                (nimble_file,) = item.glob('*.nimble')
+                nim_file = nimble_file.parent / (nimble_file.stem + '.nim')
+
+                # NOTE(pebaz): Folder must contain Nim file of exact same name.
+                if nim_file.exists():
+                    nim_exts.append(item)
+
+            elif item.is_dir():
+                "Treat item as directory"
+                nim_exts.extend(
+                    cls.__find_extensions(item, exclude_dirs=exclude_dirs)
+                )
+
+            elif item.suffix == '.nim':
+                "Treat item as a Nim Extension."
+                nim_exts.append(item)
+
+        return nim_exts
+
+    @classmethod
+    def build_nim_extension(cls, path, root):
+        return cls.compile_nim_extension(path, root, library=path.is_dir())
+
+    @classmethod
+    def build_nim_extensions(cls, exclude_dirs=[]):
+        """
+        Compiles Nim modules and libraries to C and creates Extensions from them
+        for source, binary, or wheel distribution.
+
+        Automatically recurses through the project directory to find all the Nim
+        modules and Nim libraries.
+
+        Returns:
+            A list of Extensions that can be added to the setup() function's
+            "ext_modules" keyword argument.
+        """
+        extensions = []
+        root = Path()
+
+        for extension in cls.__find_extensions(root, exclude_dirs):
+            ext = cls.build_nim_extension(extension, root)
+            if ext: extensions.append(ext)
+
+        return extensions
+
 
 class Nimporter:
     """
@@ -409,14 +428,9 @@ class Nimporter:
     [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
     """
     @classmethod
-    def pycache_dir(cls, module_path):
-        """Return the __pycache__ directory as a Path."""
-        return module_path.parent / '__pycache__'
-
-    @classmethod
     def hash_filename(cls, module_path):
         """Return the hash filename as a Path."""
-        return cls.pycache_dir(module_path) / (module_path.name + '.hash')
+        return NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
 
     @classmethod
     def is_cache(cls, module_path):
@@ -424,7 +438,7 @@ class Nimporter:
         Return whether or not a __pycache__ directory exists to store hashes and
         build artifacts.
         """
-        return cls.pycache_dir(module_path).exists()
+        return NimCompiler.pycache_dir(module_path).exists()
 
     @classmethod
     def is_hashed(cls, module_path):
@@ -434,7 +448,7 @@ class Nimporter:
     @classmethod
     def is_built(cls, module_path):
         """Return whether or not a given Nim file has already been hashed."""
-        return cls.build_artifact(module_path).exists()
+        return NimCompiler.build_artifact(module_path).exists()
 
     @classmethod
     def get_hash(cls, module_path):
@@ -480,16 +494,6 @@ class Nimporter:
             file.write(cls.hash_file(module_path))
 
     @classmethod
-    def build_artifact(cls, module_path):
-        """
-        Returns the Path to the built .PYD or .SO. Does not imply it has already
-        been built.
-        """
-        return (
-            cls.pycache_dir(module_path) / (module_path.stem + NimCompiler.EXT)
-        )
-
-    @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
         """
         Can be used to explicitly import a module rather than using the `import`
@@ -516,7 +520,7 @@ class Nimporter:
         # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
-            build_artifact = cls.build_artifact(module_path)
+            build_artifact = NimCompiler.build_artifact(module_path)
             NimCompiler.compile_nim_code(
                 nim_module,
                 build_artifact,
@@ -568,7 +572,7 @@ class Nimporter:
 
             if not module_path.exists(): continue
 
-            build_artifact = Nimporter.build_artifact(module_path)
+            build_artifact = NimCompiler.build_artifact(module_path)
 
             if cls.should_compile(module_path):
                 NimCompiler.compile_nim_code(
