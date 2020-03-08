@@ -1,17 +1,8 @@
 import sys
 
-print(MODULE_PATH)
+print('!', MODULE_PATH)
 
 if sys.platform == 'win32':
-    __switches__ = [
-    'nimble',
-    'c',
-    '--accept',
-    '--app:lib',
-    '-d:release',
-    '--opt:speed',
-    '-d:ssl'
-
     __switches__ = {
         'import' : [
             'nimble',
