@@ -239,6 +239,11 @@ class NimCompiler:
                 raise NimporterException(
                 f"Library: {library_path} doesn't contain a .nimble file"
             )
+        else:
+            if module_path.is_file():
+                library_path = module_path.parent
+            else:
+                library_path = module_path
 
         cls.ensure_nimpy()
 
@@ -323,6 +328,11 @@ class NimCompiler:
                 raise NimporterException(
                 f"Library: {library_path} doesn't contain a .nimble file"
             )
+        else:
+            if module_path.is_file():
+                library_path = module_path.parent
+            else:
+                library_path = module_path
 
         cls.ensure_nimpy()
 
