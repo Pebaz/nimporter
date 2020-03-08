@@ -279,12 +279,23 @@ class NimCompiler:
         cls.ensure_nimpy()
 
         build_dir = Path(tempfile.mktemp())
-        exe = ['nimble' if library else 'nim', 'cc', '-c']
-        nim_args = (
-            exe + cls.NIM_CLI_ARGS +
-            [f'--nimcache:{build_dir}', f'{module_path}'] +
-            (['--accept'] if library else [])
-        )
+        switch_file = library_path / 'switches.py'
+
+        # Switches file found
+        if switch_file.exists():
+            switch_script = switch_file.read_text()
+            global_scope = {}
+            exec(switch_script, global_scope)
+            nim_args = global_scope['__switches__'] + [str(module_path)]
+
+        # Use standard switches
+        else:
+            exe = ['nimble' if library else 'nim', 'cc', '-c']
+            nim_args = (
+                exe + cls.NIM_CLI_ARGS +
+                [f'--nimcache:{build_dir}', f'{module_path}'] +
+                (['--accept'] if library else [])
+            )
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
