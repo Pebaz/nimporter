@@ -348,20 +348,30 @@ class NimCompiler:
         cls.ensure_nimpy()
 
         build_artifact = Nimporter.build_artifact(module_path)
+        switch_file = library_path / 'switches.py'
 
-        exe = [('nimble' if library else 'nim'), 'c']
-        nim_args = (
-            exe + cls.NIM_CLI_ARGS +
-            [f'--out:{build_artifact}', f'{module_path}'] +
-            (['--accept'] if library else [])
-        )
+        # Switches file found
+        if switch_file.exists():
+            switch_script = switch_file.read_text()
+            global_scope = {}
+            exec(switch_script, global_scope)
+            nim_args = global_scope['__switches__'] + [str(module_path)]
+
+        # Use standard switches
+        else:
+            exe = [('nimble' if library else 'nim'), 'c']
+            nim_args = (
+                exe + cls.NIM_CLI_ARGS +
+                [f'--out:{build_artifact}', f'{module_path}'] +
+                (['--accept'] if library else [])
+            )
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
 
         if errors:
             if library:
-                raise NimInvokeException(nim_args, errors[0])
+                raise NimInvokeException(tmp_cwd, nim_args, errors[0], output)
             else:
                 raise NimCompileException(errors[0])
 
@@ -444,7 +454,9 @@ class Nimporter:
         Creates or updates the <mod-name>.nim.hash file within the __pycache__
         directory.
         """
-        with cls.hash_filename(module_path).open('wb') as file:
+        hash_file = cls.hash_filename(module_path)
+        hash_file.parent.mkdir(parents=True, exist_ok=True)
+        with hash_file.open('wb') as file:
             file.write(cls.hash_file(module_path))
 
     @classmethod
