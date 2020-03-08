@@ -284,9 +284,12 @@ class NimCompiler:
         # Switches file found
         if switch_file.exists():
             switch_script = switch_file.read_text()
-            global_scope = {}
+            global_scope = {
+                'MODULE_PATH' : module_path,
+                'BUILD_DIR' : build_dir
+            }
             exec(switch_script, global_scope)
-            nim_args = global_scope['__switches__'] + [str(module_path)]
+            nim_args = global_scope['__switches__']['bundle']
 
         # Use standard switches
         else:
@@ -364,9 +367,13 @@ class NimCompiler:
         # Switches file found
         if switch_file.exists():
             switch_script = switch_file.read_text()
-            global_scope = {}
+            global_scope = {
+                'MODULE_PATH' : module_path,
+                'BUILD_ARTIFACT' : build_artifact,
+                'IS_LIBRARY' : library
+            }
             exec(switch_script, global_scope)
-            nim_args = global_scope['__switches__'] + [str(module_path)]
+            nim_args = global_scope['__switches__']['import']
 
         # Use standard switches
         else:
