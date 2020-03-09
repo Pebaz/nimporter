@@ -12,3 +12,6 @@ def test_build_extension_module():
     clean(Path('..'))
 
     # assert isinstance(ext, Extension)
+
+def test_find_extensions():
+    pass

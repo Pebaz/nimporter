@@ -50,3 +50,7 @@ def test_hash_changes():
 def test_successful_library_import():
     "A Nim library can be imported"
     clean(Path('..'))
+
+
+def test_register_importer():
+    pass

@@ -5,6 +5,7 @@ Do not import Nim files directly, rather, test to make sure that they can build.
 
 from pathlib import Path
 import nimporter
+from nimporter import NimCompiler
 from nimporter_cli import clean
 
 
@@ -30,6 +31,14 @@ def test_temp_change_directory():
         temp_dir.rmdir()
 
 
+def test_pycache_dir():
+    "Make sure that the correct path to the __pycache__ dir is returned."
+    module_path = Path('tests/pkg1/mod1.nim').absolute()
+    expected_pycache = Path('tests/pkg1/__pycache__').absolute()
+
+    assert NimCompiler.pycache_dir(module_path).absolute() == expected_pycache
+
+
 def test_custom_build_switches():
     "Test to make sure custom build switches can be used"
 
@@ -40,3 +49,12 @@ def test_custom_build_switches_per_platform():
 
 def test_ignore_cache():
     pass
+
+
+
+def test_build_module_fails():
+    "Test NimCompileException"
+
+
+def test_build_library_fails():
+    "Test NimInvokeException"
