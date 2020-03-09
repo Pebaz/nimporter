@@ -31,6 +31,15 @@ def test_temp_change_directory():
         temp_dir.rmdir()
 
 
+def test_build_artifact_location():
+    "Make sure that the expected location to the build artifact is returned."
+    module_path = Path('tests/pkg1/mod1.nim').absolute()
+    ext = NimCompiler.EXT
+    expected_path = Path('tests/pkg1/__pycache__/mod1' + ext).absolute()
+
+    assert NimCompiler.build_artifact(module_path).absolute() == expected_path
+
+
 def test_pycache_dir():
     "Make sure that the correct path to the __pycache__ dir is returned."
     module_path = Path('tests/pkg1/mod1.nim').absolute()
@@ -51,10 +60,17 @@ def test_ignore_cache():
     pass
 
 
-
 def test_build_module_fails():
     "Test NimCompileException"
 
 
 def test_build_library_fails():
     "Test NimInvokeException"
+
+
+def test_ensure_nimpy():
+    "Make sure that Nimpy can be installed."
+
+
+def test_find_nim_std_lib():
+    "Make sure that Nim's standard library can be found."
