@@ -10,9 +10,11 @@ def clean(dir=pathlib.Path()):
     for folder in filter(lambda p: p.is_dir(), dir.iterdir()):
         if folder.name == '__pycache__':
             for item in folder.iterdir():
+                if not item.exists():
+                    continue
                 if item.suffix in ('.hash', NimCompiler.EXT):
-                    print('Deleted:'.ljust(19), item.resolve())
                     item.unlink()
+                    print('Deleted:'.ljust(19), item.resolve())
         else:
             clean(folder)
 
