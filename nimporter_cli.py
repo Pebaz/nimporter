@@ -2,7 +2,7 @@
 Iterates through all sub directories and removes any build artifacts and hashes.
 """
 
-import sys, pathlib, argparse
+import sys, os, pathlib, argparse
 from nimporter import NimCompiler
 
 def clean(dir=pathlib.Path()):
@@ -13,7 +13,7 @@ def clean(dir=pathlib.Path()):
                 if not item.exists():
                     continue
                 if item.suffix in ('.hash', NimCompiler.EXT):
-                    item.unlink()
+                    os.remove(str(item.resolve()))
                     print('Deleted:'.ljust(19), item.resolve())
         else:
             clean(folder)

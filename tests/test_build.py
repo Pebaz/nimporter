@@ -3,6 +3,7 @@ Test to make sure that the basic action of building Nim code works.
 Do not import Nim files directly, rather, test to make sure that they can build.
 """
 
+import sys
 from pathlib import Path
 import nimporter
 from nimporter import NimCompiler
@@ -46,6 +47,65 @@ def test_pycache_dir():
     expected_pycache = Path('tests/pkg1/__pycache__').absolute()
 
     assert NimCompiler.pycache_dir(module_path).absolute() == expected_pycache
+
+
+def test_invoke_compiler():
+    "Make sure that you can invoke the compiler as well as any executable."
+
+    # Test that any program can be called
+    gold_out = 'Hello World!\n'
+    out, err, war, hin = NimCompiler.invoke_compiler(['echo', gold_out.strip()])
+    assert out == gold_out
+
+
+def test_invoke_compiler_success():
+    "Test that warnings are propagated"
+    warn_file = Path('tests/pkg1/warn.nim').resolve()
+    ext = '.exe' if sys.platform == 'win32' else ''
+    out_file = Path('tests/pkg1/warn' + ext).resolve()
+
+    try:
+        out, err, war, hin = NimCompiler.invoke_compiler([
+            'nim', 'c', str(warn_file)
+        ])
+
+        assert out_file.exists()
+        assert any("Warning: imported and not used: 'tables'" in i for i in war)
+        assert any('Hint: system [Processing]' in i for i in hin)
+
+    finally:
+        if out_file.exists(): out_file.unlink()
+    
+
+def test_invoke_compiler_failure():
+    "Make sure that the compiler fails on bad input."
+    err_file = Path('tests/pkg1/error.nim').resolve()
+    ext = '.exe' if sys.platform == 'win32' else ''
+    out_file = Path('tests/pkg1/error' + ext).resolve()
+
+    try:
+        out, err, war, hin = NimCompiler.invoke_compiler([
+            'nim', 'c', str(err_file)
+        ])
+
+        assert not out_file.exists()
+        assert any('Error: cannot open file: fallacy' in i for i in err)
+        assert any('Hint: system [Processing]' in i for i in hin)
+
+    finally:
+        if out_file.exists(): out_file.unlink()
+
+
+
+
+
+
+"Make sure the appropriate Exception is thrown for compilation failures."
+
+
+
+
+
 
 
 def test_custom_build_switches():
