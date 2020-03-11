@@ -3,7 +3,7 @@ Test to make sure that the basic action of building Nim code works.
 Do not import Nim files directly, rather, test to make sure that they can build.
 """
 
-import sys
+import sys, shutil
 from pathlib import Path
 import nimporter
 from nimporter import NimCompiler
@@ -96,15 +96,34 @@ def test_invoke_compiler_failure():
         if out_file.exists(): out_file.unlink()
 
 
+def test_ensure_nimpy():
+    "Make sure that the Nimpy library can be installed."
+    assert shutil.which('nim'), 'Nim compiler is not installed or not on path'
+
+    # Make sure it is not installed
+    out = NimCompiler.invoke_compiler('nimble path nimpy'.split())
+
+    # Remove it
+    if out[0]:
+        out = NimCompiler.invoke_compiler('nimble uninstall nimpy --accept'.split())
+        assert not out[1]
+
+    # Install/verify it is already installed
+    NimCompiler.ensure_nimpy()
+
+    # Check installation code path
+    NimCompiler.ensure_nimpy()
+
+    # Verify that it is actuall installed according to Nimble
+    out = NimCompiler.invoke_compiler('nimble path nimpy'.split())
+    assert out[0] and not out[1]
+
+
 
 
 
 
 "Make sure the appropriate Exception is thrown for compilation failures."
-
-
-
-
 
 
 
@@ -126,10 +145,6 @@ def test_build_module_fails():
 
 def test_build_library_fails():
     "Test NimInvokeException"
-
-
-def test_ensure_nimpy():
-    "Make sure that Nimpy can be installed."
 
 
 def test_find_nim_std_lib():
