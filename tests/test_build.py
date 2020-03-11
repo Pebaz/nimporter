@@ -3,7 +3,7 @@ Test to make sure that the basic action of building Nim code works.
 Do not import Nim files directly, rather, test to make sure that they can build.
 """
 
-import sys, shutil
+import sys, os, shutil
 from pathlib import Path
 import nimporter
 from nimporter import NimCompiler
@@ -131,6 +131,20 @@ def test_get_import_prefix():
 
 def test_find_nim_std_lib():
     "Make sure that Nim's standard library can be found."
+    assert shutil.which('nim'), 'Nim compiler is not installed or not on path'
+    assert NimCompiler.find_nim_std_lib(), (
+        "Can't find Nim stdlib even though it is installed"
+    )
+
+    # Now test failure condition by making Nim disappear
+    environ = os.environ.copy()
+    try:
+        os.environ['PATH'] = ''
+        assert not shutil.which('nim')
+        assert not NimCompiler.find_nim_std_lib()
+    finally:
+        os.environ.clear()
+        os.environ.update(environ)
 
 
 

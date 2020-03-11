@@ -186,9 +186,10 @@ class NimCompiler:
 
     @classmethod
     def find_nim_std_lib(cls):
-        nimexe = Path(shutil.which('nim'))
+        nimexe = shutil.which('nim')
         if not nimexe:
             return None
+        nimexe = Path(nimexe)
         result = nimexe.parent / '../lib'
         if not (result / 'system.nim').exists():
             result = nimexe.resolve().parent / '../lib'
