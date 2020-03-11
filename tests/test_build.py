@@ -6,7 +6,7 @@ Do not import Nim files directly, rather, test to make sure that they can build.
 import sys, os, shutil
 from pathlib import Path
 import nimporter
-from nimporter import NimCompiler
+from nimporter import NimCompiler, NimporterException
 from nimporter_cli import clean
 
 
@@ -180,8 +180,47 @@ def test_custom_build_switches():
         sys.platform = old_platform
 
 
+def test_build_module():
+    "Test that a given Nim module can produce a Python extension module."
+    with nimporter.cd('tests'):
+        module = Path('mod_a.nim')
+        output = NimCompiler.build_artifact(module)
+        artifact = NimCompiler.compile_nim_code(module, output, library=False)
+
+        assert artifact.exists()
+        assert artifact.parent == output.parent
 
 
+def test_build_library():
+    "Test that a given Nim module can produce a Python extension library."
+    with nimporter.cd('tests'):
+        module = Path('lib1/lib1.nim')
+        output = NimCompiler.build_artifact(module)
+        artifact = NimCompiler.compile_nim_code(module, output, library=True)
+
+        assert artifact.exists()
+        assert artifact.parent == output.parent
+
+        '''
+        EITHER:
+        1. REMOVE THE FUNCTIONALITY OF THE THIRD WAY TO COMPILE MODS/LIBS/ETC.
+        2. SOMEHOW FIX THE FACT THAT MODULE_PATH NEEDS TO BE JUST THE FILENAME.
+        '''
+
+def test_build_module_fails():
+    "Test NimCompileException"
+
+    # AMONG OTHER THINGS:
+
+    try:
+        fake = Path('nonesense.nim')
+        NimCompiler.compile_nim_code(fake, None, library=True)
+        assert False, "Should throw exception. File doesn't exist: " + str(fake)
+    except NimporterException:
+        "Expected result"
+
+def test_build_library_fails():
+    "Test NimInvokeException"
 
 
 def test_custom_build_switches_per_platform():
@@ -192,12 +231,6 @@ def test_ignore_cache():
     pass
 
 
-def test_build_module_fails():
-    "Test NimCompileException"
-
-
-def test_build_library_fails():
-    "Test NimInvokeException"
 
 
 "Make sure the appropriate Exception is thrown for compilation failures."
