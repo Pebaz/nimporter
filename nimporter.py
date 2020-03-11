@@ -198,6 +198,15 @@ class NimCompiler:
         return result.resolve()
 
     @classmethod
+    def get_switches(cls, switch_file, **global_scope):
+        global_scope = global_scope.copy()
+        assert switch_file.exists(), (
+            'Cannot open nonexistent switch file: ' + str(switch_file)
+        )
+        exec(switch_file.read_text(), global_scope)
+        return global_scope['__switches__']
+
+    @classmethod
     def compile_nim_extension(cls, module_path, root, *, library: bool):
         """
         Compiles/returns an Extension and installs `.nimble` dependencies.
@@ -248,14 +257,22 @@ class NimCompiler:
 
         # Switches file found
         if switch_file.exists():
-            switch_script = switch_file.read_text()
-            global_scope = {
-                'MODULE_PATH' : module_path,
-                'BUILD_DIR' : build_dir,
-                'IS_LIBRARY' : library
-            }
-            exec(switch_script, global_scope)
-            nim_args = global_scope['__switches__']['bundle']
+            switches = cls.get_switches(
+                switch_file,
+                MODULE_PATH=module_path,
+                BUILD_DIR=build_dir,
+                IS_LIBRARY=library
+            )
+            nim_args = switches['bundle']
+
+            # switch_script = switch_file.read_text()
+            # global_scope = {
+            #     'MODULE_PATH' : module_path,
+            #     'BUILD_DIR' : build_dir,
+            #     'IS_LIBRARY' : library
+            # }
+            # exec(switch_script, global_scope)
+            # nim_args = global_scope['__switches__']['bundle']
 
         # Use standard switches
         else:
@@ -333,15 +350,24 @@ class NimCompiler:
 
         # Switches file found
         if switch_file.exists():
-            switch_script = switch_file.read_text()
-            global_scope = {
-                'MODULE_PATH' : module_path,
-                'BUILD_ARTIFACT' : build_artifact,
-                'BUILD_DIR' : None,  # Necessary for import/bundle compatibility
-                'IS_LIBRARY' : library
-            }
-            exec(switch_script, global_scope)
-            nim_args = global_scope['__switches__']['import']
+            switches = cls.get_switches(
+                switch_file,
+                MODULE_PATH=module_path,
+                BUILD_ARTIFACT=build_artifact,
+                BUILD_DIR=None,  # Necessary for import/bundle compatibility
+                IS_LIBRARY=library
+            )
+            nim_args = switches['import']
+
+            # switch_script = switch_file.read_text()
+            # global_scope = {
+            #     'MODULE_PATH' : module_path,
+            #     'BUILD_ARTIFACT' : build_artifact,
+            #     'BUILD_DIR' : None,  # Necessary for import/bundle compatibility
+            #     'IS_LIBRARY' : library
+            # }
+            # exec(switch_script, global_scope)
+            # nim_args = global_scope['__switches__']['import']
 
         # Use standard switches
         else:
