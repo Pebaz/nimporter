@@ -119,6 +119,18 @@ def test_ensure_nimpy():
     assert out[0] and not out[1]
 
 
+def test_get_import_prefix():
+    "Make sure that the right namespace is returned for a given module path."
+    module_path1 = Path('pkg1/mod1.nim')
+    module_path2 = Path('pkg1/pkg2/mod2.nim')
+    gold1 = 'pkg1', 'mod1.nim'
+    gold2 = 'pkg1', 'pkg2', 'mod2.nim'
+    assert NimCompiler.get_import_prefix(module_path1, Path()) == gold1
+    assert NimCompiler.get_import_prefix(module_path2, Path()) == gold2
+
+
+def test_find_nim_std_lib():
+    "Make sure that Nim's standard library can be found."
 
 
 
@@ -147,5 +159,3 @@ def test_build_library_fails():
     "Test NimInvokeException"
 
 
-def test_find_nim_std_lib():
-    "Make sure that Nim's standard library can be found."
