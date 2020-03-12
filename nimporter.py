@@ -51,7 +51,7 @@ class NimCompileException(NimporterException):
         self.nim_module = Path(mod)
         line, col = line_col.split(',')
         self.line = int(line)
-        self.col = int(col[:-1])
+        self.col = int(col.replace(')', ''))
         self.error_msg = error_msg
         
     def __str__(self):
@@ -133,15 +133,25 @@ class NimCompiler:
         """
         Returns the Path to the built .PYD or .SO. Does not imply it has already
         been built.
+
+        Args:
+            module_path(Path): the path to the module or library.
+
+        Returns:
+            The path to a build artifact if compilation were to succeed. If the
+            module_path is a directory, an appropriate build artifact path
+            within that directory is returned.
         """
-        return (
-            cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
-        ).resolve()
+        filename = module_path.stem + cls.EXT
+        return (cls.pycache_dir(module_path) / filename).resolve()
 
     @classmethod
     def pycache_dir(cls, module_path):
         """Return the __pycache__ directory as a Path."""
-        return (module_path.parent / '__pycache__').resolve()
+        if module_path.is_dir():
+            return (module_path / '__pycache__').resolve()
+        else:
+            return (module_path.parent / '__pycache__').resolve()
 
     @classmethod
     def invoke_compiler(cls, nim_args: list):

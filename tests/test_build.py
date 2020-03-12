@@ -6,7 +6,9 @@ Do not import Nim files directly, rather, test to make sure that they can build.
 import sys, os, shutil
 from pathlib import Path
 import nimporter
-from nimporter import NimCompiler, NimporterException
+from nimporter import (
+    NimCompiler, NimporterException, NimCompileException, NimInvokeException
+)
 from nimporter_cli import clean
 
 
@@ -149,6 +151,8 @@ def test_find_nim_std_lib():
 
 def test_custom_build_switches():
     "Test to make sure custom build switches can be used"
+    clean(Path())
+
     switch_file = Path('tests/lib2/switches.py')
     scope = dict(
         MODULE_PATH=Path('foo/bar/baz.nim'),
@@ -204,23 +208,16 @@ def test_build_library():
         assert artifact.parent == output.parent
         assert artifact.suffix == output.suffix
 
+
 def test_build_module_fails():
     "Test NimCompileException"
+    clean(Path())
 
     # Build nonexistent file
     try:
         fake = Path('nonesense.nim')
         NimCompiler.compile_nim_code(fake, None, library=True)
         assert False, "Should throw exception. File doesn't exist: " + str(fake)
-    except NimporterException:
-        "Expected result"
-
-    # Build library using Nim module
-    try:
-        NimCompiler.compile_nim_code(
-            Path('tests/mod_b.nim'), None, library=True
-        )
-        assert False, 'Should throw exception.'
     except NimporterException:
         "Expected result"
 
@@ -231,20 +228,44 @@ def test_build_module_fails():
     except NimporterException:
         "Expected result"
 
+    # Build a module that has an error
+    try:
+        module = Path('tests/pkg1/error.nim')
+        output = NimCompiler.build_artifact(module)
+        NimCompiler.compile_nim_code(module, output, library=False)
+        assert False, 'Should throw exception.'
+    except NimCompileException:
+        "Expected result"
+
+
+def test_build_library_fails():
+    "Test NimInvokeException"
+    clean(Path())
+
+    # Build library using Nim module
+    try:
+        NimCompiler.compile_nim_code(
+            Path('tests/mod_b.nim'), None, library=True
+        )
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
+    # Build a library that has an error
+    try:
+        module = Path('tests/lib4')
+        output = NimCompiler.build_artifact(module)
+        NimCompiler.compile_nim_code(module, output, library=True)
+        assert False, 'Should throw exception.'
+    except NimInvokeException:
+        "Expected result"
+
     # Build a library that doesn't have a Nimble file
     try:
         NimCompiler.compile_nim_code(Path('tests/lib3'), None, library=True)
         assert False, 'Should throw exception.'
     except NimporterException:
         "Expected result"
-
-
-def test_build_library_fails():
-    "Test NimInvokeException"
-
-
-def test_custom_build_switches_per_platform():
-    "Test to make sure that different switches are returned per platform."
 
 
 def test_ignore_cache():
