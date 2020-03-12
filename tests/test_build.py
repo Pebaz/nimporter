@@ -201,7 +201,7 @@ def test_build_library():
     clean(Path())
     with nimporter.cd('tests'):
         module = Path('lib1')
-        output = NimCompiler.build_artifact(module / 'lib1.nim')
+        output = NimCompiler.build_artifact(module)
         artifact = NimCompiler.compile_nim_code(module, output, library=True)
 
         assert artifact.exists()
