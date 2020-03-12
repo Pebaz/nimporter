@@ -197,29 +197,47 @@ def test_build_library():
     clean(Path())
     with nimporter.cd('tests'):
         module = Path('lib1')
-        output = NimCompiler.build_artifact(module)
+        output = NimCompiler.build_artifact(module / 'lib1.nim')
         artifact = NimCompiler.compile_nim_code(module, output, library=True)
 
         assert artifact.exists()
-        #assert artifact.parent == output.parent
-
-        '''
-        EITHER:
-        1. REMOVE THE FUNCTIONALITY OF THE THIRD WAY TO COMPILE MODS/LIBS/ETC.
-        2. SOMEHOW FIX THE FACT THAT MODULE_PATH NEEDS TO BE JUST THE FILENAME.
-        '''
+        assert artifact.parent == output.parent
+        assert artifact.suffix == output.suffix
 
 def test_build_module_fails():
     "Test NimCompileException"
 
-    # AMONG OTHER THINGS:
-
+    # Build nonexistent file
     try:
         fake = Path('nonesense.nim')
         NimCompiler.compile_nim_code(fake, None, library=True)
         assert False, "Should throw exception. File doesn't exist: " + str(fake)
     except NimporterException:
         "Expected result"
+
+    # Build library using Nim module
+    try:
+        NimCompiler.compile_nim_code(
+            Path('tests/mod_b.nim'), None, library=True
+        )
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
+    # Build module using library path
+    try:
+        NimCompiler.compile_nim_code(Path('tests/lib1'), None, library=False)
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
+    # Build a library that doesn't have a Nimble file
+    try:
+        NimCompiler.compile_nim_code(Path('tests/lib3'), None, library=True)
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
 
 def test_build_library_fails():
     "Test NimInvokeException"

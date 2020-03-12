@@ -136,12 +136,12 @@ class NimCompiler:
         """
         return (
             cls.pycache_dir(module_path) / (module_path.stem + cls.EXT)
-        )
+        ).resolve()
 
     @classmethod
     def pycache_dir(cls, module_path):
         """Return the __pycache__ directory as a Path."""
-        return module_path.parent / '__pycache__'
+        return (module_path.parent / '__pycache__').resolve()
 
     @classmethod
     def invoke_compiler(cls, nim_args: list):
