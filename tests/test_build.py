@@ -3,7 +3,8 @@ Test to make sure that the basic action of building Nim code works.
 Do not import Nim files directly, rather, test to make sure that they can build.
 """
 
-import sys, os, shutil
+import sys, os, shutil, io
+from contextlib import redirect_stderr
 from pathlib import Path
 import nimporter
 from nimporter import (
@@ -190,10 +191,14 @@ def test_build_module():
     with nimporter.cd('tests'):
         module = Path('mod_a.nim')
         output = NimCompiler.build_artifact(module)
-        artifact = NimCompiler.compile_nim_code(module, output, library=False)
+
+        f = io.StringIO()
+        with redirect_stderr(f):
+            artifact = NimCompiler.compile_nim_code(module, output, library=False)
 
         assert artifact.exists()
         assert artifact.parent == output.parent
+        assert 'Warning:' in f.getvalue()
 
 
 def test_build_library():
