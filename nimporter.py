@@ -331,6 +331,16 @@ class NimCompiler:
                 f'{module_path.absolute()} does not exist.'
             )
 
+        if library and module_path.is_file():
+            raise NimporterException(
+                'Librarys are built using folder name, not specific Nim module'
+            )
+
+        elif not library and module_path.is_dir():
+            raise NimporterException(
+                'Modules are built using module name, not containing folder'
+            )
+
         if module_path.is_file():
             library_path = module_path.parent.resolve()
 
