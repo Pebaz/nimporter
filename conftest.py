@@ -8,7 +8,3 @@ import pathlib, nimporter_cli
 
 def pytest_sessionstart(session):
     nimporter_cli.clean(pathlib.Path())
-
-
-def pytest_sessionfinish(session, exitstatus):
-    nimporter_cli.clean(pathlib.Path())

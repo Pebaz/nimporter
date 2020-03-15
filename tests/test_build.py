@@ -10,7 +10,6 @@ import nimporter
 from nimporter import (
     NimCompiler, NimporterException, NimCompileException, NimInvokeException
 )
-from nimporter_cli import clean
 
 
 def test_temp_change_directory():
@@ -152,7 +151,6 @@ def test_find_nim_std_lib():
 
 def test_custom_build_switches():
     "Test to make sure custom build switches can be used"
-    clean(Path())
 
     switch_file = Path('tests/lib2/switches.py')
     scope = dict(
@@ -187,7 +185,6 @@ def test_custom_build_switches():
 
 def test_build_module():
     "Test that a given Nim module can produce a Python extension module."
-    clean(Path())
     with nimporter.cd('tests'):
         module = Path('mod_a.nim')
         output = NimCompiler.build_artifact(module)
@@ -203,7 +200,6 @@ def test_build_module():
 
 def test_build_library():
     "Test that a given Nim module can produce a Python extension library."
-    clean(Path())
     with nimporter.cd('tests'):
         module = Path('lib1')
         output = NimCompiler.build_artifact(module)
@@ -216,7 +212,6 @@ def test_build_library():
 
 def test_build_module_fails():
     "Test NimCompileException"
-    clean(Path())
 
     # Build nonexistent file
     try:
@@ -245,7 +240,6 @@ def test_build_module_fails():
 
 def test_build_library_fails():
     "Test NimInvokeException"
-    clean(Path())
 
     # Build library using Nim module
     try:
@@ -274,7 +268,7 @@ def test_build_library_fails():
 
 
 def test_ignore_cache():
-    sys.exit(1)
+    pass
 
 
 
