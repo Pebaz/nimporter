@@ -569,7 +569,9 @@ class Nimporter:
 
             if cls.should_compile(module_path):
                 NimCompiler.compile_nim_code(
-                    module_path, build_artifact, library=library
+                    module_path.parent if library else module_path,
+                    build_artifact,
+                    library=library
                 )
 
                 Nimporter.update_hash(module_path)
