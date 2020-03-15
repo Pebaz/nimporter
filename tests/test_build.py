@@ -274,7 +274,7 @@ def test_build_library_fails():
 
 
 def test_ignore_cache():
-    pass
+    sys.exit(1)
 
 
 
