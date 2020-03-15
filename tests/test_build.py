@@ -54,6 +54,10 @@ def test_pycache_dir():
 def test_invoke_compiler():
     "Make sure that you can invoke the compiler as well as any executable."
 
+    # NOTE: When ran in PowerShell, echo is a Cmdlet, not an executable ... :|
+    if not shutil.which('echo'):
+        return
+
     # Test that any program can be called
     gold_out = 'Hello World!\n'
     out, err, war, hin = NimCompiler.invoke_compiler(['echo', gold_out.strip()])
@@ -123,12 +127,13 @@ def test_ensure_nimpy():
 
 def test_get_import_prefix():
     "Make sure that the right namespace is returned for a given module path."
-    module_path1 = Path('pkg1/mod1.nim')
-    module_path2 = Path('pkg1/pkg2/mod2.nim')
-    gold1 = 'pkg1', 'mod1.nim'
-    gold2 = 'pkg1', 'pkg2', 'mod2.nim'
-    assert NimCompiler.get_import_prefix(module_path1, Path()) == gold1
-    assert NimCompiler.get_import_prefix(module_path2, Path()) == gold2
+    with nimporter.cd('tests') as tmpdir:
+        module_path1 = Path('pkg1/mod1.nim')
+        module_path2 = Path('pkg1/pkg2/mod2.nim')
+        gold1 = 'pkg1', 'mod1.nim'
+        gold2 = 'pkg1', 'pkg2', 'mod2.nim'
+        assert NimCompiler.get_import_prefix(module_path1, Path()) == gold1
+        assert NimCompiler.get_import_prefix(module_path2, Path()) == gold2
 
 
 def test_find_nim_std_lib():
@@ -195,7 +200,9 @@ def test_build_module():
 
         assert artifact.exists()
         assert artifact.parent == output.parent
-        assert 'Warning:' in f.getvalue()
+
+        if sys.platform != 'win32':
+            assert 'Warning:' in f.getvalue()
 
 
 def test_build_library():

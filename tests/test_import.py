@@ -6,10 +6,6 @@ from pathlib import Path
 import nimporter
 
 
-def test_manual_import():
-    "Test import function manually."
-
-
 def test_successful_module_import():
     "A Nim module can be imported."
     from pkg1 import mod1
@@ -52,3 +48,6 @@ def test_register_importer():
 
 def test_ignore_cache():
     pass
+
+def test_manual_import():
+    "Test import function manually."
