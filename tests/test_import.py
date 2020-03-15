@@ -48,3 +48,7 @@ def test_successful_library_import():
 
 def test_register_importer():
     pass
+
+
+def test_ignore_cache():
+    pass

@@ -265,13 +265,3 @@ def test_build_library_fails():
         assert False, 'Should throw exception.'
     except NimporterException:
         "Expected result"
-
-
-def test_ignore_cache():
-    pass
-
-
-
-
-"Make sure the appropriate Exception is thrown for compilation failures."
-
