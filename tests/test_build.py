@@ -4,7 +4,7 @@ Do not import Nim files directly, rather, test to make sure that they can build.
 """
 
 import sys, os, shutil, io
-from contextlib import redirect_stderr
+from contextlib import redirect_stdout
 from pathlib import Path
 import nimporter
 from nimporter import (
@@ -195,14 +195,12 @@ def test_build_module():
         output = NimCompiler.build_artifact(module)
 
         f = io.StringIO()
-        with redirect_stderr(f):
+        with redirect_stdout(f):
             artifact = NimCompiler.compile_nim_code(module, output, library=False)
 
         assert artifact.exists()
         assert artifact.parent == output.parent
-
-        if sys.platform != 'win32':
-            assert 'Warning:' in f.getvalue()
+        assert 'Warning:' in f.getvalue()
 
 
 def test_build_library():
