@@ -2,8 +2,11 @@
 Test to make sure that Nim files can be built upon import successfully.
 """
 
+import sys
 from pathlib import Path
-from nimporter import NimCompiler, Nimporter, NimporterException
+from nimporter import (
+    NimCompiler, Nimporter, NimporterException, NimLibImporter, NimModImporter
+)
 
 
 def test_successful_module_import():
@@ -66,14 +69,21 @@ def test_successful_library_import():
 
 
 def test_register_importer():
-    pass
+    "Make sure that the importers registered by Nimporter actually exist."
+    assert sys.meta_path[0] == NimLibImporter
+    assert sys.meta_path[-1] == NimModImporter
 
 
 def test_ignore_cache():
     pass
 
+
 def test_manual_import():
     "Test import function manually."
+
+    assert Nimporter.import_nim_module('pkg3.mod3')
+    #assert Nimporter.import_nim_module('mod_b')
+
 
 def test_modify_module():
     "Module is rebuilt when the source file changes."

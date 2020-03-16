@@ -487,7 +487,7 @@ class Nimporter:
             file.write(cls.hash_file(module_path))
 
     @classmethod
-    def import_nim_module(cls, fullname, path:list=None, ignore_cache=False):
+    def import_nim_module(cls, fullname, path:list=None, ignore_cache=None):
         """
         Can be used to explicitly import a module rather than using the `import`
         keyword. Allows the cache to be ignored to solve issues arising from
@@ -511,7 +511,7 @@ class Nimporter:
         spec = cls.find_spec(fullname, path)
 
         # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
-        if ignore_cache:
+        if ignore_cache or IGNORE_CACHE:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
             build_artifact = NimCompiler.build_artifact(module_path)
             NimCompiler.compile_nim_code(
@@ -529,13 +529,6 @@ class Nimporter:
             return util.module_from_spec(spec)
         else:
             raise ImportError(f'No module named {fullname}')
-
-    @classmethod
-    def compile_nim_module(cls, fullname, path:list=None, cli_args:list=None):
-        """
-        Import a Nim module after compiling it using exact command line given in
-        the cli_args variable.
-        """
 
     @classmethod
     def import_nim_code(cls, fullname, path, *, library: bool):
