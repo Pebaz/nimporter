@@ -239,8 +239,8 @@ def test_build_module_fails():
         output = NimCompiler.build_artifact(module)
         NimCompiler.compile_nim_code(module, output, library=False)
         assert False, 'Should throw exception.'
-    except NimCompileException:
-        "Expected result"
+    except NimCompileException as e:
+        assert str(e)
 
 
 def test_build_library_fails():
@@ -261,8 +261,9 @@ def test_build_library_fails():
         output = NimCompiler.build_artifact(module)
         NimCompiler.compile_nim_code(module, output, library=True)
         assert False, 'Should throw exception.'
-    except NimInvokeException:
-        "Expected result"
+    except NimInvokeException as e:
+        assert str(e)
+        assert e.get_output()
 
     # Build a library that doesn't have a Nimble file
     try:

@@ -31,7 +31,9 @@ def test_hash_coincides():
     "Make sure an imported Nim module's hash matches the actual source file."
     from pkg1 import mod1
     assert not Nimporter.hash_changed(Path('tests/pkg1/mod1.nim'))
-    
+
+def test_hash_not_there():
+    "Make sure an exception is thrown when a module is not hashed."
 
 def test_hash():
     "Make sure when a module is modified it's hash is also."

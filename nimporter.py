@@ -89,7 +89,7 @@ class NimInvokeException(NimporterException):
         self.cwd = Path(cwd).resolve()
         self.cmd_line = cmd_line
         self.err_msg = err_msg
-        self.out = ''
+        self.out = out
 
     def get_output(self):
         return self.out
