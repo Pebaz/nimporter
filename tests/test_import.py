@@ -89,6 +89,10 @@ def test_manual_import():
     assert lib
     assert lib.func1
 
+    mod2 = Nimporter.import_nim_module('baz', ['tests/pkg3/foo/bar'])
+    assert mod2
+    assert mod2.func1
+
 
 def test_modify_module():
     "Module is rebuilt when the source file changes."
