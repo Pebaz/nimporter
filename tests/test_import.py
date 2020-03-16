@@ -81,8 +81,13 @@ def test_ignore_cache():
 def test_manual_import():
     "Test import function manually."
 
-    assert Nimporter.import_nim_module('pkg3.mod3')
-    #assert Nimporter.import_nim_module('mod_b')
+    mod = Nimporter.import_nim_module('pkg3.mod3')
+    assert mod
+    assert mod.func1
+
+    lib = Nimporter.import_nim_module('pkg3.lib5', ['tests/pkg3/lib5'])
+    assert lib
+    assert lib.func1
 
 
 def test_modify_module():

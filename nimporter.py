@@ -508,14 +508,20 @@ class Nimporter:
         Returns:
             The Python Module object representing the imported PYD or SO file.            
         """
-        spec = cls.find_spec(fullname, path)
+        spec = (
+            cls.import_nim_code(fullname, path, library=False)
+            or
+            cls.import_nim_code(fullname, path, library=True)
+        )
 
-        '''
-        spec = cls.import_nim_code(...)
+        if not spec:
+            raise ImportError(f'No module named {fullname}')
+
         module = spec.loader.create_module(spec)
         return module
-        '''
+        
 
+        spec = cls.find_spec(fullname, path)
 
         # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache or IGNORE_CACHE:
