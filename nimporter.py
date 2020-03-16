@@ -508,40 +508,25 @@ class Nimporter:
         Returns:
             The Python Module object representing the imported PYD or SO file.            
         """
-        spec = (
-            cls.import_nim_code(fullname, path, library=False)
-            or
-            cls.import_nim_code(fullname, path, library=True)
-        )
+        global IGNORE_CACHE
+
+        tmp = IGNORE_CACHE
+        IGNORE_CACHE = ignore_cache
+
+        try:
+            spec = (
+                cls.import_nim_code(fullname, path, library=False)
+                or
+                cls.import_nim_code(fullname, path, library=True)
+            )
+        finally:
+            IGNORE_CACHE = tmp
 
         if not spec:
             raise ImportError(f'No module named {fullname}')
 
         module = spec.loader.create_module(spec)
         return module
-        
-
-        spec = cls.find_spec(fullname, path)
-
-        # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
-        if ignore_cache or IGNORE_CACHE:
-            nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
-            build_artifact = NimCompiler.build_artifact(module_path)
-            NimCompiler.compile_nim_code(
-                nim_module,
-                build_artifact,
-                library=any(nim_module.parent.glob('*.nimble'))
-            )
-            sys.path_importer_cache.clear()
-            importlib.invalidate_caches()
-            if spec.name in sys.modules:
-                sys.modules.pop(spec.name)
-            spec = cls.find_spec(fullname, path)
-
-        if spec:
-            return util.module_from_spec(spec)
-        else:
-            raise ImportError(f'No module named {fullname}')
 
     @classmethod
     def import_nim_code(cls, fullname, path, *, library: bool):
