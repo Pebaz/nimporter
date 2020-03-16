@@ -448,7 +448,7 @@ class Nimporter:
         """Returns the bits of the hash for a given Nim module."""
         if not cls.is_hashed(module_path):
             path = module_path.absolute()
-            raise Exception(f'Module {path} has not yet been hashed.')
+            raise NimporterException(f'Module {path} has not yet been hashed.')
         return cls.hash_filename(module_path).read_bytes()
 
     @classmethod

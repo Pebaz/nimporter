@@ -3,7 +3,7 @@ Test to make sure that Nim files can be built upon import successfully.
 """
 
 from pathlib import Path
-from nimporter import NimCompiler, Nimporter
+from nimporter import NimCompiler, Nimporter, NimporterException
 
 
 def test_successful_module_import():
@@ -32,8 +32,15 @@ def test_hash_coincides():
     from pkg1 import mod1
     assert not Nimporter.hash_changed(Path('tests/pkg1/mod1.nim'))
 
+
 def test_hash_not_there():
     "Make sure an exception is thrown when a module is not hashed."
+    try:
+        Nimporter.get_hash(Path('tests/lib4/lib4.nim'))
+        assert False, 'Exception should have been thrown.'
+    except NimporterException:
+        "Expected case"
+
 
 def test_hash():
     "Make sure when a module is modified it's hash is also."
