@@ -510,6 +510,13 @@ class Nimporter:
         """
         spec = cls.find_spec(fullname, path)
 
+        '''
+        spec = cls.import_nim_code(...)
+        module = spec.loader.create_module(spec)
+        return module
+        '''
+
+
         # NOTE(pebaz): Compile the module anyway if ignore_cache is set.
         if ignore_cache or IGNORE_CACHE:
             nim_module = Path(spec.origin).parent.parent / (spec.name + '.nim')
