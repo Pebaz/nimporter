@@ -56,10 +56,12 @@ def test_build_extension_library():
 def test_build_all_extensions():
     "Make sure all extensions within a project are compiled correctly."
 
+    extension_names = {'proj1.lib1', 'proj1.performance'}
     extensions = Nimporter.build_nim_extensions(Path('tests/proj1'))
     assert len(extensions) == 2
-    
+
     for ext in extensions:
+        assert ext.name in extension_names
         assert isinstance(ext, Extension)
         #assert ext.name == 'proj1.lib1'
 
