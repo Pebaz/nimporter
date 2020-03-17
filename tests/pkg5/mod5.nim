@@ -1,5 +1,14 @@
 import typetraits, json, tables, nimpy
 
+type
+    MyObject = object
+      a: int
+      b: seq[bool]
+      c: string
+  
+    MyRefObject = ref MyObject
+
+
 proc return_bool(): bool {.exportpy.} =
     return true
 
@@ -26,6 +35,14 @@ proc return_dict(): Table[string, int] {.exportpy.} =
         "Protodip" : 28,
         "Yelbu": 23
     }.toTable
+
+
+proc return_object(): MyObject {.exportpy.} =
+    var obj = MyObject()
+    obj.a = 123
+    obj.b = @[true, false, true]
+    obj.c = "Hello World!"
+    return obj
 
 
 
@@ -57,3 +74,10 @@ proc receive_dict(val: JsonNode): bool {.exportpy.} =
     res = res and val["Height"].getFloat() > 5
     res = res and val["Height"].getFloat() < 7
     return val.type.name == "JsonNode" and res
+
+
+proc receive_object(val: MyObject): bool {.exportpy.} =
+    var res = val.a == 123
+    res = res and val.b == @[true, false, true]
+    res = res and val.c == "Hello World!"
+    return res

@@ -85,6 +85,8 @@ def test_correct_data_types_from_nim():
     assert isinstance(mod5.return_str(), str)
     assert isinstance(mod5.return_list(), list)
     assert isinstance(mod5.return_dict(), dict)
+    assert isinstance(mod5.return_object(), dict)
+    print(mod5.return_object())
 
 
 def test_correct_data_types_to_nim():
@@ -97,3 +99,4 @@ def test_correct_data_types_to_nim():
     assert mod5.receive_str('Hello World!')
     assert mod5.receive_list([1, 2, 3])
     assert mod5.receive_dict(dict(Name='Pebaz', Age=25, Alive=True, Height=6.2))
+    assert mod5.receive_object(mod5.return_object())
