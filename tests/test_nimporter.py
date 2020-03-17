@@ -40,9 +40,11 @@ def test_hash():
     assert Nimporter.hash_file(module) == original_hash
 
 
-    # Build Once
-    output = NimCompiler.build_artifact(module)
-    artifact = NimCompiler.compile_nim_code(module, output, library=False)
+def test_hash_filename():
+    "Make sure that the file used to store the hash is the correct path."
+    module = Path('tests/pkg1/mod2.nim')
+    proper_hash = Path('tests/pkg1/__pycache__/mod2.nim.hash').resolve()
+    assert Nimporter.hash_filename(module) == proper_hash
 
 
 def test_hash_coincides():
