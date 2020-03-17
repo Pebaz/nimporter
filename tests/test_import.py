@@ -2,11 +2,12 @@
 Test to make sure that Nim files can be built upon import successfully.
 """
 
-import sys
+import sys, time
 from pathlib import Path
 from nimporter import (
     NimCompiler, Nimporter, NimporterException, NimLibImporter, NimModImporter
 )
+import nimporter
 
 
 def test_successful_module_import():
@@ -74,10 +75,6 @@ def test_register_importer():
     assert sys.meta_path[-1] == NimModImporter
 
 
-def test_ignore_cache():
-    pass
-
-
 def test_manual_import():
     "Test import function manually."
 
@@ -94,9 +91,38 @@ def test_manual_import():
     assert mod2.func1
 
 
+def test_ignore_cache():
+    tenth = 100  # ms
+    CTM = lambda: round(time.time() * tenth * 10)
+
+    start = CTM()
+    mod = Nimporter.import_nim_module('pkg3.mod4')
+    assert mod
+    assert mod.func1
+    ellapsed = CTM() - start
+    assert ellapsed > tenth, 'Module was loaded from __pycache__'
+
+    start = CTM()
+    mod = Nimporter.import_nim_module('pkg3.mod4', ignore_cache=True)
+    assert mod
+    assert mod.func1
+    ellapsed2 = CTM() - start
+    assert ellapsed2 > tenth, 'Module was loaded from __pycache__'
+
+    start = CTM()
+    mod = Nimporter.import_nim_module('pkg3.mod4')
+    assert mod
+    assert mod.func1
+    ellapsed3 = CTM() - start
+    assert ellapsed3 < tenth, 'Module should have been loaded from __pycache__.'
+
+
 def test_modify_module():
     "Module is rebuilt when the source file changes."
 
+    # This can only be achieved by saving output to file and flip-flopping each
+    # time it is run.
+ 
     # Print some code to file
     # Import file
     # Run file
