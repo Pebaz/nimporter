@@ -5,8 +5,6 @@ type
       a: int
       b: seq[bool]
       c: string
-  
-    MyRefObject = ref MyObject
 
 
 proc return_bool(): bool {.exportpy.} =
