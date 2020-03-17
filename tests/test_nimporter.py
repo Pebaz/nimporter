@@ -73,3 +73,27 @@ def test_should_compile():
     assert not NimCompiler.pycache_dir(filename).exists()
     assert not Nimporter.IGNORE_CACHE
     assert Nimporter.should_compile(filename)
+
+
+def test_correct_data_types_from_nim():
+    "Make sure that Nim marshals Python objects correctly."
+    import pkg5.mod5 as mod5
+    
+    assert isinstance(mod5.return_bool(), bool)
+    assert isinstance(mod5.return_int(), int)
+    assert isinstance(mod5.return_float(), float)
+    assert isinstance(mod5.return_str(), str)
+    assert isinstance(mod5.return_list(), list)
+    assert isinstance(mod5.return_dict(), dict)
+
+
+def test_correct_data_types_to_nim():
+    "Make sure that Python marshals Python objects correctly."
+    import pkg5.mod5 as mod5
+
+    assert mod5.receive_bool(True)
+    assert mod5.receive_int(1)
+    assert mod5.receive_float(3.14)
+    assert mod5.receive_str('Hello World!')
+    assert mod5.receive_list([1, 2, 3])
+    assert mod5.receive_dict(dict(Name='Pebaz', Age=25, Alive=True, Height=6.2))
