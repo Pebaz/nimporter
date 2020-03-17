@@ -86,7 +86,6 @@ def test_correct_data_types_from_nim():
     assert isinstance(mod5.return_list(), list)
     assert isinstance(mod5.return_dict(), dict)
     assert isinstance(mod5.return_object(), dict)
-    print(mod5.return_object())
 
 
 def test_correct_data_types_to_nim():

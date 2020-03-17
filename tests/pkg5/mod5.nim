@@ -57,8 +57,8 @@ proc receive_int(val: int): bool {.exportpy.} =
 
 proc receive_float(val: float): bool {.exportpy.} =
     return val.type.name == "float" and val == 3.14
-            
-            
+
+
 proc receive_str(val: string): bool {.exportpy.} =
     return val.type.name == "string" and val == "Hello World!"
 
