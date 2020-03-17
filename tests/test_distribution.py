@@ -7,7 +7,6 @@ from pathlib import Path
 import nimporter
 from nimporter import Nimporter, NimCompiler
 
-
 def test_find_extensions():
     "Make sure that all Nim modules and libraries can be found."
     gold = {
@@ -16,7 +15,6 @@ def test_find_extensions():
     }
     for ext in Nimporter._find_extensions(Path('tests/proj1')):
         assert ext in gold
-
 
 
 def test_build_extension_module():
@@ -33,7 +31,6 @@ def test_build_extension_module():
         src = Path(source)
         assert src.suffix == '.c'
         assert src.parent in includes
-
 
 
 def test_build_extension_library():
@@ -63,7 +60,6 @@ def test_build_all_extensions():
     for ext in extensions:
         assert ext.name in extension_names
         assert isinstance(ext, Extension)
-        #assert ext.name == 'proj1.lib1'
 
         includes = set(Path(i) for i in ext.include_dirs)
 

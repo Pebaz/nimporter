@@ -633,9 +633,10 @@ class Nimporter:
             "ext_modules" keyword argument.
         """
         extensions = []
+        root = root or Path()
 
         for extension in cls._find_extensions(root, exclude_dirs):
-            ext = cls._build_nim_extension(extension, root or Path())
+            ext = cls._build_nim_extension(extension, root)
             if ext: extensions.append(ext)
 
         return extensions
