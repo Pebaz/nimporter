@@ -138,3 +138,15 @@ def test_modify_module():
     # Change file
     # Reimport file
     # Ensure different value returned
+
+    mod = Nimporter.import_nim_module('pkg3.mod5')
+    assert mod.func1() == 'Hello World!'
+    filename = Path('tests/pkg3/mod5.nim')
+    code = filename.read_text()
+    try:
+        filename.write_text(code.replace('World', 'Pebaz'))
+        assert code != filename.read_text()
+        mod = Nimporter.import_nim_module('pkg3.mod5')
+        assert mod.func1() == 'Hello Pebaz!'
+    finally:
+        filename.write_text(code)
