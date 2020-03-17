@@ -16,11 +16,6 @@ from setuptools import Extension
 from importlib import util
 
 
-# When True, will always trigger a rebuild of any Nim modules
-# Can be set by the importer of this module
-IGNORE_CACHE = False
-
-
 @contextmanager
 def cd(path):
     "Convenience function to step in and out of a directory temporarily."
@@ -419,7 +414,13 @@ class Nimporter:
     Python files, and then return it as a full Python module.
     This Nimporter can only import Nim modules with procedures exposed via the
     [Nimpy](https://github.com/yglukhov/nimpy) library acting as a bridge.
+
+    Atrributes:
+        IGNORE_CACHE(bool): when True, will always trigger a rebuild of any Nim
+            modules. Can be set by the importer of this module.
     """
+    IGNORE_CACHE = False
+
     @classmethod
     def hash_filename(cls, module_path):
         """Return the hash filename as a Path."""
@@ -508,10 +509,8 @@ class Nimporter:
         Returns:
             The Python Module object representing the imported PYD or SO file.            
         """
-        global IGNORE_CACHE
-
-        tmp = IGNORE_CACHE
-        IGNORE_CACHE = ignore_cache
+        tmp = cls.IGNORE_CACHE
+        cls.IGNORE_CACHE = ignore_cache
 
         try:
             spec = (
@@ -520,7 +519,7 @@ class Nimporter:
                 cls.import_nim_code(fullname, path, library=True)
             )
         finally:
-            IGNORE_CACHE = tmp
+            cls.IGNORE_CACHE = tmp
 
         if not spec:
             raise ImportError(f'No module named {fullname}')
@@ -576,7 +575,7 @@ class Nimporter:
     def should_compile(cls, module_path):
         "Determine if a module should be rebuilt using only the path to it."
         return any([
-            IGNORE_CACHE,
+            cls.IGNORE_CACHE,
             cls.hash_changed(module_path),
             not cls.is_cache(module_path),
             not cls.is_built(module_path)
