@@ -55,3 +55,17 @@ def test_build_extension_library():
 
 def test_build_all_extensions():
     "Make sure all extensions within a project are compiled correctly."
+
+    extensions = Nimporter.build_nim_extensions(Path('tests/proj1'))
+    assert len(extensions) == 2
+    
+    for ext in extensions:
+        assert isinstance(ext, Extension)
+        #assert ext.name == 'proj1.lib1'
+
+        includes = set(Path(i) for i in ext.include_dirs)
+
+        for source in ext.sources:
+            src = Path(source)
+            assert src.suffix == '.c'
+            assert src.parent in includes

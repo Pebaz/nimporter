@@ -310,7 +310,6 @@ class NimCompiler:
         import_prefix = cls.get_import_prefix(module_path.parent, root)
         module_part = tuple() if library else (module_name,)
         import_path = '.'.join(import_prefix + module_part)
-        #import_path = '.'.join(import_prefix + (module_name,))
 
         return Extension(
             name=import_path,
@@ -621,7 +620,7 @@ class Nimporter:
         )
 
     @classmethod
-    def build_nim_extensions(cls, exclude_dirs=[]):
+    def build_nim_extensions(cls, root=None, exclude_dirs=[]):
         """
         Compiles Nim modules and libraries to C and creates Extensions from them
         for source, binary, or wheel distribution.
@@ -634,10 +633,9 @@ class Nimporter:
             "ext_modules" keyword argument.
         """
         extensions = []
-        root = Path()
 
         for extension in cls._find_extensions(root, exclude_dirs):
-            ext = cls._build_nim_extension(extension, root)
+            ext = cls._build_nim_extension(extension, root or Path())
             if ext: extensions.append(ext)
 
         return extensions

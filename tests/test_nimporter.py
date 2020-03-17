@@ -2,6 +2,7 @@
 Test to make sure that libraries built with Nimporter can be used effectively.
 """
 
+import sys
 from pathlib import Path
 from nimporter import (
     NimCompiler, Nimporter, NimporterException, NimLibImporter, NimModImporter
