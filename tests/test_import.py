@@ -109,12 +109,21 @@ def test_ignore_cache():
     ellapsed2 = CTM() - start
     assert ellapsed2 > tenth, 'Module was loaded from __pycache__'
 
+    Nimporter.IGNORE_CACHE = True
     start = CTM()
     mod = Nimporter.import_nim_module('pkg3.mod4')
     assert mod
     assert mod.func1
     ellapsed3 = CTM() - start
-    assert ellapsed3 < tenth, 'Module should have been loaded from __pycache__.'
+    assert ellapsed3 > tenth, 'Module was loaded from __pycache__'
+    Nimporter.IGNORE_CACHE = False
+
+    start = CTM()
+    mod = Nimporter.import_nim_module('pkg3.mod4')
+    assert mod
+    assert mod.func1
+    ellapsed4 = CTM() - start
+    assert ellapsed4 < tenth, 'Module should have been loaded from __pycache__.'
 
 
 def test_modify_module():

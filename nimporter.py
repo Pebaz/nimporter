@@ -509,8 +509,9 @@ class Nimporter:
         Returns:
             The Python Module object representing the imported PYD or SO file.            
         """
-        tmp = cls.IGNORE_CACHE
-        cls.IGNORE_CACHE = ignore_cache
+        if ignore_cache != None:
+            tmp = cls.IGNORE_CACHE
+            cls.IGNORE_CACHE = ignore_cache
 
         try:
             spec = (
@@ -519,7 +520,8 @@ class Nimporter:
                 cls.import_nim_code(fullname, path, library=True)
             )
         finally:
-            cls.IGNORE_CACHE = tmp
+            if ignore_cache != None:
+                cls.IGNORE_CACHE = tmp
 
         if not spec:
             raise ImportError(f'No module named {fullname}')
