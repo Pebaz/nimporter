@@ -25,6 +25,7 @@ def test_build_extension_module():
     ext = Nimporter._build_nim_extension(module, Path('tests/proj1'))
 
     assert isinstance(ext, Extension)
+    assert ext.name == 'proj1.performance'
 
     includes = set(Path(i) for i in ext.include_dirs)
 
@@ -33,13 +34,23 @@ def test_build_extension_module():
         assert src.suffix == '.c'
         assert src.parent in includes
 
-    assert ext.name == 'proj1.performance'
 
 
 def test_build_extension_library():
     "Make sure a Nim library compiles to C and an Extension object is built."
 
-    # assert isinstance(ext, Extension)
+    library = Path('tests/proj1/proj1/lib1')
+    ext = Nimporter._build_nim_extension(library, Path('tests/proj1'))
+
+    assert isinstance(ext, Extension)
+    assert ext.name == 'proj1.lib1'
+
+    includes = set(Path(i) for i in ext.include_dirs)
+
+    for source in ext.sources:
+        src = Path(source)
+        assert src.suffix == '.c'
+        assert src.parent in includes
 
 
 def test_build_all_extensions():

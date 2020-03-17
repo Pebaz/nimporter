@@ -308,7 +308,9 @@ class NimCompiler:
 
         # Coerce proper import path using root path
         import_prefix = cls.get_import_prefix(module_path.parent, root)
-        import_path = '.'.join(import_prefix + (module_name,))
+        module_part = tuple() if library else (module_name,)
+        import_path = '.'.join(import_prefix + module_part)
+        #import_path = '.'.join(import_prefix + (module_name,))
 
         return Extension(
             name=import_path,
