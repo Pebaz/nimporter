@@ -114,3 +114,9 @@ def test_modify_module():
         )
     finally:
         filename.write_text(code)
+
+
+def test_importers():
+    "Make sure that importers are returning specs"
+    assert NimModImporter.find_spec('pkg3.mod3')
+    assert NimLibImporter.find_spec('pkg3.lib5')
