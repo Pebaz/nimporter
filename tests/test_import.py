@@ -128,25 +128,28 @@ def test_ignore_cache():
 
 def test_modify_module():
     "Module is rebuilt when the source file changes."
-
-    # This can only be achieved by saving output to file and flip-flopping each
-    # time it is run.
- 
-    # Print some code to file
-    # Import file
-    # Run file
-    # Change file
-    # Reimport file
-    # Ensure different value returned
-
-    mod = Nimporter.import_nim_module('pkg3.mod5')
-    assert mod.func1() == 'Hello World!'
+    mod_name = 'pkg3.mod5'
     filename = Path('tests/pkg3/mod5.nim')
     code = filename.read_text()
+    mod = Nimporter.import_nim_module(mod_name)
+
+    assert mod.func1() == 'Hello World!'
+    
     try:
         filename.write_text(code.replace('World', 'Pebaz'))
-        assert code != filename.read_text()
-        mod = Nimporter.import_nim_module('pkg3.mod5')
-        assert mod.func1() == 'Hello Pebaz!'
+        new_code = filename.read_text()
+
+        assert code != new_code
+        assert 'Pebaz' in new_code
+
+        # NOTE(pebaz): There is no way to reload a Nim module after it has been
+        # imported. Not even importlib.reload() works. This test will count as
+        # passing if Nimporter.hash_changed() returns True.
+        assert Nimporter.hash_changed(filename)
+        
+        mod = Nimporter.import_nim_module(
+            mod_name,
+            ignore_cache=True  # :/
+        )
     finally:
         filename.write_text(code)

@@ -566,7 +566,7 @@ class Nimporter:
                     library=library
                 )
 
-                Nimporter.update_hash(module_path)
+                cls.update_hash(module_path)
             
             return util.spec_from_file_location(
                 fullname,
