@@ -81,4 +81,35 @@ def test_install_sdist():
 
 @pytest.mark.slow_integration_test
 def test_install_bdist():
-    pass
+    "Make sure that the wheel can be installed by Pip"
+    with nimporter.cd('tests/proj1'):
+        subprocess.Popen('python3 setup.py bdist_wheel'.split()).wait()
+        dist = Path('dist')
+        build = Path('build')
+        egg = Path('project1.egg-info')
+        try:
+            assert dist.exists()
+            assert build.exists()
+            assert egg.exists()
+            targets = list(Path('dist').glob('project1*.whl'))
+            assert len(targets) == 1
+            wheel = targets[0]
+            assert wheel.exists()
+
+            pip = 'pip' if shutil.which('pip') else 'pip3'
+            subprocess.Popen(f'{pip} install {wheel}'.split()).wait()
+        finally:
+            shutil.rmtree(str(dist.absolute()))
+            shutil.rmtree(str(build.absolute()))
+            shutil.rmtree(str(egg.absolute()))
+
+    import proj1
+    assert proj1
+    assert proj1.performance
+    assert proj1.lib1
+    assert proj1.foo
+    assert proj1.bar
+    assert proj1.baz
+    assert proj1.baz() == 1
+
+    subprocess.Popen(f'{pip} uninstall project1 -y'.split()).wait()
