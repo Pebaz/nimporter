@@ -67,3 +67,30 @@ def test_build_all_extensions():
             src = Path(source)
             assert src.suffix == '.c'
             assert src.parent in includes
+
+
+def test_compilation_failures():
+    "Make sure that all expected errors are thrown."
+
+    # Doesn't exist
+    try:
+        NimCompiler.compile_nim_extension(Path('bar/baz'), None, library=False)
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
+    # No Nimble file
+    try:
+        NimCompiler.compile_nim_extension(
+            Path('tests/lib3'), None, library=True
+        )
+        assert False, 'Should throw exception.'
+    except NimporterException:
+        "Expected result"
+
+    # Errors
+    
+
+
+
+# TODO() SWITCHES SWITCHES SWITCHES
