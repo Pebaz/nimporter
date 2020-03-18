@@ -49,7 +49,24 @@ def test_create_bdist():
 
 @pytest.mark.slow_integration_test
 def test_install_sdist():
-    pass
+    "Make sure that the project can be installed by Pip"
+    with nimporter.cd('tests/proj1'):
+        subprocess.Popen('python3 setup.py sdist'.split()).wait()
+        dist = Path('dist')
+        egg = Path('project1.egg-info')
+        try:
+            assert dist.exists()
+            assert egg.exists()
+            targets = list(dist.glob('project1*'))
+            assert len(targets) == 1
+            assert targets[0].exists()
+
+            pip = 'pip' if shutil.which('pip') else 'pip3'
+            subprocess.Popen(f'{pip} install .'.split()).wait()
+
+        finally:
+            shutil.rmtree(str(dist.absolute()))
+            shutil.rmtree(str(egg.absolute()))
 
 
 @pytest.mark.slow_integration_test
