@@ -63,10 +63,20 @@ def test_install_sdist():
 
             pip = 'pip' if shutil.which('pip') else 'pip3'
             subprocess.Popen(f'{pip} install .'.split()).wait()
-
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(egg.absolute()))
+
+    import proj1
+    assert proj1
+    assert proj1.performance
+    assert proj1.lib1
+    assert proj1.foo
+    assert proj1.bar
+    assert proj1.baz
+    assert proj1.baz() == 1
+
+    subprocess.Popen(f'{pip} uninstall project1 -y'.split()).wait()
 
 
 @pytest.mark.slow_integration_test
