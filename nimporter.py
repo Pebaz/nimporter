@@ -41,12 +41,16 @@ class NimCompileException(NimporterException):
     """
     def __init__(self, msg):
         nim_module, error_msg = msg.split('Error:')
-        nim_module = nim_module.splitlines()[-1]
-        mod, (line_col) = nim_module.split('(')
-        self.nim_module = Path(mod)
-        line, col = line_col.split(',')
-        self.line = int(line)
-        self.col = int(col.replace(')', ''))
+        nim_module = nim_module.splitlines()
+        if nim_module:
+            nim_module = nim_module[-1]
+            mod, (line_col) = nim_module.split('(')
+            self.nim_module = Path(mod)
+            line, col = line_col.split(',')
+            self.line = int(line)
+            self.col = int(col.replace(')', ''))
+        else:
+            error_msg = msg
         self.error_msg = error_msg
         
     def __str__(self):
