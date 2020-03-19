@@ -40,46 +40,43 @@ class NimCompileException(NimporterException):
     NOTE: The provided message must contain the string: 'Error:'
     """
     def __init__(self, msg):
-        nim_module, error_msg = msg.split('Error:')
-        nim_module = nim_module.splitlines()
-        if nim_module:
-            nim_module = nim_module[-1]
-            mod, (line_col) = nim_module.split('(')
-            self.nim_module = Path(mod)
-            line, col = line_col.split(',')
-            self.line = int(line)
-            self.col = int(col.replace(')', ''))
-            self.error_msg = error_msg
+        if sys.platform == 'win32' and 'external' in msg:
+            self.message = msg
+
         else:
-            self.__str__ = lambda self: msg
-        
+            nim_module, error_msg = msg.split('Error:')
+            nim_module = nim_module.splitlines()[-1]
+            mod, (line_col) = nim_module.split('(')
+            nim_module = Path(mod)
+            line, col = line_col.split(',')
+            line = int(line)
+            col = int(col.replace(')', ''))
+            message = error_msg + '\n'
+            
+            with open(nim_module, 'r') as mod:
+                line = 0
+                for each_line in mod:
+                    line += 1
+
+                    if line == line:
+                        message += f' -> {each_line}'
+                        
+                    elif line > line + 2:
+                        break
+                    
+                    elif line > line - 3:
+                        message += f' |  {each_line}'
+
+            self.message = message.rstrip() + (
+                f'\n\nAt {nim_module.absolute()} '
+                f'{line}:{col}'
+            )
         
     def __str__(self):
         """
         Return the string representation of the given compiler error.
         """
-        message = self.error_msg + '\n'
-        
-        with open(self.nim_module, 'r') as mod:
-            line = 0
-            for each_line in mod:
-                line += 1
-
-                if line == self.line:
-                    message += f' -> {each_line}'
-                    
-                elif line > self.line + 2:
-                    break
-                
-                elif line > self.line - 3:
-                    message += f' |  {each_line}'
-
-        message = message.rstrip() + (
-            f'\n\nAt {self.nim_module.absolute()} '
-            f'{self.line}:{self.col}'
-        )
-        
-        return message
+        return self.message
 
 
 class NimInvokeException(NimporterException):
