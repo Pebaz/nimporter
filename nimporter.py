@@ -195,8 +195,8 @@ class NimCompiler:
     def find_nim_std_lib(cls):
         # Installed via ChooseNim
         if shutil.which('choosenim'):
-            out, _, _, _ = cls.invoke_compiler('choosenim show'.split())
-            choosenim = out.splitlines().pop()
+            o, _, _, _ = cls.invoke_compiler('choosenim show --nocolor'.split())
+            choosenim = o.splitlines().pop()
             toolchain = Path(choosenim.pop().split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
             if not (stdlib / 'system.nim').exists():
