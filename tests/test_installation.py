@@ -2,7 +2,7 @@
 Test to make sure that libraries built with Nimporter can be installed via Pip.
 """
 
-import pytest
+import pytest, time
 from pathlib import Path
 import subprocess, shutil
 import nimporter
@@ -13,6 +13,7 @@ def test_create_sdist():
     "Test the successful creation of a source distribution."
     with nimporter.cd('tests/proj1'):
         subprocess.Popen('python3 setup.py sdist'.split()).wait()
+        time.sleep(2)
         dist = Path('dist')
         egg = Path('project1.egg-info')
         try:
@@ -22,6 +23,7 @@ def test_create_sdist():
             assert len(targets) == 1
             assert targets[0].exists()
         finally:
+            time.sleep(2)
             if dist.exists(): shutil.rmtree(str(dist.absolute()))
             if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
@@ -31,6 +33,7 @@ def test_create_bdist():
     "Test the successful create of a wheel."
     with nimporter.cd('tests/proj1'):
         subprocess.Popen('python3 setup.py bdist_wheel'.split()).wait()
+        time.sleep(2)
         dist = Path('dist')
         build = Path('build')
         egg = Path('project1.egg-info')
@@ -42,6 +45,7 @@ def test_create_bdist():
             assert len(targets) == 1
             assert targets[0].exists()
         finally:
+            time.sleep(2)
             if dist.exists(): shutil.rmtree(str(dist.absolute()))
             if build.exists(): shutil.rmtree(str(build.absolute()))
             if egg.exists(): shutil.rmtree(str(egg.absolute()))
@@ -52,6 +56,7 @@ def test_install_sdist():
     "Make sure that the project can be installed by Pip"
     with nimporter.cd('tests/proj1'):
         subprocess.Popen('python3 setup.py sdist'.split()).wait()
+        time.sleep(2)
         dist = Path('dist')
         egg = Path('project1.egg-info')
         try:
@@ -64,6 +69,7 @@ def test_install_sdist():
             pip = 'pip' if shutil.which('pip') else 'pip3'
             subprocess.Popen(f'{pip} install .'.split()).wait()
         finally:
+            time.sleep(2)
             if dist.exists(): shutil.rmtree(str(dist.absolute()))
             if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
@@ -84,6 +90,7 @@ def test_install_bdist():
     "Make sure that the wheel can be installed by Pip"
     with nimporter.cd('tests/proj1'):
         subprocess.Popen('python3 setup.py bdist_wheel'.split()).wait()
+        time.sleep(2)
         dist = Path('dist')
         build = Path('build')
         egg = Path('project1.egg-info')
@@ -99,6 +106,7 @@ def test_install_bdist():
             pip = 'pip' if shutil.which('pip') else 'pip3'
             subprocess.Popen(f'{pip} install {wheel}'.split()).wait()
         finally:
+            time.sleep(2)
             if dist.exists(): shutil.rmtree(str(dist.absolute()))
             if build.exists(): shutil.rmtree(str(build.absolute()))
             if egg.exists(): shutil.rmtree(str(egg.absolute()))
