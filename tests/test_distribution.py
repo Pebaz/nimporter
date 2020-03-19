@@ -5,7 +5,9 @@ Test to make sure that Nim code can be built and distributed.
 from setuptools import Extension
 from pathlib import Path
 import nimporter
-from nimporter import Nimporter, NimCompiler, NimporterException
+from nimporter import (
+    Nimporter, NimCompiler, NimporterException, NimInvokeException
+)
 
 def test_find_extensions():
     "Make sure that all Nim modules and libraries can be found."
@@ -89,8 +91,27 @@ def test_compilation_failures():
         "Expected result"
 
     # Errors
-    
+    try:
+        NimCompiler.compile_nim_extension(
+            Path('tests/lib4'), None, library=True
+        )
+        assert False, 'Should throw exception.'
+    except NimInvokeException:
+        "Expected result"
 
 
+def test_compile_switches():
+    "Make sure that an extension can still be compiled when using a switchfile."
+    ext = NimCompiler.compile_nim_extension(
+        Path('tests/lib2'), Path('tests'), library=True
+    )
 
-# TODO() SWITCHES SWITCHES SWITCHES
+    assert isinstance(ext, Extension)
+    assert ext.name == 'lib2'
+
+    includes = set(Path(i) for i in ext.include_dirs)
+
+    for source in ext.sources:
+        src = Path(source)
+        assert src.suffix == '.c'
+        assert src.parent in includes

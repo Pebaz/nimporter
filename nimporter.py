@@ -266,6 +266,8 @@ class NimCompiler:
                 switch_file,
                 MODULE_PATH=module_path,
                 BUILD_DIR=build_dir,
+                # Necessary for import/bundle compatibility
+                BUILD_ARTIFACT=None,
                 IS_LIBRARY=library
             )
             nim_args = switches['bundle']
@@ -293,7 +295,7 @@ class NimCompiler:
 
         if errors:
             if library:
-                raise NimInvokeException(Path(), nim_args, errors[0], output)
+                raise NimInvokeException(tmp_cwd, nim_args, errors[0], output)
             else:
                 raise NimCompileException(errors[0])
 

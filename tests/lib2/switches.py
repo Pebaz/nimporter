@@ -40,7 +40,7 @@ else:
             'cc',
             '-c',
             '--accept',
-            '-d:release'
+            '-d:release',
             f'--nimcache:{BUILD_DIR}',
             f'{MODULE_PATH}'
         ]
