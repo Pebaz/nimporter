@@ -22,8 +22,8 @@ def test_create_sdist():
             assert len(targets) == 1
             assert targets[0].exists()
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.exists(): shutil.rmtree(str(dist.absolute()))
+            if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
 
 @pytest.mark.integration_test
@@ -42,9 +42,9 @@ def test_create_bdist():
             assert len(targets) == 1
             assert targets[0].exists()
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(build.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.exists(): shutil.rmtree(str(dist.absolute()))
+            if build.exists(): shutil.rmtree(str(build.absolute()))
+            if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
 
 @pytest.mark.slow_integration_test
@@ -64,8 +64,8 @@ def test_install_sdist():
             pip = 'pip' if shutil.which('pip') else 'pip3'
             subprocess.Popen(f'{pip} install .'.split()).wait()
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.exists(): shutil.rmtree(str(dist.absolute()))
+            if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
     import proj1
     assert proj1
@@ -99,9 +99,9 @@ def test_install_bdist():
             pip = 'pip' if shutil.which('pip') else 'pip3'
             subprocess.Popen(f'{pip} install {wheel}'.split()).wait()
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(build.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.exists(): shutil.rmtree(str(dist.absolute()))
+            if build.exists(): shutil.rmtree(str(build.absolute()))
+            if egg.exists(): shutil.rmtree(str(egg.absolute()))
 
     import proj1
     assert proj1
