@@ -193,6 +193,16 @@ class NimCompiler:
 
     @classmethod
     def find_nim_std_lib(cls):
+        # Installed via ChooseNim
+        if shutil.which('choosenim'):
+            choosenim, _, _, _ = cls.invoke_compiler('choosenim show'.split())
+            toolchain = Path(choosenim.pop().split('Path:').pop().strip())
+            stdlib = toolchain / 'lib'
+            if not (stdlib / 'system.nim').exists():
+                return None
+            return stdlib.resolve().absolute()
+
+        # Installed manually
         nimexe = shutil.which('nim')
         if not nimexe:
             return None
@@ -202,7 +212,7 @@ class NimCompiler:
             result = nimexe.resolve().parent / '../lib'
             if not (result / 'system.nim').exists():
                 return None
-        return result.resolve()
+        return result.resolve().absolute()
 
     @classmethod
     def get_switches(cls, switch_file, **global_scope):
