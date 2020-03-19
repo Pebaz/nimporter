@@ -1,5 +1,6 @@
 # NOTE(pebaz): Required to make unit tests use local Nimporter, not installed
-import sys; sys.path.extend('../../')
+from pathlib import Path
+import sys; sys.path.extend(str(Path('../../').absolute()))
 
 from setuptools import setup
 import nimporter
