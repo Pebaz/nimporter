@@ -2,13 +2,22 @@
 Test to make sure that libraries built with Nimporter can be installed via Pip.
 """
 
-import sys, subprocess, shutil
+import sys, os, subprocess, shutil, pkg_resources
 from pathlib import Path
 import pytest
 import nimporter
 
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
+
+@pytest.mark.integration_test
+def test_ensure_nimporter_installed():
+    "Make sure that Nimporter is installed before running integration tests."
+    libs = {lib.key.lower() for lib in pkg_resources.working_set}
+    assert 'nimporter' in libs, (
+        f'Nimporter is not installed. Please install via:'
+        f'`{PIP} install .` before running the integration tests.'
+    )
 
 @pytest.mark.integration_test
 def test_create_sdist():
