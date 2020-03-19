@@ -115,10 +115,13 @@ def test_modify_module():
         # passing if Nimporter.hash_changed() returns True.
         assert Nimporter.hash_changed(filename)
         
-        mod = Nimporter.import_nim_module(
-            mod_name,
-            ignore_cache=True  # :/
-        )
+        # NOTE(pebaz): Win32 won't let processes delete each other's DLLs
+        # It is sufficient to check for hash changing in this case.
+        if sys.platform != 'win32':
+            mod = Nimporter.import_nim_module(
+                mod_name,
+                ignore_cache=True  # :/
+            )
     finally:
         filename.write_text(code)
 
