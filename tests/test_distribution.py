@@ -5,7 +5,7 @@ Test to make sure that Nim code can be built and distributed.
 from setuptools import Extension
 from pathlib import Path
 import nimporter
-from nimporter import Nimporter, NimCompiler
+from nimporter import Nimporter, NimCompiler, NimporterException
 
 def test_find_extensions():
     "Make sure that all Nim modules and libraries can be found."
