@@ -49,9 +49,10 @@ class NimCompileException(NimporterException):
             line, col = line_col.split(',')
             self.line = int(line)
             self.col = int(col.replace(')', ''))
+            self.error_msg = error_msg
         else:
-            error_msg = msg
-        self.error_msg = error_msg
+            self.__str__ = lambda self: msg
+        
         
     def __str__(self):
         """
