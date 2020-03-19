@@ -70,6 +70,10 @@ def test_ignore_cache():
     ellapsed = CTM() - start
     assert ellapsed > tenth, 'Module was loaded from __pycache__'
 
+    # NOTE(pebaz): Win32 won't let processes delete each other's DLLs.
+    if sys.platform == 'win32':
+        return
+
     start = CTM()
     mod = Nimporter.import_nim_module('pkg3.mod4', ignore_cache=True)
     assert mod
@@ -115,7 +119,7 @@ def test_modify_module():
         # passing if Nimporter.hash_changed() returns True.
         assert Nimporter.hash_changed(filename)
         
-        # NOTE(pebaz): Win32 won't let processes delete each other's DLLs
+        # NOTE(pebaz): Win32 won't let processes delete each other's DLLs.
         # It is sufficient to check for hash changing in this case.
         if sys.platform != 'win32':
             mod = Nimporter.import_nim_module(
