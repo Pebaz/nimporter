@@ -1,3 +1,6 @@
+# NOTE(pebaz): Required to make unit tests use local Nimporter, not installed
+import sys; sys.path.extend('../../')
+
 from setuptools import setup
 import nimporter
 
