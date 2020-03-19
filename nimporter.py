@@ -197,7 +197,7 @@ class NimCompiler:
         if shutil.which('choosenim'):
             o, _, _, _ = cls.invoke_compiler('choosenim show --nocolor'.split())
             choosenim = o.splitlines().pop()
-            toolchain = Path(choosenim.pop().split('Path:').pop().strip())
+            toolchain = Path(choosenim.split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
             if not (stdlib / 'system.nim').exists():
                 return None
