@@ -6,7 +6,8 @@ from setuptools import Extension
 from pathlib import Path
 import nimporter
 from nimporter import (
-    Nimporter, NimCompiler, NimporterException, NimInvokeException
+    Nimporter, NimCompiler, NimporterException, NimInvokeException,
+    NimCompileException
 )
 
 def test_find_extensions():
@@ -90,13 +91,22 @@ def test_compilation_failures():
     except NimporterException:
         "Expected result"
 
-    # Errors
+    # Errors with Library
     try:
         NimCompiler.compile_nim_extension(
             Path('tests/lib4'), None, library=True
         )
         assert False, 'Should throw exception.'
     except NimInvokeException:
+        "Expected result"
+
+    # Errors with Module
+    try:
+        NimCompiler.compile_nim_extension(
+            Path('tests/pkg1/error.nim'), None, library=False
+        )
+        assert False, 'Should throw exception.'
+    except NimCompileException:
         "Expected result"
 
 

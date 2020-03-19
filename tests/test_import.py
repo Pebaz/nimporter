@@ -35,6 +35,13 @@ def test_successful_library_import():
     import lib2
     assert lib2
 
+def test_failed_library_import():
+    "Make sure that Nimporter doesn't import anything that's not there."
+    try:
+        Nimporter.import_nim_module('this_does_not_exist')
+    except ImportError:
+        "Expected result"
+
 
 def test_manual_import():
     "Test import function manually."
