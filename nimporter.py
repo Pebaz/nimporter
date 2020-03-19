@@ -373,16 +373,6 @@ class NimCompiler:
             )
             nim_args = switches['import']
 
-            # switch_script = switch_file.read_text()
-            # global_scope = {
-            #     'MODULE_PATH' : module_path,
-            #     'BUILD_ARTIFACT' : build_artifact,
-            #     'BUILD_DIR' : None,  # Necessary for import/bundle compatibility
-            #     'IS_LIBRARY' : library
-            # }
-            # exec(switch_script, global_scope)
-            # nim_args = global_scope['__switches__']['import']
-
         # Use standard switches
         else:
             exe = [('nimble' if library else 'nim'), 'c']
