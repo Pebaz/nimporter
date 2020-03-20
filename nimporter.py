@@ -254,7 +254,6 @@ class NimCompiler:
             )
 
         module_name = module_path.stem
-        build_dir = Path(tempfile.mktemp())
 
         if module_path.is_file():
             library_path = module_path.parent.resolve()
@@ -366,8 +365,6 @@ class NimCompiler:
         )
 
         cls.ensure_nimpy()
-
-        build_artifact = cls.build_artifact(module_path)
         switch_file = library_path / 'switches.py'
 
         # Switches file found
