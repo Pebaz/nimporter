@@ -808,7 +808,17 @@ class Nimporter:
 
     @classmethod
     def _build_nim_extension(cls, path, root):
-        "Convenience function to create an Extension object from a given path."
+        """
+        Convenience function to create an Extension object from a given path.
+
+        Args:
+            path(Path): the path to the Nim module/library.
+            root(tuple): the namespace to add the Extension to.
+
+        Returns:
+            An Extension object representing the Nim module or library that has
+            successfully be compiled to C.
+        """
         return NimCompiler.compile_nim_extension(
             path, root, library=path.is_dir()
         )
@@ -816,11 +826,17 @@ class Nimporter:
     @classmethod
     def build_nim_extensions(cls, root=None, exclude_dirs=[]):
         """
+        Gathers all Nim Extensinos by recursing through a Python project.
+
         Compiles Nim modules and libraries to C and creates Extensions from them
         for source, binary, or wheel distribution.
 
         Automatically recurses through the project directory to find all the Nim
         modules and Nim libraries.
+
+        Args:
+            root(tuple): the namespace to add all extensions to.
+            exclude_dirs(list): the Paths to skip while recursing the project.
 
         Returns:
             A list of Extensions that can be added to the setup() function's
@@ -841,6 +857,9 @@ def register_importer(list_position):
     Adds a given importer class to `sys.meta_path` at a given position.
 
     NOTE: The position in `sys.meta_path` is extremely relevant.
+
+    Args:
+        list_position(int): the index in `sys.meta_path` to place the importer.
     """
     def decorator(importer):
         nonlocal list_position
@@ -910,4 +929,3 @@ class NimLibImporter:
 
 # This should be the only real usage of the Nimporter module beyond importing it
 build_nim_extensions = Nimporter.build_nim_extensions
-#__all__ = ['build_nim_extensions']
