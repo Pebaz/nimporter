@@ -109,6 +109,7 @@ class NimCompiler:
      - Compile Nim files and return any failure messages as Python exceptions.
      - Store hashes of Nim source files to only recompile when module changes.
      - Stores hash in __pycache__ directory to not clutter up file system.
+     - Compile Nim files to C and bundle them as an Extension for distribution.
     
     Attributes:
         EXT(str): the extension to use for the importable build artifact.
@@ -144,7 +145,23 @@ class NimCompiler:
 
     @classmethod
     def pycache_dir(cls, module_path):
-        "Return the __pycache__ directory as a Path."
+        """
+        Return the `__pycache__` directory as a Path.
+
+        Works the same as Python's `__pycache__` directory except now it works
+        with Nim extensions also. For modules, it works literally exactly like
+        Python. However, for libraries, the `__pycache__` dir is placed in the
+        folder that contains the library, not within the library's folder. This
+        is because the library needs to act like a single container, not a
+        package.
+
+        Args:
+            module_path(Path): the path to a given Nim module or library.
+
+        Returns:
+            The Path to the `__pycache__` directory that the build artifact
+            should be stored.
+        """
         if module_path.is_dir():
             return (module_path / '__pycache__').resolve()
         else:
@@ -153,8 +170,18 @@ class NimCompiler:
     @classmethod
     def invoke_compiler(cls, nim_args: list):
         """
-        Returns a tuple containing any errors, warnings, or hints from the
-        compilation process.
+        Invokes the compiler (or any executable) and returns the output.
+
+        While this can (and has been) used to call executables other than Nim
+        and Nimble, it should be noted that the warnings and hints are artifacts
+        of being mainly targeted as a Nim compiler invoker.
+
+        Args:
+            nim_args(list): the arg being the executable and the rest are args.
+
+        Returns:
+            A tuple containing any errors, warnings, or hints from the
+            compilation process.
         """
         process = subprocess.run(
             nim_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -172,7 +199,15 @@ class NimCompiler:
 
     @classmethod
     def ensure_nimpy(cls):
-        "Makes sure that the Nimpy Nim library is installed."
+        """
+        Makes sure that the Nimpy Nim library is installed.
+
+        Verifies that the [Nimpy Library](https://github.com/yglukhov/nimpy) is
+        installed and installs it otherwise.
+
+        NOTE: Nimporter would not be possible without Nimpy. Thank you
+        Yuriy Glukhov for making this project possible!
+        """
         out, errors, _, _ = cls.invoke_compiler('nimble path nimpy'.split())
 
         if not out or errors:
@@ -183,7 +218,21 @@ class NimCompiler:
 
     @staticmethod
     def get_import_prefix(module_path, root):
-        "Returns tuple of packages containing the given module."
+        """
+        Computes the proper name of a Nim module amid a given Python project.
+
+        This method is needed because Nim Extensions do not automatically know
+        where they are within a given Python namespace. This method is vital for
+        recursing through an entire Python project to find every Nim Extension
+        module and library while preserving the namespace containing each one.
+
+        Args:
+            module_path(Path): the module for which to determine its namespace.
+            root(Path): the path to the Python project containing the Extension.
+
+        Returns:
+            A tuple of packages containing the given module.
+        """
         root_path = root.resolve()
         full_path = module_path.resolve()
 
@@ -277,7 +326,7 @@ class NimCompiler:
         root as well as a file ending with ".nimble".
 
         NOTE: The library parameter signifies (albeit subtly) that the given Nim
-        library has (can have) dependencies (Nimble file).
+        library has (can have) dependencies specified in a Nimble file.
 
         Args:
             module_path(Path): the path to the library directory or a Nim file.
@@ -378,7 +427,7 @@ class NimCompiler:
         Nimble file alongside the given path.
 
         NOTE: The library parameter signifies (albeit subtly) that the given Nim
-        library has (can have) dependencies (Nimble file).
+        library has (can have) dependencies specified in a Nimble file.
         """
 
         if not module_path.exists():
@@ -461,8 +510,18 @@ class Nimporter:
 
     @classmethod
     def hash_filename(cls, module_path):
-        "Return the hash filename as a Path."
-        return NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
+        """
+        Gets the filename that should contain a given module's hash.
+    
+        Args:
+            module_path(Path): the Nim module the hash file pertains to.
+
+        Returns:
+            The hash filename as a Path.
+        """
+        return (
+            NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
+        )
 
     @classmethod
     def is_cache(cls, module_path):
