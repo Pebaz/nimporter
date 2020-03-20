@@ -43,15 +43,13 @@ def main(args=None):
 
     args = parser.parse_args(args or sys.argv[1:])
 
-    print(args)
-
-
     if args.cmd == 'clean':
         cwd = pathlib.Path()
         print('Cleaning Directory:', cwd.resolve())
         clean(cwd)
 
     elif args.cmd == 'build':
+        args.source = args.source.absolute()
         if not args.dest: args.dest = NimCompiler.build_artifact(args.source)
         module = args.source
 
@@ -61,12 +59,16 @@ def main(args=None):
             is_library = bool([*module.parent.glob('*.nimble')])
             if is_library: module = module.parent
 
-        temp_build_dir = pathlib.Path(tempfile.mkdtemp()) / args.dest.name
+        temp_build_dir = pathlib.Path('build')
+        temp_build_dir.mkdir()
+        artifact = temp_build_dir / args.dest.name
         try:
-            NimCompiler.compile_nim_code(module, temp_build_dir, library=False)
-            shutil.copy(temp_build_dir, args.dest)
+            NimCompiler.compile_nim_code(
+                module, artifact, library=False
+            )
+            shutil.copy(artifact, args.dest.parent)
         finally:
-            shutil.rmtree(temp_build_dir.parent)
+            shutil.rmtree(temp_build_dir)
 
 
 if __name__ == '__main__':
