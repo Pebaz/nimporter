@@ -73,9 +73,7 @@ class NimCompileException(NimporterException):
             )
         
     def __str__(self):
-        """
-        Return the string representation of the given compiler error.
-        """
+        "Return the string representation of the given compiler error."
         return self.message
 
 
@@ -89,9 +87,11 @@ class NimInvokeException(NimporterException):
         self.out = out
 
     def get_output(self):
+        "Return the output (if any) of the CLI command that caused the error."
         return self.out
 
     def __str__(self):
+        "Return the string representation of the error."
         cmd = self.cmd_line[0]
         message = f'Failed to run command: {cmd}\n\n'
         message += f'Current Directory:\n    {self.cwd}\n\n'
@@ -144,7 +144,7 @@ class NimCompiler:
 
     @classmethod
     def pycache_dir(cls, module_path):
-        """Return the __pycache__ directory as a Path."""
+        "Return the __pycache__ directory as a Path."
         if module_path.is_dir():
             return (module_path / '__pycache__').resolve()
         else:
@@ -193,6 +193,19 @@ class NimCompiler:
 
     @classmethod
     def find_nim_std_lib(cls):
+        """
+        Finds the path to the `lib/` directory within a given Nim installation.
+
+        Has the ability to find Nim's stdlib on Windows, MacOS, and Linux. Can
+        also find the stdlib when Nim was installed via Choosenim. Additionally,
+        it can even find the stdlib of the currently selected toolchain when
+        using Choosenim.
+
+        Returns:
+            The Path to the Nim stdlib 'lib' directory if it exists and None
+            otherwise.
+        """
+
         # Installed via ChooseNim
         if shutil.which('choosenim'):
             o, _, _, _ = cls.invoke_compiler('choosenim show --nocolor'.split())
@@ -217,6 +230,37 @@ class NimCompiler:
 
     @classmethod
     def get_switches(cls, switch_file, **global_scope):
+        """
+        Convenience function to return the switches from a given switchfile.
+
+        Works by exposing a global scope to the switch file and then evaluating
+        it. The resulting variable: `__switches__` should have been defined
+        within the script which should contain the keys: "import" and "bundle".
+
+        The "import" key should be a list of CLI args that should be passed to
+        the Nim compiler when importing the given Nim library.
+
+        The "bundle" key should be a list of CLI args that should be passed to
+        the Nim compiler when creating an Extension object from the C sources.
+
+        When evaluated, the switchfile can make use of a few global variables
+        that allow it to make certain decisions regarding the outcome of the
+        compilation:
+
+         * **MODULE_PATH**: the path to the actual Nim source file to compile
+         * **BUILD_ARTIFACT**: can be used when building a module
+         * **BUILD_DIR**: can be used when building a library
+         * **IS_LIBRARY**: used to determine if a library or a module is being built
+
+        The reason for the switchfile being a Python script is that different
+        platforms will require different compilation switches. The switchfile
+        author can make use of `sys.platform` to query platform information.
+
+        Returns:
+            A dictionary containing the keys: "import" and "bundle", signifying
+            the CLI arguments used when importing and building an extension
+            module respectively.
+        """
         global_scope = global_scope.copy()
         assert switch_file.exists(), (
             'Cannot open nonexistent switch file: ' + str(switch_file)
@@ -417,7 +461,7 @@ class Nimporter:
 
     @classmethod
     def hash_filename(cls, module_path):
-        """Return the hash filename as a Path."""
+        "Return the hash filename as a Path."
         return NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
 
     @classmethod
@@ -430,17 +474,17 @@ class Nimporter:
 
     @classmethod
     def is_hashed(cls, module_path):
-        """Return whether or not a given Nim file has already been hashed."""
+        "Return whether or not a given Nim file has already been hashed."
         return cls.hash_filename(module_path).exists()
 
     @classmethod
     def is_built(cls, module_path):
-        """Return whether or not a given Nim file has already been hashed."""
+        "Return whether or not a given Nim file has already been hashed."
         return NimCompiler.build_artifact(module_path).exists()
 
     @classmethod
     def get_hash(cls, module_path):
-        """Returns the bits of the hash for a given Nim module."""
+        "Returns the bits of the hash for a given Nim module."
         if not cls.is_hashed(module_path):
             path = module_path.absolute()
             raise NimporterException(f'Module {path} has not yet been hashed.')
@@ -458,9 +502,7 @@ class Nimporter:
 
     @staticmethod
     def hash_file(module_path):
-        """
-        Returns the hash of the Nim file.
-        """
+        "Returns the hash of the Nim file."
         block_size = 65536
         hasher = hashlib.md5()
         with module_path.open('rb') as file:
@@ -580,13 +622,14 @@ class Nimporter:
     @classmethod
     def _find_extensions(cls, path, exclude_dirs=[]):
         """
-        Compiles Nim files to C and creates Extensions from them for distribution.
+        Compiles Nim files to C and creates Extensions from them for
+        distribution.
         """
         nim_exts = []
 
         for item in path.iterdir():
             if item.is_dir() and list(item.glob('*.nimble')):
-                "Treat directory as one single Extension"
+                # Treat directory as one single Extension
                 (nimble_file,) = item.glob('*.nimble')
                 nim_file = nimble_file.parent / (nimble_file.stem + '.nim')
 
@@ -595,19 +638,20 @@ class Nimporter:
                     nim_exts.append(item)
 
             elif item.is_dir():
-                "Treat item as directory"
+                # Treat item as directory
                 nim_exts.extend(
                     cls._find_extensions(item, exclude_dirs=exclude_dirs)
                 )
 
             elif item.suffix == '.nim':
-                "Treat item as a Nim Extension."
+                # Treat item as a Nim Extension.
                 nim_exts.append(item)
 
         return nim_exts
 
     @classmethod
     def _build_nim_extension(cls, path, root):
+        "Convenience function to create an Extension object from a given path."
         return NimCompiler.compile_nim_extension(
             path, root, library=path.is_dir()
         )
@@ -709,4 +753,4 @@ class NimLibImporter:
 
 # This should be the only real usage of the Nimporter module beyond importing it
 build_nim_extensions = Nimporter.build_nim_extensions
-__all__ = ['build_nim_extensions']
+#__all__ = ['build_nim_extensions']
