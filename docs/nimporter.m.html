@@ -1266,6 +1266,7 @@ users of the library don't have to install a Nim compiler.</p>
 <span class="sd">     - Compile Nim files and return any failure messages as Python exceptions.</span>
 <span class="sd">     - Store hashes of Nim source files to only recompile when module changes.</span>
 <span class="sd">     - Stores hash in __pycache__ directory to not clutter up file system.</span>
+<span class="sd">     - Compile Nim files to C and bundle them as an Extension for distribution.</span>
 <span class="sd">    </span>
 <span class="sd">    Attributes:</span>
 <span class="sd">        EXT(str): the extension to use for the importable build artifact.</span>
@@ -1301,7 +1302,23 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">pycache_dir</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return the __pycache__ directory as a Path.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the `__pycache__` directory as a Path.</span>
+
+<span class="sd">        Works the same as Python&#39;s `__pycache__` directory except now it works</span>
+<span class="sd">        with Nim extensions also. For modules, it works literally exactly like</span>
+<span class="sd">        Python. However, for libraries, the `__pycache__` dir is placed in the</span>
+<span class="sd">        folder that contains the library, not within the library&#39;s folder. This</span>
+<span class="sd">        is because the library needs to act like a single container, not a</span>
+<span class="sd">        package.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the path to a given Nim module or library.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The Path to the `__pycache__` directory that the build artifact</span>
+<span class="sd">            should be stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">module_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">module_path</span> <span class="o">/</span> <span class="s1">&#39;__pycache__&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1310,8 +1327,18 @@ users of the library don't have to install a Nim compiler.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">invoke_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nim_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a tuple containing any errors, warnings, or hints from the</span>
-<span class="sd">        compilation process.</span>
+<span class="sd">        Invokes the compiler (or any executable) and returns the output.</span>
+
+<span class="sd">        While this can (and has been) used to call executables other than Nim</span>
+<span class="sd">        and Nimble, it should be noted that the warnings and hints are artifacts</span>
+<span class="sd">        of being mainly targeted as a Nim compiler invoker.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nim_args(list): the arg being the executable and the rest are args.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple containing any errors, warnings, or hints from the</span>
+<span class="sd">            compilation process.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
             <span class="n">nim_args</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
@@ -1329,7 +1356,15 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">ensure_nimpy</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="s2">&quot;Makes sure that the Nimpy Nim library is installed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes sure that the Nimpy Nim library is installed.</span>
+
+<span class="sd">        Verifies that the [Nimpy Library](https://github.com/yglukhov/nimpy) is</span>
+<span class="sd">        installed and installs it otherwise.</span>
+
+<span class="sd">        NOTE: Nimporter would not be possible without Nimpy. Thank you</span>
+<span class="sd">        Yuriy Glukhov for making this project possible!</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="s1">&#39;nimble path nimpy&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">out</span> <span class="ow">or</span> <span class="n">errors</span><span class="p">:</span>
@@ -1340,7 +1375,21 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_import_prefix</span><span class="p">(</span><span class="n">module_path</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="s2">&quot;Returns tuple of packages containing the given module.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the proper name of a Nim module amid a given Python project.</span>
+
+<span class="sd">        This method is needed because Nim Extensions do not automatically know</span>
+<span class="sd">        where they are within a given Python namespace. This method is vital for</span>
+<span class="sd">        recursing through an entire Python project to find every Nim Extension</span>
+<span class="sd">        module and library while preserving the namespace containing each one.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the module for which to determine its namespace.</span>
+<span class="sd">            root(Path): the path to the Python project containing the Extension.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple of packages containing the given module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">root_path</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="n">full_path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 
@@ -1434,7 +1483,7 @@ users of the library don't have to install a Nim compiler.</p>
 <span class="sd">        root as well as a file ending with &quot;.nimble&quot;.</span>
 
 <span class="sd">        NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">        library has (can have) dependencies (Nimble file).</span>
+<span class="sd">        library has (can have) dependencies specified in a Nimble file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module_path(Path): the path to the library directory or a Nim file.</span>
@@ -1535,7 +1584,7 @@ users of the library don't have to install a Nim compiler.</p>
 <span class="sd">        Nimble file alongside the given path.</span>
 
 <span class="sd">        NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">        library has (can have) dependencies (Nimble file).</span>
+<span class="sd">        library has (can have) dependencies specified in a Nimble file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">module_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -1618,30 +1667,75 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">hash_filename</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return the hash filename as a Path.&quot;</span>
-        <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the filename that should contain a given module&#39;s hash.</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module the hash file pertains to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The hash filename as a Path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_cache</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return whether or not a __pycache__ directory exists to store hashes and</span>
-<span class="sd">        build artifacts.</span>
+<span class="sd">        Determines if the `__pycache__` dir for a given Nim module exists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module the `__pycache__` dir pertains to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a __pycache__ directory exists to</span>
+<span class="sd">            store hashes and build artifacts.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_hashed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a given Nim module has already been hashed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to query hash existence.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">            hashed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_built</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a given Nim module has already been built.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to query for artifacts.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">            built.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">build_artifact</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Returns the bits of the hash for a given Nim module.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gathers the hash for a given Nim module.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to return its hash.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NimporterException: if the module has not yet been hashed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The bytes of the hash for a given Nim module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
             <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Module </span><span class="si">{path}</span><span class="s1"> has not yet been hashed.&#39;</span><span class="p">)</span>
@@ -1650,8 +1744,14 @@ users of the library don't have to install a Nim compiler.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">hash_changed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return whether or not a given Nim file has changed since last hash. If</span>
-<span class="sd">        the module has not yet been hashed, returns True.</span>
+<span class="sd">        Determines if a module has been modified.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module to check for modification.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has changed since</span>
+<span class="sd">            last hash. If the module has not yet been hashed, returns True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -1659,7 +1759,15 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">hash_file</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Returns the hash of the Nim file.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to hash a given file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the file to hash.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The hash bytes of the Nim file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">block_size</span> <span class="o">=</span> <span class="mi">65536</span>
         <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">module_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
@@ -1672,8 +1780,15 @@ users of the library don't have to install a Nim compiler.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">update_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates or updates the &lt;mod-name&gt;.nim.hash file within the __pycache__</span>
-<span class="sd">        directory.</span>
+<span class="sd">        Updates the hash file associated with a given Nim module.</span>
+
+<span class="sd">        This is commonly done after compilation to determine if recompilation is</span>
+<span class="sd">        required upon subsequent imports. If the module&#39;s hash file has not yet</span>
+<span class="sd">        been created, this method will create it and store it in the</span>
+<span class="sd">        `__pycache__` dir for the module.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the module which should have its hash updated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">hash_file</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
         <span class="n">hash_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1683,16 +1798,18 @@ users of the library don't have to install a Nim compiler.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">import_nim_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span><span class="nb">list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to manually import a given Nim module or library.</span>
+
 <span class="sd">        Can be used to explicitly import a module rather than using the `import`</span>
 <span class="sd">        keyword. Allows the cache to be ignored to solve issues arising from</span>
 <span class="sd">        caching one module when 10 other imported Nim libraries have changed.</span>
 
 <span class="sd">        Example Use:</span>
 
-<span class="sd">        &gt;&gt;&gt; # Rather than:</span>
-<span class="sd">        &gt;&gt;&gt; import foo</span>
-<span class="sd">        &gt;&gt;&gt; # You can say:</span>
-<span class="sd">        &gt;&gt;&gt; foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
+<span class="sd">            # Rather than:</span>
+<span class="sd">            import foo</span>
+<span class="sd">            # You can say:</span>
+<span class="sd">            foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            fullname(str): the module to import. Can be &#39;foo&#39; or &#39;foo.bar.baz&#39;</span>
@@ -2178,7 +2295,8 @@ returned from Nim as a Python Exception.</p>
     <div class="desc"><p>Nim compiler invoker. Features:
  - Compile Nim files and return any failure messages as Python exceptions.
  - Store hashes of Nim source files to only recompile when module changes.
- - Stores hash in <strong>pycache</strong> directory to not clutter up file system.</p>
+ - Stores hash in <strong>pycache</strong> directory to not clutter up file system.
+ - Compile Nim files to C and bundle them as an Extension for distribution.</p>
 <p>Attributes:
     EXT(str): the extension to use for the importable build artifact.
     NIM_CLI_ARGS(list): compiler switches common to all builds.</p></div>
@@ -2191,6 +2309,7 @@ returned from Nim as a Python Exception.</p>
 <span class="sd">     - Compile Nim files and return any failure messages as Python exceptions.</span>
 <span class="sd">     - Store hashes of Nim source files to only recompile when module changes.</span>
 <span class="sd">     - Stores hash in __pycache__ directory to not clutter up file system.</span>
+<span class="sd">     - Compile Nim files to C and bundle them as an Extension for distribution.</span>
 <span class="sd">    </span>
 <span class="sd">    Attributes:</span>
 <span class="sd">        EXT(str): the extension to use for the importable build artifact.</span>
@@ -2226,7 +2345,23 @@ returned from Nim as a Python Exception.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">pycache_dir</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return the __pycache__ directory as a Path.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the `__pycache__` directory as a Path.</span>
+
+<span class="sd">        Works the same as Python&#39;s `__pycache__` directory except now it works</span>
+<span class="sd">        with Nim extensions also. For modules, it works literally exactly like</span>
+<span class="sd">        Python. However, for libraries, the `__pycache__` dir is placed in the</span>
+<span class="sd">        folder that contains the library, not within the library&#39;s folder. This</span>
+<span class="sd">        is because the library needs to act like a single container, not a</span>
+<span class="sd">        package.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the path to a given Nim module or library.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The Path to the `__pycache__` directory that the build artifact</span>
+<span class="sd">            should be stored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">module_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">module_path</span> <span class="o">/</span> <span class="s1">&#39;__pycache__&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2235,8 +2370,18 @@ returned from Nim as a Python Exception.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">invoke_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nim_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a tuple containing any errors, warnings, or hints from the</span>
-<span class="sd">        compilation process.</span>
+<span class="sd">        Invokes the compiler (or any executable) and returns the output.</span>
+
+<span class="sd">        While this can (and has been) used to call executables other than Nim</span>
+<span class="sd">        and Nimble, it should be noted that the warnings and hints are artifacts</span>
+<span class="sd">        of being mainly targeted as a Nim compiler invoker.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nim_args(list): the arg being the executable and the rest are args.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple containing any errors, warnings, or hints from the</span>
+<span class="sd">            compilation process.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
             <span class="n">nim_args</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
@@ -2254,7 +2399,15 @@ returned from Nim as a Python Exception.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">ensure_nimpy</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="s2">&quot;Makes sure that the Nimpy Nim library is installed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Makes sure that the Nimpy Nim library is installed.</span>
+
+<span class="sd">        Verifies that the [Nimpy Library](https://github.com/yglukhov/nimpy) is</span>
+<span class="sd">        installed and installs it otherwise.</span>
+
+<span class="sd">        NOTE: Nimporter would not be possible without Nimpy. Thank you</span>
+<span class="sd">        Yuriy Glukhov for making this project possible!</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="s1">&#39;nimble path nimpy&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">out</span> <span class="ow">or</span> <span class="n">errors</span><span class="p">:</span>
@@ -2265,7 +2418,21 @@ returned from Nim as a Python Exception.</p>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_import_prefix</span><span class="p">(</span><span class="n">module_path</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="s2">&quot;Returns tuple of packages containing the given module.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the proper name of a Nim module amid a given Python project.</span>
+
+<span class="sd">        This method is needed because Nim Extensions do not automatically know</span>
+<span class="sd">        where they are within a given Python namespace. This method is vital for</span>
+<span class="sd">        recursing through an entire Python project to find every Nim Extension</span>
+<span class="sd">        module and library while preserving the namespace containing each one.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the module for which to determine its namespace.</span>
+<span class="sd">            root(Path): the path to the Python project containing the Extension.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A tuple of packages containing the given module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">root_path</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="n">full_path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 
@@ -2359,7 +2526,7 @@ returned from Nim as a Python Exception.</p>
 <span class="sd">        root as well as a file ending with &quot;.nimble&quot;.</span>
 
 <span class="sd">        NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">        library has (can have) dependencies (Nimble file).</span>
+<span class="sd">        library has (can have) dependencies specified in a Nimble file.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module_path(Path): the path to the library directory or a Nim file.</span>
@@ -2460,7 +2627,7 @@ returned from Nim as a Python Exception.</p>
 <span class="sd">        Nimble file alongside the given path.</span>
 
 <span class="sd">        NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">        library has (can have) dependencies (Nimble file).</span>
+<span class="sd">        library has (can have) dependencies specified in a Nimble file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">module_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -2568,13 +2735,33 @@ returned from Nim as a Python Exception.</p>
 
     
   
-    <div class="desc"><p>Returns tuple of packages containing the given module.</p></div>
+    <div class="desc"><p>Computes the proper name of a Nim module amid a given Python project.</p>
+<p>This method is needed because Nim Extensions do not automatically know
+where they are within a given Python namespace. This method is vital for
+recursing through an entire Python project to find every Nim Extension
+module and library while preserving the namespace containing each one.</p>
+<p>Args:
+    module_path(Path): the module for which to determine its namespace.
+    root(Path): the path to the Python project containing the Extension.</p>
+<p>Returns:
+    A tuple of packages containing the given module.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.get_import_prefix', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.NimCompiler.get_import_prefix" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">get_import_prefix</span><span class="p">(</span><span class="n">module_path</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-    <span class="s2">&quot;Returns tuple of packages containing the given module.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the proper name of a Nim module amid a given Python project.</span>
+<span class="sd">    This method is needed because Nim Extensions do not automatically know</span>
+<span class="sd">    where they are within a given Python namespace. This method is vital for</span>
+<span class="sd">    recursing through an entire Python project to find every Nim Extension</span>
+<span class="sd">    module and library while preserving the namespace containing each one.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the module for which to determine its namespace.</span>
+<span class="sd">        root(Path): the path to the Python project containing the Extension.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple of packages containing the given module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">root_path</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">full_path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="k">assert</span> <span class="n">full_path</span> <span class="o">&gt;=</span> <span class="n">root_path</span><span class="p">,</span> <span class="s1">&#39;Extension path is not within root dir.&#39;</span>
@@ -2644,7 +2831,7 @@ case of <code>library=True</code>). However, it has a third supported usage. It 
 be a Nim module when <code>library=True</code> and this method will search for the
 Nimble file alongside the given path.</p>
 <p>NOTE: The library parameter signifies (albeit subtly) that the given Nim
-library has (can have) dependencies (Nimble file).</p></div>
+library has (can have) dependencies specified in a Nimble file.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.compile_nim_code', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.NimCompiler.compile_nim_code" class="source">
@@ -2658,7 +2845,7 @@ library has (can have) dependencies (Nimble file).</p></div>
 <span class="sd">    be a Nim module when `library=True` and this method will search for the</span>
 <span class="sd">    Nimble file alongside the given path.</span>
 <span class="sd">    NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">    library has (can have) dependencies (Nimble file).</span>
+<span class="sd">    library has (can have) dependencies specified in a Nimble file.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">module_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span>
@@ -2730,7 +2917,7 @@ library has (can have) dependencies (Nimble file).</p></div>
 <p>Libraries MUST have a Nim file named "<library name>.nim" at the project
 root as well as a file ending with ".nimble".</p>
 <p>NOTE: The library parameter signifies (albeit subtly) that the given Nim
-library has (can have) dependencies (Nimble file).</p>
+library has (can have) dependencies specified in a Nimble file.</p>
 <p>Args:
     module_path(Path): the path to the library directory or a Nim file.
     root(Path): the path to the directory containing the entire project.
@@ -2750,7 +2937,7 @@ library has (can have) dependencies (Nimble file).</p>
 <span class="sd">    Libraries MUST have a Nim file named &quot;&lt;library name&gt;.nim&quot; at the project</span>
 <span class="sd">    root as well as a file ending with &quot;.nimble&quot;.</span>
 <span class="sd">    NOTE: The library parameter signifies (albeit subtly) that the given Nim</span>
-<span class="sd">    library has (can have) dependencies (Nimble file).</span>
+<span class="sd">    library has (can have) dependencies specified in a Nimble file.</span>
 <span class="sd">    Args:</span>
 <span class="sd">        module_path(Path): the path to the library directory or a Nim file.</span>
 <span class="sd">        root(Path): the path to the directory containing the entire project.</span>
@@ -2836,13 +3023,23 @@ library has (can have) dependencies (Nimble file).</p>
 
     
   
-    <div class="desc"><p>Makes sure that the Nimpy Nim library is installed.</p></div>
+    <div class="desc"><p>Makes sure that the Nimpy Nim library is installed.</p>
+<p>Verifies that the <a href="https://github.com/yglukhov/nimpy">Nimpy Library</a> is
+installed and installs it otherwise.</p>
+<p>NOTE: Nimporter would not be possible without Nimpy. Thank you
+Yuriy Glukhov for making this project possible!</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.ensure_nimpy', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.NimCompiler.ensure_nimpy" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">ensure_nimpy</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-    <span class="s2">&quot;Makes sure that the Nimpy Nim library is installed.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Makes sure that the Nimpy Nim library is installed.</span>
+<span class="sd">    Verifies that the [Nimpy Library](https://github.com/yglukhov/nimpy) is</span>
+<span class="sd">    installed and installs it otherwise.</span>
+<span class="sd">    NOTE: Nimporter would not be possible without Nimpy. Thank you</span>
+<span class="sd">    Yuriy Glukhov for making this project possible!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">out</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">invoke_compiler</span><span class="p">(</span><span class="s1">&#39;nimble path nimpy&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">out</span> <span class="ow">or</span> <span class="n">errors</span><span class="p">:</span>
         <span class="n">nimble_args</span> <span class="o">=</span> <span class="s1">&#39;nimble install nimpy --accept&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
@@ -2998,16 +3195,30 @@ author can make use of <code>sys.platform</code> to query platform information.<
 
     
   
-    <div class="desc"><p>Returns a tuple containing any errors, warnings, or hints from the
-compilation process.</p></div>
+    <div class="desc"><p>Invokes the compiler (or any executable) and returns the output.</p>
+<p>While this can (and has been) used to call executables other than Nim
+and Nimble, it should be noted that the warnings and hints are artifacts
+of being mainly targeted as a Nim compiler invoker.</p>
+<p>Args:
+    nim_args(list): the arg being the executable and the rest are args.</p>
+<p>Returns:
+    A tuple containing any errors, warnings, or hints from the
+    compilation process.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.invoke_compiler', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.NimCompiler.invoke_compiler" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">invoke_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nim_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns a tuple containing any errors, warnings, or hints from the</span>
-<span class="sd">    compilation process.</span>
+<span class="sd">    Invokes the compiler (or any executable) and returns the output.</span>
+<span class="sd">    While this can (and has been) used to call executables other than Nim</span>
+<span class="sd">    and Nimble, it should be noted that the warnings and hints are artifacts</span>
+<span class="sd">    of being mainly targeted as a Nim compiler invoker.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        nim_args(list): the arg being the executable and the rest are args.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A tuple containing any errors, warnings, or hints from the</span>
+<span class="sd">        compilation process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
         <span class="n">nim_args</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span>
@@ -3036,13 +3247,37 @@ compilation process.</p></div>
 
     
   
-    <div class="desc"><p>Return the <strong>pycache</strong> directory as a Path.</p></div>
+    <div class="desc"><p>Return the <code>__pycache__</code> directory as a Path.</p>
+<p>Works the same as Python's <code>__pycache__</code> directory except now it works
+with Nim extensions also. For modules, it works literally exactly like
+Python. However, for libraries, the <code>__pycache__</code> dir is placed in the
+folder that contains the library, not within the library's folder. This
+is because the library needs to act like a single container, not a
+package.</p>
+<p>Args:
+    module_path(Path): the path to a given Nim module or library.</p>
+<p>Returns:
+    The Path to the <code>__pycache__</code> directory that the build artifact
+    should be stored.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.pycache_dir', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.NimCompiler.pycache_dir" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">pycache_dir</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Return the __pycache__ directory as a Path.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the `__pycache__` directory as a Path.</span>
+<span class="sd">    Works the same as Python&#39;s `__pycache__` directory except now it works</span>
+<span class="sd">    with Nim extensions also. For modules, it works literally exactly like</span>
+<span class="sd">    Python. However, for libraries, the `__pycache__` dir is placed in the</span>
+<span class="sd">    folder that contains the library, not within the library&#39;s folder. This</span>
+<span class="sd">    is because the library needs to act like a single container, not a</span>
+<span class="sd">    package.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the path to a given Nim module or library.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The Path to the `__pycache__` directory that the build artifact</span>
+<span class="sd">        should be stored.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">module_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">module_path</span> <span class="o">/</span> <span class="s1">&#39;__pycache__&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
@@ -3394,30 +3629,75 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">hash_filename</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return the hash filename as a Path.&quot;</span>
-        <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the filename that should contain a given module&#39;s hash.</span>
+<span class="sd">    </span>
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module the hash file pertains to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The hash filename as a Path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_cache</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return whether or not a __pycache__ directory exists to store hashes and</span>
-<span class="sd">        build artifacts.</span>
+<span class="sd">        Determines if the `__pycache__` dir for a given Nim module exists.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module the `__pycache__` dir pertains to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a __pycache__ directory exists to</span>
+<span class="sd">            store hashes and build artifacts.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_hashed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a given Nim module has already been hashed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to query hash existence.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">            hashed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_built</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a given Nim module has already been built.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to query for artifacts.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">            built.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">build_artifact</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Returns the bits of the hash for a given Nim module.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gathers the hash for a given Nim module.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module for which to return its hash.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NimporterException: if the module has not yet been hashed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The bytes of the hash for a given Nim module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
             <span class="n">path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
             <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Module </span><span class="si">{path}</span><span class="s1"> has not yet been hashed.&#39;</span><span class="p">)</span>
@@ -3426,8 +3706,14 @@ This Nimporter can only import Nim modules with procedures exposed via the
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">hash_changed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return whether or not a given Nim file has changed since last hash. If</span>
-<span class="sd">        the module has not yet been hashed, returns True.</span>
+<span class="sd">        Determines if a module has been modified.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module to check for modification.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not a given Nim file has changed since</span>
+<span class="sd">            last hash. If the module has not yet been hashed, returns True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -3435,7 +3721,15 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">hash_file</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Returns the hash of the Nim file.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to hash a given file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the file to hash.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            The hash bytes of the Nim file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">block_size</span> <span class="o">=</span> <span class="mi">65536</span>
         <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
         <span class="k">with</span> <span class="n">module_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
@@ -3448,8 +3742,15 @@ This Nimporter can only import Nim modules with procedures exposed via the
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">update_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates or updates the &lt;mod-name&gt;.nim.hash file within the __pycache__</span>
-<span class="sd">        directory.</span>
+<span class="sd">        Updates the hash file associated with a given Nim module.</span>
+
+<span class="sd">        This is commonly done after compilation to determine if recompilation is</span>
+<span class="sd">        required upon subsequent imports. If the module&#39;s hash file has not yet</span>
+<span class="sd">        been created, this method will create it and store it in the</span>
+<span class="sd">        `__pycache__` dir for the module.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the module which should have its hash updated.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">hash_file</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
         <span class="n">hash_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -3459,16 +3760,18 @@ This Nimporter can only import Nim modules with procedures exposed via the
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">import_nim_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span><span class="nb">list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to manually import a given Nim module or library.</span>
+
 <span class="sd">        Can be used to explicitly import a module rather than using the `import`</span>
 <span class="sd">        keyword. Allows the cache to be ignored to solve issues arising from</span>
 <span class="sd">        caching one module when 10 other imported Nim libraries have changed.</span>
 
 <span class="sd">        Example Use:</span>
 
-<span class="sd">        &gt;&gt;&gt; # Rather than:</span>
-<span class="sd">        &gt;&gt;&gt; import foo</span>
-<span class="sd">        &gt;&gt;&gt; # You can say:</span>
-<span class="sd">        &gt;&gt;&gt; foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
+<span class="sd">            # Rather than:</span>
+<span class="sd">            import foo</span>
+<span class="sd">            # You can say:</span>
+<span class="sd">            foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            fullname(str): the module to import. Can be &#39;foo&#39; or &#39;foo.bar.baz&#39;</span>
@@ -3643,13 +3946,24 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     
   
-    <div class="desc"><p>Returns the hash of the Nim file.</p></div>
+    <div class="desc"><p>Convenience function to hash a given file.</p>
+<p>Args:
+    module_path(Path): the file to hash.</p>
+<p>Returns:
+    The hash bytes of the Nim file.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.hash_file', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.hash_file" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@staticmethod</span>
 <span class="k">def</span> <span class="nf">hash_file</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Returns the hash of the Nim file.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function to hash a given file.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the file to hash.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The hash bytes of the Nim file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">block_size</span> <span class="o">=</span> <span class="mi">65536</span>
     <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">()</span>
     <span class="k">with</span> <span class="n">module_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
@@ -3718,13 +4032,27 @@ modules and Nim libraries.</p>
 
     
   
-    <div class="desc"><p>Returns the bits of the hash for a given Nim module.</p></div>
+    <div class="desc"><p>Gathers the hash for a given Nim module.</p>
+<p>Args:
+    module_path(Path): the Nim module for which to return its hash.</p>
+<p>Raises:
+    NimporterException: if the module has not yet been hashed.</p>
+<p>Returns:
+    The bytes of the hash for a given Nim module.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.get_hash', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.get_hash" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">get_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Returns the bits of the hash for a given Nim module.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gathers the hash for a given Nim module.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module for which to return its hash.</span>
+<span class="sd">    Raises:</span>
+<span class="sd">        NimporterException: if the module has not yet been hashed.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The bytes of the hash for a given Nim module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">module_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
         <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Module </span><span class="si">{path}</span><span class="s1"> has not yet been hashed.&#39;</span><span class="p">)</span>
@@ -3745,16 +4073,24 @@ modules and Nim libraries.</p>
 
     
   
-    <div class="desc"><p>Return whether or not a given Nim file has changed since last hash. If
-the module has not yet been hashed, returns True.</p></div>
+    <div class="desc"><p>Determines if a module has been modified.</p>
+<p>Args:
+    module_path(Path): the Nim module to check for modification.</p>
+<p>Returns:
+    A bool indicating whether or not a given Nim file has changed since
+    last hash. If the module has not yet been hashed, returns True.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.hash_changed', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.hash_changed" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">hash_changed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return whether or not a given Nim file has changed since last hash. If</span>
-<span class="sd">    the module has not yet been hashed, returns True.</span>
+<span class="sd">    Determines if a module has been modified.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module to check for modification.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether or not a given Nim file has changed since</span>
+<span class="sd">        last hash. If the module has not yet been hashed, returns True.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_hashed</span><span class="p">(</span><span class="n">module_path</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
@@ -3775,14 +4111,27 @@ the module has not yet been hashed, returns True.</p></div>
 
     
   
-    <div class="desc"><p>Return the hash filename as a Path.</p></div>
+    <div class="desc"><p>Gets the filename that should contain a given module's hash.</p>
+<p>Args:
+    module_path(Path): the Nim module the hash file pertains to.</p>
+<p>Returns:
+    The hash filename as a Path.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.hash_filename', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.hash_filename" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">hash_filename</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Return the hash filename as a Path.&quot;</span>
-    <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the filename that should contain a given module&#39;s hash.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module the hash file pertains to.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        The hash filename as a Path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">module_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.hash&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
 </pre></div>
 
   </div>
@@ -3852,20 +4201,18 @@ the module has not yet been hashed, returns True.</p></div>
 
     
   
-    <div class="desc"><p>Can be used to explicitly import a module rather than using the <code>import</code>
+    <div class="desc"><p>Convenience function to manually import a given Nim module or library.</p>
+<p>Can be used to explicitly import a module rather than using the <code>import</code>
 keyword. Allows the cache to be ignored to solve issues arising from
 caching one module when 10 other imported Nim libraries have changed.</p>
 <p>Example Use:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<h1>Rather than:</h1>
-<p>import foo</p>
-<h1>You can say:</h1>
-<p>foo = Nimporter.import_nim_module('foo', ['/some/random/dir'])</p>
-</blockquote>
-</blockquote>
-</blockquote>
+<div class="codehilite"><pre><span></span><span class="c1"># Rather than:</span>
+<span class="kn">import</span> <span class="nn">foo</span>
+<span class="c1"># You can say:</span>
+<span class="n">foo</span> <span class="o">=</span> <span class="n">Nimporter</span><span class="o">.</span><span class="n">import_nim_module</span><span class="p">(</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;/some/random/dir&#39;</span><span class="p">])</span>
+</pre></div>
+
+
 <p>Args:
     fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
     path(list): a list of paths to search first.
@@ -3878,14 +4225,15 @@ caching one module when 10 other imported Nim libraries have changed.</p>
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">import_nim_module</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span><span class="nb">list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore_cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function to manually import a given Nim module or library.</span>
 <span class="sd">    Can be used to explicitly import a module rather than using the `import`</span>
 <span class="sd">    keyword. Allows the cache to be ignored to solve issues arising from</span>
 <span class="sd">    caching one module when 10 other imported Nim libraries have changed.</span>
 <span class="sd">    Example Use:</span>
-<span class="sd">    &gt;&gt;&gt; # Rather than:</span>
-<span class="sd">    &gt;&gt;&gt; import foo</span>
-<span class="sd">    &gt;&gt;&gt; # You can say:</span>
-<span class="sd">    &gt;&gt;&gt; foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
+<span class="sd">        # Rather than:</span>
+<span class="sd">        import foo</span>
+<span class="sd">        # You can say:</span>
+<span class="sd">        foo = Nimporter.import_nim_module(&#39;foo&#39;, [&#39;/some/random/dir&#39;])</span>
 <span class="sd">    Args:</span>
 <span class="sd">        fullname(str): the module to import. Can be &#39;foo&#39; or &#39;foo.bar.baz&#39;</span>
 <span class="sd">        path(list): a list of paths to search first.</span>
@@ -3925,13 +4273,25 @@ caching one module when 10 other imported Nim libraries have changed.</p>
 
     
   
-    <div class="desc"><p>Return whether or not a given Nim file has already been hashed.</p></div>
+    <div class="desc"><p>Determines if a given Nim module has already been built.</p>
+<p>Args:
+    module_path(Path): the Nim module for which to query for artifacts.</p>
+<p>Returns:
+    A bool indicating whether or not a given Nim file has already been
+    built.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.is_built', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.is_built" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">is_built</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines if a given Nim module has already been built.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module for which to query for artifacts.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">        built.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">build_artifact</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 </pre></div>
 
@@ -3949,16 +4309,24 @@ caching one module when 10 other imported Nim libraries have changed.</p>
 
     
   
-    <div class="desc"><p>Return whether or not a <strong>pycache</strong> directory exists to store hashes and
-build artifacts.</p></div>
+    <div class="desc"><p>Determines if the <code>__pycache__</code> dir for a given Nim module exists.</p>
+<p>Args:
+    module_path(Path): the Nim module the <code>__pycache__</code> dir pertains to.</p>
+<p>Returns:
+    A bool indicating whether or not a <strong>pycache</strong> directory exists to
+    store hashes and build artifacts.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.is_cache', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.is_cache" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">is_cache</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return whether or not a __pycache__ directory exists to store hashes and</span>
-<span class="sd">    build artifacts.</span>
+<span class="sd">    Determines if the `__pycache__` dir for a given Nim module exists.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module the `__pycache__` dir pertains to.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether or not a __pycache__ directory exists to</span>
+<span class="sd">        store hashes and build artifacts.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">pycache_dir</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 </pre></div>
@@ -3977,13 +4345,25 @@ build artifacts.</p></div>
 
     
   
-    <div class="desc"><p>Return whether or not a given Nim file has already been hashed.</p></div>
+    <div class="desc"><p>Determines if a given Nim module has already been hashed.</p>
+<p>Args:
+    module_path(Path): the Nim module for which to query hash existence.</p>
+<p>Returns:
+    A bool indicating whether or not a given Nim file has already been
+    hashed.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.is_hashed', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.is_hashed" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">is_hashed</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Return whether or not a given Nim file has already been hashed.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines if a given Nim module has already been hashed.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module for which to query hash existence.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether or not a given Nim file has already been</span>
+<span class="sd">        hashed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 </pre></div>
 
@@ -4030,16 +4410,26 @@ build artifacts.</p></div>
 
     
   
-    <div class="desc"><p>Creates or updates the <mod-name>.nim.hash file within the <strong>pycache</strong>
-directory.</p></div>
+    <div class="desc"><p>Updates the hash file associated with a given Nim module.</p>
+<p>This is commonly done after compilation to determine if recompilation is
+required upon subsequent imports. If the module's hash file has not yet
+been created, this method will create it and store it in the
+<code>__pycache__</code> dir for the module.</p>
+<p>Args:
+    module_path(Path): the module which should have its hash updated.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.update_hash', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.update_hash" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">update_hash</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates or updates the &lt;mod-name&gt;.nim.hash file within the __pycache__</span>
-<span class="sd">    directory.</span>
+<span class="sd">    Updates the hash file associated with a given Nim module.</span>
+<span class="sd">    This is commonly done after compilation to determine if recompilation is</span>
+<span class="sd">    required upon subsequent imports. If the module&#39;s hash file has not yet</span>
+<span class="sd">    been created, this method will create it and store it in the</span>
+<span class="sd">    `__pycache__` dir for the module.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the module which should have its hash updated.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">hash_file</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">hash_filename</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
     <span class="n">hash_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

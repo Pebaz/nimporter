@@ -526,24 +526,59 @@ class Nimporter:
     @classmethod
     def is_cache(cls, module_path):
         """
-        Return whether or not a __pycache__ directory exists to store hashes and
-        build artifacts.
+        Determines if the `__pycache__` dir for a given Nim module exists.
+
+        Args:
+            module_path(Path): the Nim module the `__pycache__` dir pertains to.
+
+        Returns:
+            A bool indicating whether or not a __pycache__ directory exists to
+            store hashes and build artifacts.
         """
         return NimCompiler.pycache_dir(module_path).exists()
 
     @classmethod
     def is_hashed(cls, module_path):
-        "Return whether or not a given Nim file has already been hashed."
+        """
+        Determines if a given Nim module has already been hashed.
+
+        Args:
+            module_path(Path): the Nim module for which to query hash existence.
+
+        Returns:
+            A bool indicating whether or not a given Nim file has already been
+            hashed.
+        """
         return cls.hash_filename(module_path).exists()
 
     @classmethod
     def is_built(cls, module_path):
-        "Return whether or not a given Nim file has already been hashed."
+        """
+        Determines if a given Nim module has already been built.
+
+        Args:
+            module_path(Path): the Nim module for which to query for artifacts.
+
+        Returns:
+            A bool indicating whether or not a given Nim file has already been
+            built.
+        """
         return NimCompiler.build_artifact(module_path).exists()
 
     @classmethod
     def get_hash(cls, module_path):
-        "Returns the bits of the hash for a given Nim module."
+        """
+        Gathers the hash for a given Nim module.
+
+        Args:
+            module_path(Path): the Nim module for which to return its hash.
+
+        Raises:
+            NimporterException: if the module has not yet been hashed.
+
+        Returns:
+            The bytes of the hash for a given Nim module.
+        """
         if not cls.is_hashed(module_path):
             path = module_path.absolute()
             raise NimporterException(f'Module {path} has not yet been hashed.')
@@ -552,8 +587,14 @@ class Nimporter:
     @classmethod
     def hash_changed(cls, module_path):
         """
-        Return whether or not a given Nim file has changed since last hash. If
-        the module has not yet been hashed, returns True.
+        Determines if a module has been modified.
+
+        Args:
+            module_path(Path): the Nim module to check for modification.
+
+        Returns:
+            A bool indicating whether or not a given Nim file has changed since
+            last hash. If the module has not yet been hashed, returns True.
         """
         if not cls.is_hashed(module_path):
             return True
@@ -561,7 +602,15 @@ class Nimporter:
 
     @staticmethod
     def hash_file(module_path):
-        "Returns the hash of the Nim file."
+        """
+        Convenience function to hash a given file.
+
+        Args:
+            module_path(Path): the file to hash.
+        
+        Returns:
+            The hash bytes of the Nim file.
+        """
         block_size = 65536
         hasher = hashlib.md5()
         with module_path.open('rb') as file:
@@ -574,8 +623,15 @@ class Nimporter:
     @classmethod
     def update_hash(cls, module_path):
         """
-        Creates or updates the <mod-name>.nim.hash file within the __pycache__
-        directory.
+        Updates the hash file associated with a given Nim module.
+
+        This is commonly done after compilation to determine if recompilation is
+        required upon subsequent imports. If the module's hash file has not yet
+        been created, this method will create it and store it in the
+        `__pycache__` dir for the module.
+
+        Args:
+            module_path(Path): the module which should have its hash updated.
         """
         hash_file = cls.hash_filename(module_path)
         hash_file.parent.mkdir(parents=True, exist_ok=True)
@@ -585,16 +641,18 @@ class Nimporter:
     @classmethod
     def import_nim_module(cls, fullname, path:list=None, ignore_cache=None):
         """
+        Convenience function to manually import a given Nim module or library.
+
         Can be used to explicitly import a module rather than using the `import`
         keyword. Allows the cache to be ignored to solve issues arising from
         caching one module when 10 other imported Nim libraries have changed.
 
         Example Use:
 
-        >>> # Rather than:
-        >>> import foo
-        >>> # You can say:
-        >>> foo = Nimporter.import_nim_module('foo', ['/some/random/dir'])
+            # Rather than:
+            import foo
+            # You can say:
+            foo = Nimporter.import_nim_module('foo', ['/some/random/dir'])
 
         Args:
             fullname(str): the module to import. Can be 'foo' or 'foo.bar.baz'
@@ -626,7 +684,21 @@ class Nimporter:
 
     @classmethod
     def import_nim_code(cls, fullname, path, *, library: bool):
-        "Search for, compile, and return Spec for module loaders."
+        """
+        Search for, compile, and return Spec for module loaders.
+
+        Used by both NimModImporter and NimLibImporter for their Spec-finding
+        capabilities.
+
+        Args:
+            fullname(str): the name given when importing the module in Python.
+            path(list): additional search paths.
+            library(bool): indicates whether or not to compile as a library.
+
+        Returns:
+            A Spec object that can be used to import the (now compiled) Nim
+            module or library.
+        """
         parts = fullname.split('.')
         module = parts[-1] if library else parts.pop()
         module_file = f'{module}.nim'
@@ -670,7 +742,22 @@ class Nimporter:
 
     @classmethod
     def should_compile(cls, module_path):
-        "Determine if a module should be rebuilt using only the path to it."
+        """
+        Determines if a module should be rebuilt using only the path to it.
+
+        Factors included in the decision to compile a module include: 
+
+         * If `IGNORE_CACHE` is set
+         * If the module has been modified since the last build
+         * If the `__pycache__` directory does not exist
+         * If there is no cached build artifact available in `__pycache__`
+
+        Args:
+            module_path(Path): the Nim module to potentially (re)compile.
+
+        Returns:
+            A bool indicating whether or not the module should be (re)built.
+        """
         return any([
             cls.IGNORE_CACHE,
             cls.hash_changed(module_path),
@@ -679,14 +766,25 @@ class Nimporter:
         ])
 
     @classmethod
-    def _find_extensions(cls, path, exclude_dirs=[]):
+    def _find_extensions(cls, path, exclude_dirs=set()):
         """
-        Compiles Nim files to C and creates Extensions from them for
-        distribution.
+        Recurses through a given path to find all Nim modules or libraries.
+
+        Args:
+            path(Path): the path to begin recursing.
+            exclude_dirs(list): the list of Paths to skip while searching.
+
+        Returns:
+            A list of Path objects. File Paths indicate a Nim Module. Folder
+            Paths indicate Nim Libraries.
         """
+        exclude_dirs = {p.expanduser().absolute() for i in exclude_dirs}
         nim_exts = []
 
         for item in path.iterdir():
+            if item.expanduser().absolute() in exclude_dirs:
+                continue
+
             if item.is_dir() and list(item.glob('*.nimble')):
                 # Treat directory as one single Extension
                 (nimble_file,) = item.glob('*.nimble')
