@@ -149,11 +149,7 @@ class NimCompiler:
         Return the `__pycache__` directory as a Path.
 
         Works the same as Python's `__pycache__` directory except now it works
-        with Nim extensions also. For modules, it works literally exactly like
-        Python. However, for libraries, the `__pycache__` dir is placed in the
-        folder that contains the library, not within the library's folder. This
-        is because the library needs to act like a single container, not a
-        package.
+        with Nim extensions also. It works literally exactly like Python.
 
         Args:
             module_path(Path): the path to a given Nim module or library.
