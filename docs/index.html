@@ -1841,7 +1841,21 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">import_nim_code</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">library</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="s2">&quot;Search for, compile, and return Spec for module loaders.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search for, compile, and return Spec for module loaders.</span>
+
+<span class="sd">        Used by both NimModImporter and NimLibImporter for their Spec-finding</span>
+<span class="sd">        capabilities.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fullname(str): the name given when importing the module in Python.</span>
+<span class="sd">            path(list): additional search paths.</span>
+<span class="sd">            library(bool): indicates whether or not to compile as a library.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Spec object that can be used to import the (now compiled) Nim</span>
+<span class="sd">            module or library.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">library</span> <span class="k">else</span> <span class="n">parts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="n">module_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{module}</span><span class="s1">.nim&#39;</span>
@@ -1885,7 +1899,22 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">should_compile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Determine if a module should be rebuilt using only the path to it.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a module should be rebuilt using only the path to it.</span>
+
+<span class="sd">        Factors included in the decision to compile a module include: </span>
+
+<span class="sd">         * If `IGNORE_CACHE` is set</span>
+<span class="sd">         * If the module has been modified since the last build</span>
+<span class="sd">         * If the `__pycache__` directory does not exist</span>
+<span class="sd">         * If there is no cached build artifact available in `__pycache__`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module to potentially (re)compile.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not the module should be (re)built.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">([</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">IGNORE_CACHE</span><span class="p">,</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">hash_changed</span><span class="p">(</span><span class="n">module_path</span><span class="p">),</span>
@@ -1894,14 +1923,25 @@ users of the library don't have to install a Nim compiler.</p>
         <span class="p">])</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_find_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span> <span class="nf">_find_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="nb">set</span><span class="p">()):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compiles Nim files to C and creates Extensions from them for</span>
-<span class="sd">        distribution.</span>
+<span class="sd">        Recurses through a given path to find all Nim modules or libraries.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path(Path): the path to begin recursing.</span>
+<span class="sd">            exclude_dirs(list): the list of Paths to skip while searching.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of Path objects. File Paths indicate a Nim Module. Folder</span>
+<span class="sd">            Paths indicate Nim Libraries.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exclude_dirs</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">exclude_dirs</span><span class="p">}</span>
         <span class="n">nim_exts</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="ow">in</span> <span class="n">exclude_dirs</span><span class="p">:</span>
+                <span class="k">continue</span>
+
             <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.nimble&#39;</span><span class="p">)):</span>
                 <span class="c1"># Treat directory as one single Extension</span>
                 <span class="p">(</span><span class="n">nimble_file</span><span class="p">,)</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.nimble&#39;</span><span class="p">)</span>
@@ -1925,7 +1965,17 @@ users of the library don't have to install a Nim compiler.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_build_nim_extension</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="s2">&quot;Convenience function to create an Extension object from a given path.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to create an Extension object from a given path.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path(Path): the path to the Nim module/library.</span>
+<span class="sd">            root(tuple): the namespace to add the Extension to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An Extension object representing the Nim module or library that has</span>
+<span class="sd">            successfully be compiled to C.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">compile_nim_extension</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">library</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
         <span class="p">)</span>
@@ -1933,11 +1983,17 @@ users of the library don't have to install a Nim compiler.</p>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">build_nim_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gathers all Nim Extensinos by recursing through a Python project.</span>
+
 <span class="sd">        Compiles Nim modules and libraries to C and creates Extensions from them</span>
 <span class="sd">        for source, binary, or wheel distribution.</span>
 
 <span class="sd">        Automatically recurses through the project directory to find all the Nim</span>
 <span class="sd">        modules and Nim libraries.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            root(tuple): the namespace to add all extensions to.</span>
+<span class="sd">            exclude_dirs(list): the Paths to skip while recursing the project.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A list of Extensions that can be added to the setup() function&#39;s</span>
@@ -1958,6 +2014,9 @@ users of the library don't have to install a Nim compiler.</p>
 <span class="sd">    Adds a given importer class to `sys.meta_path` at a given position.</span>
 
 <span class="sd">    NOTE: The position in `sys.meta_path` is extremely relevant.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        list_position(int): the index in `sys.meta_path` to place the importer.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">importer</span><span class="p">):</span>
         <span class="k">nonlocal</span> <span class="n">list_position</span>
@@ -2027,7 +2086,6 @@ users of the library don't have to install a Nim compiler.</p>
 
 <span class="c1"># This should be the only real usage of the Nimporter module beyond importing it</span>
 <span class="n">build_nim_extensions</span> <span class="o">=</span> <span class="n">Nimporter</span><span class="o">.</span><span class="n">build_nim_extensions</span>
-<span class="c1">#__all__ = [&#39;build_nim_extensions&#39;]</span>
 </pre></div>
 
   </div>
@@ -2046,10 +2104,14 @@ users of the library don't have to install a Nim compiler.</p>
 
     
   
-    <div class="desc"><p>Compiles Nim modules and libraries to C and creates Extensions from them
+    <div class="desc"><p>Gathers all Nim Extensinos by recursing through a Python project.</p>
+<p>Compiles Nim modules and libraries to C and creates Extensions from them
 for source, binary, or wheel distribution.</p>
 <p>Automatically recurses through the project directory to find all the Nim
 modules and Nim libraries.</p>
+<p>Args:
+    root(tuple): the namespace to add all extensions to.
+    exclude_dirs(list): the Paths to skip while recursing the project.</p>
 <p>Returns:
     A list of Extensions that can be added to the setup() function's
     "ext_modules" keyword argument.</p></div>
@@ -2059,10 +2121,14 @@ modules and Nim libraries.</p>
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">build_nim_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gathers all Nim Extensinos by recursing through a Python project.</span>
 <span class="sd">    Compiles Nim modules and libraries to C and creates Extensions from them</span>
 <span class="sd">    for source, binary, or wheel distribution.</span>
 <span class="sd">    Automatically recurses through the project directory to find all the Nim</span>
 <span class="sd">    modules and Nim libraries.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root(tuple): the namespace to add all extensions to.</span>
+<span class="sd">        exclude_dirs(list): the Paths to skip while recursing the project.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        A list of Extensions that can be added to the setup() function&#39;s</span>
 <span class="sd">        &quot;ext_modules&quot; keyword argument.</span>
@@ -2119,7 +2185,9 @@ modules and Nim libraries.</p>
     
   
     <div class="desc"><p>Adds a given importer class to <code>sys.meta_path</code> at a given position.</p>
-<p>NOTE: The position in <code>sys.meta_path</code> is extremely relevant.</p></div>
+<p>NOTE: The position in <code>sys.meta_path</code> is extremely relevant.</p>
+<p>Args:
+    list_position(int): the index in <code>sys.meta_path</code> to place the importer.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.register_importer', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.register_importer" class="source">
@@ -2128,6 +2196,9 @@ modules and Nim libraries.</p>
 <span class="sd">    Adds a given importer class to `sys.meta_path` at a given position.</span>
 
 <span class="sd">    NOTE: The position in `sys.meta_path` is extremely relevant.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        list_position(int): the index in `sys.meta_path` to place the importer.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">importer</span><span class="p">):</span>
         <span class="k">nonlocal</span> <span class="n">list_position</span>
@@ -3803,7 +3874,21 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">import_nim_code</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">library</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="s2">&quot;Search for, compile, and return Spec for module loaders.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Search for, compile, and return Spec for module loaders.</span>
+
+<span class="sd">        Used by both NimModImporter and NimLibImporter for their Spec-finding</span>
+<span class="sd">        capabilities.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fullname(str): the name given when importing the module in Python.</span>
+<span class="sd">            path(list): additional search paths.</span>
+<span class="sd">            library(bool): indicates whether or not to compile as a library.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A Spec object that can be used to import the (now compiled) Nim</span>
+<span class="sd">            module or library.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parts</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">library</span> <span class="k">else</span> <span class="n">parts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
         <span class="n">module_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{module}</span><span class="s1">.nim&#39;</span>
@@ -3847,7 +3932,22 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">should_compile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-        <span class="s2">&quot;Determine if a module should be rebuilt using only the path to it.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if a module should be rebuilt using only the path to it.</span>
+
+<span class="sd">        Factors included in the decision to compile a module include: </span>
+
+<span class="sd">         * If `IGNORE_CACHE` is set</span>
+<span class="sd">         * If the module has been modified since the last build</span>
+<span class="sd">         * If the `__pycache__` directory does not exist</span>
+<span class="sd">         * If there is no cached build artifact available in `__pycache__`</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            module_path(Path): the Nim module to potentially (re)compile.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A bool indicating whether or not the module should be (re)built.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">any</span><span class="p">([</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">IGNORE_CACHE</span><span class="p">,</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">hash_changed</span><span class="p">(</span><span class="n">module_path</span><span class="p">),</span>
@@ -3856,14 +3956,25 @@ This Nimporter can only import Nim modules with procedures exposed via the
         <span class="p">])</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_find_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span> <span class="nf">_find_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="nb">set</span><span class="p">()):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compiles Nim files to C and creates Extensions from them for</span>
-<span class="sd">        distribution.</span>
+<span class="sd">        Recurses through a given path to find all Nim modules or libraries.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path(Path): the path to begin recursing.</span>
+<span class="sd">            exclude_dirs(list): the list of Paths to skip while searching.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of Path objects. File Paths indicate a Nim Module. Folder</span>
+<span class="sd">            Paths indicate Nim Libraries.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exclude_dirs</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">exclude_dirs</span><span class="p">}</span>
         <span class="n">nim_exts</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span> <span class="ow">in</span> <span class="n">exclude_dirs</span><span class="p">:</span>
+                <span class="k">continue</span>
+
             <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.nimble&#39;</span><span class="p">)):</span>
                 <span class="c1"># Treat directory as one single Extension</span>
                 <span class="p">(</span><span class="n">nimble_file</span><span class="p">,)</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.nimble&#39;</span><span class="p">)</span>
@@ -3887,7 +3998,17 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_build_nim_extension</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
-        <span class="s2">&quot;Convenience function to create an Extension object from a given path.&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convenience function to create an Extension object from a given path.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path(Path): the path to the Nim module/library.</span>
+<span class="sd">            root(tuple): the namespace to add the Extension to.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An Extension object representing the Nim module or library that has</span>
+<span class="sd">            successfully be compiled to C.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">compile_nim_extension</span><span class="p">(</span>
             <span class="n">path</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">library</span><span class="o">=</span><span class="n">path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
         <span class="p">)</span>
@@ -3895,11 +4016,17 @@ This Nimporter can only import Nim modules with procedures exposed via the
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">build_nim_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gathers all Nim Extensinos by recursing through a Python project.</span>
+
 <span class="sd">        Compiles Nim modules and libraries to C and creates Extensions from them</span>
 <span class="sd">        for source, binary, or wheel distribution.</span>
 
 <span class="sd">        Automatically recurses through the project directory to find all the Nim</span>
 <span class="sd">        modules and Nim libraries.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            root(tuple): the namespace to add all extensions to.</span>
+<span class="sd">            exclude_dirs(list): the Paths to skip while recursing the project.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A list of Extensions that can be added to the setup() function&#39;s</span>
@@ -3989,10 +4116,14 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
     
   
-    <div class="desc"><p>Compiles Nim modules and libraries to C and creates Extensions from them
+    <div class="desc"><p>Gathers all Nim Extensinos by recursing through a Python project.</p>
+<p>Compiles Nim modules and libraries to C and creates Extensions from them
 for source, binary, or wheel distribution.</p>
 <p>Automatically recurses through the project directory to find all the Nim
 modules and Nim libraries.</p>
+<p>Args:
+    root(tuple): the namespace to add all extensions to.
+    exclude_dirs(list): the Paths to skip while recursing the project.</p>
 <p>Returns:
     A list of Extensions that can be added to the setup() function's
     "ext_modules" keyword argument.</p></div>
@@ -4002,10 +4133,14 @@ modules and Nim libraries.</p>
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">build_nim_extensions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude_dirs</span><span class="o">=</span><span class="p">[]):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gathers all Nim Extensinos by recursing through a Python project.</span>
 <span class="sd">    Compiles Nim modules and libraries to C and creates Extensions from them</span>
 <span class="sd">    for source, binary, or wheel distribution.</span>
 <span class="sd">    Automatically recurses through the project directory to find all the Nim</span>
 <span class="sd">    modules and Nim libraries.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        root(tuple): the namespace to add all extensions to.</span>
+<span class="sd">        exclude_dirs(list): the Paths to skip while recursing the project.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        A list of Extensions that can be added to the setup() function&#39;s</span>
 <span class="sd">        &quot;ext_modules&quot; keyword argument.</span>
@@ -4148,13 +4283,33 @@ modules and Nim libraries.</p>
 
     
   
-    <div class="desc"><p>Search for, compile, and return Spec for module loaders.</p></div>
+    <div class="desc"><p>Search for, compile, and return Spec for module loaders.</p>
+<p>Used by both NimModImporter and NimLibImporter for their Spec-finding
+capabilities.</p>
+<p>Args:
+    fullname(str): the name given when importing the module in Python.
+    path(list): additional search paths.
+    library(bool): indicates whether or not to compile as a library.</p>
+<p>Returns:
+    A Spec object that can be used to import the (now compiled) Nim
+    module or library.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.import_nim_code', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.import_nim_code" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">import_nim_code</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fullname</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">library</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-    <span class="s2">&quot;Search for, compile, and return Spec for module loaders.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Search for, compile, and return Spec for module loaders.</span>
+<span class="sd">    Used by both NimModImporter and NimLibImporter for their Spec-finding</span>
+<span class="sd">    capabilities.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        fullname(str): the name given when importing the module in Python.</span>
+<span class="sd">        path(list): additional search paths.</span>
+<span class="sd">        library(bool): indicates whether or not to compile as a library.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A Spec object that can be used to import the (now compiled) Nim</span>
+<span class="sd">        module or library.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="n">fullname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
     <span class="n">module</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">library</span> <span class="k">else</span> <span class="n">parts</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
     <span class="n">module_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{module}</span><span class="s1">.nim&#39;</span>
@@ -4381,13 +4536,35 @@ caching one module when 10 other imported Nim libraries have changed.</p>
 
     
   
-    <div class="desc"><p>Determine if a module should be rebuilt using only the path to it.</p></div>
+    <div class="desc"><p>Determines if a module should be rebuilt using only the path to it.</p>
+<p>Factors included in the decision to compile a module include: </p>
+<ul>
+<li>If <code>IGNORE_CACHE</code> is set</li>
+<li>If the module has been modified since the last build</li>
+<li>If the <code>__pycache__</code> directory does not exist</li>
+<li>If there is no cached build artifact available in <code>__pycache__</code></li>
+</ul>
+<p>Args:
+    module_path(Path): the Nim module to potentially (re)compile.</p>
+<p>Returns:
+    A bool indicating whether or not the module should be (re)built.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.Nimporter.should_compile', this);">Show source &equiv;</a></p>
   <div id="source-nimporter.Nimporter.should_compile" class="source">
     <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">should_compile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
-    <span class="s2">&quot;Determine if a module should be rebuilt using only the path to it.&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines if a module should be rebuilt using only the path to it.</span>
+<span class="sd">    Factors included in the decision to compile a module include: </span>
+<span class="sd">     * If `IGNORE_CACHE` is set</span>
+<span class="sd">     * If the module has been modified since the last build</span>
+<span class="sd">     * If the `__pycache__` directory does not exist</span>
+<span class="sd">     * If there is no cached build artifact available in `__pycache__`</span>
+<span class="sd">    Args:</span>
+<span class="sd">        module_path(Path): the Nim module to potentially (re)compile.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A bool indicating whether or not the module should be (re)built.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">([</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">IGNORE_CACHE</span><span class="p">,</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">hash_changed</span><span class="p">(</span><span class="n">module_path</span><span class="p">),</span>
