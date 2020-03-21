@@ -9,6 +9,8 @@ Upload to PyPi:
 Please note: In order to use Nimporter, you must have both Nim installed as well
 as the [Nimpy](https://github.com/yglukhov/nimpy) library.
 
+Libraries distributed using Nimporter have no restriction.
+
 Make sure to star it on GitHub as well while you're up there. ;)
 """
 
@@ -18,13 +20,13 @@ from setuptools import setup
 """
 Computer with Nim Installed
 
-    pip install meowhash-nim                               # Works (Doesn't run Nim)
-    pip install git+https://github.com/Pebaz/meowhash-nim  # Works (Runs Nim)
+    pip install meowhash-nim                           # Works (Doesn't run Nim)
+    pip install git+https://github.com/Pebaz/test-nim  # Works (Runs Nim)
 
 Computer without Nim Installed
 
-    pip install meowhash-nim                               # Works (Runs Nim)
-    pip install git+https://github.com/Pebaz/meowhash-nim  # Fails (Cannot run Nim)
+    pip install meowhash-nim                           # Works (Runs Nim)
+    pip install git+https://github.com/Pebaz/test-nim  # Fails (Cannot run Nim)
 
 """
 

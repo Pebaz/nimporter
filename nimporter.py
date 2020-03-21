@@ -314,6 +314,45 @@ class NimCompiler:
         return global_scope['__switches__']
 
     @classmethod
+    def check_nim_extensions(cls, root):
+        """
+        if not cls.check_nim_extensions(root):
+            ...
+        else:
+            extensions = cls.get_nim_extensions(root)
+        """
+        return (root / 'build/nim-extensions').exists()
+
+    @classmethod
+    def get_nim_extensions(cls, root):
+        """
+
+
+
+        TODO:
+
+        1. USE ROOT / BUILD/NIM-EXTENSIONS DURING EXTENSION COMPILATION
+        2. ROOT IS KNOWN.
+        3. WHEN LOOKING FOR EXTENSIONS, FIRST LOOK IN BUILD/NIM-EXTENSIONS
+        4. TEST THIS ALL OUT.
+
+
+
+
+        """
+        extension_dir = root / 'build/nim-extensions'
+        assert extension_dir.exists()
+        return [
+            Extension(
+                name=extension.name,
+                sources=[str(c) for c in extension.glob('*.c')],
+                include_dirs=[str(extension)]
+            )
+            for extension in extension_dir.iterdir()
+        ]
+
+
+    @classmethod
     def compile_nim_extension(cls, module_path, root, *, library: bool):
         """
         Compiles/returns an Extension and installs `.nimble` dependencies.
@@ -358,7 +397,7 @@ class NimCompiler:
 
         cls.ensure_nimpy()
 
-        build_dir = Path(tempfile.mktemp())
+        build_dir = Path(tempfile.mkdtemp(dir='.'))
         switch_file = library_path / 'switches.py'
 
         # Switches file found
