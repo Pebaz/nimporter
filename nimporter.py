@@ -27,6 +27,16 @@ def cd(path):
         os.chdir(cwd)
 
 
+def difference(minuend, subtrahend):
+    if minuend == subtrahend: return minuend
+    assert minuend >= subtrahend
+    parents = iter(minuend.parents)
+    for difference in parents:
+        if difference == subtrahend:
+            return difference
+    raise Exception('Should never get here if minuend >= subtrahend')
+
+
 class NimporterException(Exception):
     "Catch-all for Nimporter exceptions"
 
@@ -125,6 +135,7 @@ class NimCompiler:
         '-d:release',
         '-d:ssl'
     ]
+    EXT_DIR = 'nim-extensions'
 
     @classmethod
     def build_artifact(cls, module_path):
@@ -314,45 +325,6 @@ class NimCompiler:
         return global_scope['__switches__']
 
     @classmethod
-    def check_nim_extensions(cls, root):
-        """
-        if not cls.check_nim_extensions(root):
-            ...
-        else:
-            extensions = cls.get_nim_extensions(root)
-        """
-        return (root / 'build/nim-extensions').exists()
-
-    @classmethod
-    def get_nim_extensions(cls, root):
-        """
-
-
-
-        TODO:
-
-        1. USE ROOT / BUILD/NIM-EXTENSIONS DURING EXTENSION COMPILATION
-        2. ROOT IS KNOWN.
-        3. WHEN LOOKING FOR EXTENSIONS, FIRST LOOK IN BUILD/NIM-EXTENSIONS
-        4. TEST THIS ALL OUT.
-
-
-
-
-        """
-        extension_dir = root / 'build/nim-extensions'
-        assert extension_dir.exists()
-        return [
-            Extension(
-                name=extension.name,
-                sources=[str(c) for c in extension.glob('*.c')],
-                include_dirs=[str(extension)]
-            )
-            for extension in extension_dir.iterdir()
-        ]
-
-
-    @classmethod
     def compile_nim_extension(cls, module_path, root, *, library: bool):
         """
         Compiles/returns an Extension and installs `.nimble` dependencies.
@@ -397,10 +369,22 @@ class NimCompiler:
 
         cls.ensure_nimpy()
 
-        build_dir = Path(tempfile.mkdtemp(dir='.'))
-        switch_file = library_path / 'switches.py'
+        # Coerce proper import path using root path
+        import_prefix = cls.get_import_prefix(module_path.parent, root)
+        module_part = tuple() if library else (module_name,)
+        import_path = '.'.join(import_prefix + module_part)
+
+        # Record results of build so it can be copied into source archive
+        extension_dir = root / cls.EXT_DIR
+        extension_dir.mkdir(parents=True, exist_ok=True)
+        build_dir = extension_dir.absolute() / import_path
+        build_dir.mkdir()
+        build_dir_relative = extension_dir / import_path
+
+        #build_dir = Path(tempfile.mkdtemp(dir='.'))
 
         # Switches file found
+        switch_file = library_path / 'switches.py'
         if switch_file.exists():
             switches = cls.get_switches(
                 switch_file,
@@ -432,17 +416,12 @@ class NimCompiler:
 
         for warn in warnings: print(warn)
 
-        csources = [str(c) for c in build_dir.iterdir() if c.suffix == '.c']
+        csources = [str(c) for c in build_dir_relative.iterdir() if c.suffix == '.c']
 
         # Copy over needed header(s)
         NIMBASE = 'nimbase.h'
         nimbase = cls.find_nim_std_lib() / NIMBASE
         shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
-
-        # Coerce proper import path using root path
-        import_prefix = cls.get_import_prefix(module_path.parent, root)
-        module_part = tuple() if library else (module_name,)
-        import_path = '.'.join(import_prefix + module_part)
 
         return Extension(
             name=import_path,
@@ -859,15 +838,68 @@ class Nimporter:
         )
 
     @classmethod
+    def check_nim_extensions(cls, root):
+        """
+        if not cls.check_nim_extensions(root):
+            ...
+        else:
+            extensions = cls.get_nim_extensions(root)
+        """
+        return (root / NimCompiler.EXT_DIR).exists()
+
+    @classmethod
+    def get_nim_extensions(cls, root):
+        """
+        TODO:
+
+        1. USE ROOT / BUILD/NIM-EXTENSIONS DURING EXTENSION COMPILATION
+        2. ROOT IS KNOWN.
+        3. WHEN LOOKING FOR EXTENSIONS, FIRST LOOK IN BUILD/NIM-EXTENSIONS
+        4. TEST THIS ALL OUT.
+
+        """
+        extension_dir = root / NimCompiler.EXT_DIR
+        assert extension_dir.exists()
+        return [
+            Extension(
+                name=extension.name,
+                sources=[str(c) for c in extension.glob('*.c')],
+                include_dirs=[str(extension)]
+            )
+            for extension in extension_dir.iterdir()
+        ]
+
+    @classmethod
     def build_nim_extensions(cls, root=None, exclude_dirs=[]):
         """
-        Gathers all Nim Extensinos by recursing through a Python project.
+        Gathers all Nim Extensions by recursing through a Python project.
 
         Compiles Nim modules and libraries to C and creates Extensions from them
         for source, binary, or wheel distribution.
 
         Automatically recurses through the project directory to find all the Nim
         modules and Nim libraries.
+
+        NOTE: Since this method is the only method that should be used by
+        consumers of the Nimporter API, it has to do a couple of things:
+
+        1. Build all Nim modules and libraries into C Extensions.
+        2. Compile all C Extensions with a C compiler on an end-user's machine.
+
+        Case 1 happens when creating a source or binary distribution. Also, this
+        can happen if installing via: `python setup.py install` after cloning
+        from Git.
+
+        Case 2 happens after the C files have been put into the source archive
+        and shipped to the end user. When the end user runs the `setup()`
+        function, the already-bundled C files need to be compiled as Extensions
+        rather than trying to look for Nim files that have not been bundled.
+
+        Although this is a complicated process, it can be illustrated here:
+
+        * `python setup.py install`: Case 1 + 2
+        * `pip install some-lib`: Case 2
+        * `pip install git+https://github.com/some-lib`: Case 1 + 2
 
         Args:
             root(tuple): the namespace to add all extensions to.
@@ -877,10 +909,21 @@ class Nimporter:
             A list of Extensions that can be added to the setup() function's
             "ext_modules" keyword argument.
         """
-        extensions = []
+        #root = (root or Path()).expanduser().absolute()
         root = root or Path()
 
+        # Check for bundled C source files
+        if cls.check_nim_extensions(root):
+
+            # NOTE(pebaz): Run only on end-user's machine.
+            return cls.get_nim_extensions(root)
+
+        extensions = []
+
+        # Create extensions from the Nim files found within the project
         for extension in cls._find_extensions(root, exclude_dirs):
+
+            # NOTE(pebaz): Run on author's machine or when building from source
             ext = cls._build_nim_extension(extension, root)
             if ext: extensions.append(ext)
 
