@@ -421,7 +421,11 @@ class NimCompiler:
         # Copy over needed header(s)
         NIMBASE = 'nimbase.h'
         nimbase = cls.find_nim_std_lib() / NIMBASE
-        shutil.copyfile(str(nimbase), str(build_dir / NIMBASE))
+        nimbase_dest = str(build_dir_relative / NIMBASE)
+        shutil.copyfile(str(nimbase), nimbase_dest)
+
+        with open(root / 'MANIFEST.in', 'a') as file:
+            file.write(f'include {nimbase_dest}\n')
 
         return Extension(
             name=import_path,
