@@ -867,8 +867,8 @@ class Nimporter:
         return [
             Extension(
                 name=extension.name,
-                sources=[str(c) for c in extension.glob('*.c')],
-                include_dirs=[str(extension)]
+                sources=[str(c.absolute()) for c in extension.glob('*.c')],
+                include_dirs=[str(extension.absolute())]
             )
             for extension in extension_dir.iterdir()
         ]
