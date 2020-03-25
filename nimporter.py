@@ -264,7 +264,9 @@ class NimCompiler:
 
         # Installed via ChooseNim
         if shutil.which('choosenim'):
-            o, _, _, _ = cls.invoke_compiler('choosenim show --nocolor'.split())
+            o, _, _, _ = cls.invoke_compiler(
+                'choosenim show -y --nocolor'.split()
+            )
             (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
             toolchain = Path(choosenim.split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
