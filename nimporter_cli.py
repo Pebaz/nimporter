@@ -20,7 +20,19 @@ def clean(dir=pathlib.Path()):
                 if item.suffix in remove_these:
                     os.remove(str(item.resolve()))
                     print('Deleted:'.ljust(19), item.resolve())
+
+        elif folder.name == 'nim-extensions':
+            shutil.rmtree(str(folder.absolute()))
+            print('Deleted Folder:'.ljust(19), folder.absolute())
+
         else:
+            if list(folder.glob('MANIFEST.in')):
+                item = folder / 'MANIFEST.in'
+                header = 'NIMPORTER BUNDLE'
+                for line in item.read_text().splitlines():
+                    if header in line:
+                        os.remove(str(item.resolve()))
+                        print('Deleted:'.ljust(19), item.resolve())
             clean(folder)
 
 

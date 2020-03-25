@@ -31,7 +31,7 @@ def test_build_extension_module():
     includes = set(Path(i) for i in ext.include_dirs)
 
     for source in ext.sources:
-        src = Path(source)
+        src = Path(source).absolute()
         assert src.suffix == '.c'
         assert src.parent in includes
 
@@ -48,7 +48,7 @@ def test_build_extension_library():
     includes = set(Path(i) for i in ext.include_dirs)
 
     for source in ext.sources:
-        src = Path(source)
+        src = Path(source).absolute()
         assert src.suffix == '.c'
         assert src.parent in includes
 
@@ -67,7 +67,7 @@ def test_build_all_extensions():
         includes = set(Path(i) for i in ext.include_dirs)
 
         for source in ext.sources:
-            src = Path(source)
+            src = Path(source).absolute()
             assert src.suffix == '.c'
             assert src.parent in includes
 
@@ -85,7 +85,7 @@ def test_compilation_failures():
     # No Nimble file
     try:
         NimCompiler.compile_nim_extension(
-            Path('tests/lib3'), None, library=True
+            Path('tests/lib3'), Path('tests'), library=True
         )
         assert False, 'Should throw exception.'
     except NimporterException:
@@ -94,7 +94,7 @@ def test_compilation_failures():
     # Errors with Library
     try:
         NimCompiler.compile_nim_extension(
-            Path('tests/lib4'), None, library=True
+            Path('tests/lib4'), Path('tests'), library=True
         )
         assert False, 'Should throw exception.'
     except NimInvokeException:
@@ -103,7 +103,7 @@ def test_compilation_failures():
     # Errors with Module
     try:
         NimCompiler.compile_nim_extension(
-            Path('tests/pkg1/error.nim'), None, library=False
+            Path('tests/pkg1/error.nim'), Path('tests'), library=False
         )
         assert False, 'Should throw exception.'
     except NimCompileException:
@@ -122,6 +122,6 @@ def test_compile_switches():
     includes = set(Path(i) for i in ext.include_dirs)
 
     for source in ext.sources:
-        src = Path(source)
+        src = Path(source).absolute()
         assert src.suffix == '.c'
         assert src.parent in includes

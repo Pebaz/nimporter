@@ -265,7 +265,7 @@ class NimCompiler:
         # Installed via ChooseNim
         if shutil.which('choosenim'):
             o, _, _, _ = cls.invoke_compiler('choosenim show --nocolor'.split())
-            choosenim = o.splitlines().pop()
+            (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
             toolchain = Path(choosenim.split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
             if not (stdlib / 'system.nim').exists():
@@ -378,7 +378,7 @@ class NimCompiler:
         extension_dir = root / cls.EXT_DIR
         extension_dir.mkdir(parents=True, exist_ok=True)
         build_dir = extension_dir.absolute() / import_path
-        build_dir.mkdir()
+        build_dir.mkdir(exist_ok=True)
         build_dir_relative = extension_dir / import_path
 
         #build_dir = Path(tempfile.mkdtemp(dir='.'))
@@ -424,7 +424,12 @@ class NimCompiler:
         nimbase_dest = str(build_dir_relative / NIMBASE)
         shutil.copyfile(str(nimbase), nimbase_dest)
 
-        with open(root / 'MANIFEST.in', 'a') as file:
+        # Properly handle bundling headers into the source distribution
+        manifest = root / 'MANIFEST.in'
+        if not manifest.exists():
+            manifest.write_text('# NIMPORTER BUNDLE\n')
+
+        with manifest.open('a') as file:
             file.write(f'include {nimbase_dest}\n')
 
         return Extension(
