@@ -134,7 +134,7 @@ class NimCompiler:
         '--app:lib',
         '-d:release',
         '-d:ssl',
-        '--verbosity:3'v
+        '--verbosity:3'
     ]
     EXT_DIR = 'nim-extensions'
 
