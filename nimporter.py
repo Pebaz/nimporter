@@ -134,7 +134,8 @@ class NimCompiler:
         '--app:lib',
         '-d:release',
         '-d:ssl',
-    ] + (['--os:Windows'] if sys.platform == 'win32' else [])
+        '--verbosity:3'
+    ]
     EXT_DIR = 'nim-extensions'
 
     @classmethod
