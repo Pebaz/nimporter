@@ -133,8 +133,7 @@ class NimCompiler:
         '--threads:on',
         '--app:lib',
         '-d:release',
-        '-d:ssl',
-        '--verbosity:3'
+        '-d:ssl'
     ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
     EXT_DIR = 'nim-extensions'
 
@@ -384,8 +383,6 @@ class NimCompiler:
         build_dir.mkdir(exist_ok=True)
         build_dir_relative = extension_dir / import_path
 
-        #build_dir = Path(tempfile.mkdtemp(dir='.'))
-
         # Switches file found
         switch_file = library_path / 'switches.py'
         if switch_file.exists():
@@ -410,8 +407,6 @@ class NimCompiler:
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
-
-        print(output)
 
         if errors:
             if library:
