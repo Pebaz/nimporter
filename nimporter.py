@@ -134,7 +134,7 @@ class NimCompiler:
         '--app:lib',
         '-d:release',
         '-d:ssl',
-        '--verbosity:3'
+        '--verbosity:3'v
     ]
     EXT_DIR = 'nim-extensions'
 
@@ -410,6 +410,8 @@ class NimCompiler:
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
             output, errors, warnings, hints = cls.invoke_compiler(nim_args)
+
+        print(output)
 
         if errors:
             if library:
