@@ -1,0 +1,98 @@
+# Example template to automatically build and upload binary artifacts to PyPi 
+# when releases are created on GitHub. Supports Windows, MacOS, and Linux.
+# Place into your Project/.github/workflows to use it.
+# For the PYPI_USERNAME and PYPI_PASSWORD environment variables, create them
+# using your GitHub repo's Settings/Secrets page.
+
+name: CI
+on:
+  release:
+    types: [created]
+
+jobs:
+
+  # ----------------------------------------------------------------------------
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+        
+      - uses: jiro4989/setup-nim-action@v1.0.2
+        with:
+          nim-version: '1.0.6'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel twine nimporter
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py bdist_wheel
+          WHEEL=dist/$(python3 -c 'import pathlib;print([*pathlib.Path("dist").glob("pebaz*")][0].name.replace("linux", "manylinux1"))')
+          mv dist/$(python -c "import pathlib;print([*pathlib.Path('dist').glob('pebaz*')][0].name)") $WHEEL
+          ls dist
+          twine upload dist/*
+
+  # ----------------------------------------------------------------------------
+  build-win32:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+        
+      - uses: jiro4989/setup-nim-action@v1.0.2
+        with:
+          nim-version: '1.0.6'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel twine nimporter
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py bdist_wheel
+          twine upload dist/*
+
+  # ----------------------------------------------------------------------------
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - uses: jiro4989/setup-nim-action@v1.0.2
+        with:
+          nim-version: '1.0.6'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel twine nimporter
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 setup.py bdist_wheel
+          twine upload dist/*
