@@ -111,7 +111,9 @@ def test_ensure_nimpy():
 
     # Remove it
     if out[0]:
-        out = NimCompiler.invoke_compiler('nimble uninstall nimpy --accept'.split())
+        out = NimCompiler.invoke_compiler(
+            'nimble uninstall nimpy --accept'.split()
+        )
         assert not out[1]
 
     # Install/verify it is already installed
