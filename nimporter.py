@@ -859,13 +859,21 @@ class Nimporter:
     @classmethod
     def get_nim_extensions(cls, root):
         """
-        TODO:
+        Convenience function to look for previously compiled Nim Extensions.
 
-        1. USE ROOT / BUILD/NIM-EXTENSIONS DURING EXTENSION COMPILATION
-        2. ROOT IS KNOWN.
-        3. WHEN LOOKING FOR EXTENSIONS, FIRST LOOK IN BUILD/NIM-EXTENSIONS
-        4. TEST THIS ALL OUT.
+        When extensions are created, they are stored in the
+        `<root>/build/nim-extensions` directory. The reason this is necessary is
+        because `setup.py` runs the `setup()` function twice: once to gather
+        info and once to actually compile/bundle everything. On the first pass,
+        the extensions are compiled to C. On the second pass, they are compiled
+        to Python-compatible shared objects.
 
+        Args:
+            root(Path): the root of the project.
+
+        Returns:
+            A list of Extensions that were compiled on the library maintainer's
+            computer.
         """
         extension_dir = root / NimCompiler.EXT_DIR
         assert extension_dir.exists()
