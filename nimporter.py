@@ -308,7 +308,7 @@ class NimCompiler:
          * **MODULE_PATH**: the path to the actual Nim source file to compile
          * **BUILD_ARTIFACT**: can be used when building a module
          * **BUILD_DIR**: can be used when building a library
-         * **IS_LIBRARY**: used to determine if a library or a module is being built
+         * **IS_LIBRARY**: used to determine if a library/module is being built.
 
         The reason for the switchfile being a Python script is that different
         platforms will require different compilation switches. The switchfile
@@ -416,7 +416,9 @@ class NimCompiler:
 
         for warn in warnings: print(warn)
 
-        csources = [str(c) for c in build_dir_relative.iterdir() if c.suffix == '.c']
+        csources = [
+            str(c) for c in build_dir_relative.iterdir() if c.suffix == '.c'
+        ]
 
         # Copy over needed header(s)
         NIMBASE = 'nimbase.h'
