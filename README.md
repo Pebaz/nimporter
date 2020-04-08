@@ -59,6 +59,8 @@ print(nim_math.add(2, 4))  # 6
 
 For tutorials, advanced usage, and more, head over to the [Wiki](<https://github.com/Pebaz/nimporter/wiki>).
 
+Generated documentation can be found [here](https://pebaz.github.io/nimporter/index.html).
+
 ### Distributing Libraries Using Nimporter
 
 Libraries that require Nim source files can easily distribute those files by
