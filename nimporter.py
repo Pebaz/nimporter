@@ -80,10 +80,10 @@ class NimCompileException(NimporterException):
 class NimInvokeException(NimporterException):
     "Exception for when a given CLI command fails."
 
-    def __init__(self, cwd, cmd_line, err_msg, out=''):
+    def __init__(self, cwd, cmd_line, errors, out=''):
         self.cwd = Path(cwd).resolve()
         self.cmd_line = cmd_line
-        self.err_msg = err_msg
+        self.errors = errors
         self.out = out
 
     def get_output(self):
@@ -95,8 +95,8 @@ class NimInvokeException(NimporterException):
         cmd = self.cmd_line[0]
         message = f'Failed to run command: {cmd}\n\n'
         message += f'Current Directory:\n    {self.cwd}\n\n'
-        message += f'Error Message:\n    "{self.err_msg.strip()}"\n\n'
-        #message += f'Command Line Arguments:\n    {" ".join(self.cmd_line)}'
+        message += f'Error Message:\n'
+        message += '\n    '.join(self.errors) + '\n\n'
         message += f'Command Line Arguments:\n    {cmd}\n'
         for arg in self.cmd_line[1:]:
             message += f'        {arg}\n'
@@ -211,7 +211,7 @@ class NimCompiler:
             nimble_args = 'nimble install nimpy --accept'.split()
             out, errors, _, _ = cls.invoke_compiler(nimble_args)
 
-        if errors: raise NimInvokeException(Path(), nimble_args, errors[0], out)
+        if errors: raise NimInvokeException(Path(), nimble_args, errors, out)
 
     @staticmethod
     def get_import_prefix(module_path, root):
@@ -400,7 +400,7 @@ class NimCompiler:
 
         if errors:
             if library:
-                raise NimInvokeException(tmp_cwd, nim_args, errors[0], output)
+                raise NimInvokeException(tmp_cwd, nim_args, errors, output)
             else:
                 raise NimCompileException(errors[0])
 
@@ -500,7 +500,7 @@ class NimCompiler:
 
         if errors:
             if library:
-                raise NimInvokeException(tmp_cwd, nim_args, errors[0], output)
+                raise NimInvokeException(tmp_cwd, nim_args, errors, output)
             else:
                 raise NimCompileException(errors[0])
 
