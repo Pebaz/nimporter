@@ -62,23 +62,39 @@ def main(args=None):
 
     elif args.cmd == 'build':
         args.source = args.source.absolute()
-        if not args.dest: args.dest = NimCompiler.build_artifact(args.source)
+
+        if not args.dest:
+            args.dest = NimCompiler.build_artifact(args.source).parent
+
+        else:
+            assert args.dest.is_dir(), (
+                'Cannot specify output filename since extensions change per '
+                'platform. Please specify an output directory such as ".".'
+            )
+
+        args.dest.mkdir(exist_ok=True)
+
         module = args.source
 
         if args.source.is_dir():
             is_library = bool([*module.glob('*.nimble')])
+            assert is_library, 'Library dir must contain <libname>.nimble file'
+
         elif args.source.is_file():
             is_library = bool([*module.parent.glob('*.nimble')])
             if is_library: module = module.parent
 
-        temp_build_dir = pathlib.Path('build')
-        temp_build_dir.mkdir()
-        artifact = temp_build_dir / args.dest.name
+        temp_build_dir = pathlib.Path('build').absolute()
+        temp_build_dir.mkdir(exist_ok=True)
+        artifact = temp_build_dir / (args.source.stem + NimCompiler.EXT)
+
         try:
             NimCompiler.compile_nim_code(
-                module, artifact, library=False
+                module, artifact, library=is_library
             )
-            shutil.copy(artifact, args.dest.parent)
+            shutil.copy(artifact, args.dest)
+            module_name = args.source.stem + '.nim'
+            Nimporter.update_hash(args.dest.parent / module_name)
         finally:
             shutil.rmtree(temp_build_dir)
 

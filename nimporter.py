@@ -27,16 +27,6 @@ def cd(path):
         os.chdir(cwd)
 
 
-def difference(minuend, subtrahend):
-    if minuend == subtrahend: return minuend
-    assert minuend >= subtrahend
-    parents = iter(minuend.parents)
-    for difference in parents:
-        if difference == subtrahend:
-            return difference
-    raise Exception('Should never get here if minuend >= subtrahend')
-
-
 class NimporterException(Exception):
     "Catch-all for Nimporter exceptions"
 

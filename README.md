@@ -11,6 +11,12 @@ the `__pycache__` directory, which means that you don't have to add a line to
 your `.gitignore` files because (presumably) Git is already ignoring the
 `__pycache__` directory.
 
+CASE BUSINESS CASE SCENARIO (HOW WOULD I HANDLE IT)
+    ELLAGABILITY ENGINE: WHAT WOULD MY SOLUTION
+BI: BUSINESS INTELLIGENCE INTERVIEW (WHAT WOULD I DO IN THIS SITUATION)
+    TELL ME ABOUT A TIME WHEN ... DISAGREEMENT WITH COWORKER
+2 JOB FIT: LEARNING MORE ABOUT ROLE/TEAM/TALK TO TEAM
+
 ## Possible Benefits
 
  * Seamless integration with existing Nim code by using the
@@ -174,7 +180,6 @@ NIMPORTER CLI
 
 
 
-
 #### Binary Distributions
 
 
@@ -215,6 +220,30 @@ setup(
 When creating a source distribution, the Nim source files will be included along
 with the normal Python files it uses.
 
+### Nimporter Command Line Interface
+
+Nimporter provides a CLI that you can use to easily clean all cached build and
+hash files from your project recursively. This can be very useful for debugging
+situations arising from stale builds.
+
+Usage example:
+
+```bash
+# Recursively removes all hashes and cached builds
+$ nimporter clean
+```
+
+Additionally, the CLI can also be used like a compiler to produce a binary
+extension (`.pyd` and `.so`) from a given Nim file.
+
+```bash
+# Stores build in __pycache__
+# Can be imported by first importing nimporter
+$ nimporter build file.nim
+
+# Stores build in current dir
+$ nimporter build file.nim --dest .
+```
 
 ### Code Quality
 
