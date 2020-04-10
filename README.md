@@ -135,8 +135,6 @@ nimporter.build_nim_extensions()
 
 *How much simpler could it possibly get?*
 
----
-
 ## Documentation
 
 For tutorials, advanced usage, and more, head over to the
@@ -148,10 +146,6 @@ Generated documentation can be found
 For a bunch of little examples, look in the `examples/` directory. For more
 rigorous examples testing every feature of Nimporter, you can take a look at the
 files within the `tests/` directory.
-
-
-
-
 
 ## Distributing Libraries Using Nimporter
 
@@ -178,6 +172,12 @@ setup(
     ...,                                          # Keep your existing arguments
     ext_modules=nimporter.build_nim_extensions()  # Recurse+build Nim extensions
 )
+```
+
+To create the binary distribution:
+
+```bash
+$ python setup.py bdist_wheel
 ```
 
 When installing via Pip, the appropriate wheel version will be selected,
@@ -210,6 +210,12 @@ setup(
     include_package_data=True,
     install_requires=['nimporter']  # Depends upon Nimporter
 )
+```
+
+To create the source distribution:
+
+```bash
+$ python setup.py sdist
 ```
 
 When installing via Pip and a binary distribution (wheel) cannot be found for a
