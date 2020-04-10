@@ -4,12 +4,10 @@
 
 Compile [Nim](<https://nim-lang.org/>) extensions for Python on import automatically!
 
-With Nimporter, you can simply import Nim source code files *as if they
-were Python modules*, and use them seamlessly with Python code. The compiler is
-invoked to build a Python-compatible extension module and it is then placed in
-the `__pycache__` directory, which means that you don't have to add a line to
-your `.gitignore` files because (presumably) Git is already ignoring the
-`__pycache__` directory.
+## What is Nimporter
+
+> With Nimporter, you can simply import Nim source code files *as if they
+were Python modules*, and use them seamlessly with Python code.
 
 ## Possible Benefits
 
@@ -18,56 +16,21 @@ your `.gitignore` files because (presumably) Git is already ignoring the
  * Very low effort to create high-performance Python extensions using Nim.
  * Leverage both language's ecosystems: Python for breadth, Nim for performance.
 
-### Dependencies
-
- 1. [Nim Compiler](<https://nim-lang.org/install.html>)
- 2. [Nimpy library](https://github.com/yglukhov/nimpy)
- 3. [Nimporter library](https://github.com/Pebaz/nimporter) (this library).
-
-### Installation
+## Installation
 
 ```bash
-# Windows
-$ pip install nimporter  # Nimporter library
-$ nimble install nimpy  # Nimpy library
-
-# Everything Else
-$ pip3 install nimporter  # Nimporter library
-$ nimble install nimpy  # Nimpy library
+$ pip install nimporter
 ```
 
-### Examples
+Dependencies:
 
-```nim
-# nim_math.nim
+ 1. [Nim Compiler](<https://nim-lang.org/install.html>) (for compiling Nim
+ source files)
+ 2. [Nimpy library](https://github.com/yglukhov/nimpy) (Installed automatically)
+ 3. [Nimporter library](https://github.com/Pebaz/nimporter) (distributed
+ libraries will need access to Nimporter).
 
-import nimpy
-
-proc add(a: int, b: int): int {.exportpy.} =
-    return a + b
-```
-
-```python
-import nimporter
-
-import nim_math
-
-print(nim_math.add(2, 4))  # 6
-```
-
-### Documentation
-
-For tutorials, advanced usage, and more, head over to the
-[Wiki](<https://github.com/Pebaz/nimporter/wiki>).
-
-Generated documentation can be found
-[here](https://pebaz.github.io/nimporter/index.html).
-
-For a bunch of little examples, look in the `examples/` directory. For more
-rigorous examples testing every feature of Nimporter, you can take a look at the
-files within the `tests/` directory.
-
-### Distributing Libraries Using Nimporter
+## About
 
 Nimporter provides an official way to develop applications and libraries that
 make use of Nim code for achieving higher performance.
@@ -97,7 +60,7 @@ platform seamlessly for both developing and bundling extensions.
 Since Nimporter relies on [Nimpy](https://github.com/yglukhov/nimpy) for Nim <->
 Python interaction, it is a required dependency during development for every
 module and library. Nimporter ensures that this is installed prior to every
-compilation so that 
+compilation so that users do not have a separate `nimble install nimpy` step.
 
 Additionally, for users who do not have access or are not interested in
 installing a Nim compiler, Nimporter makes distribution effortless.
@@ -140,18 +103,45 @@ import my_nim_module
 nimporter.build_nim_extensions()
 ```
 
-How much simpler could it possibly get?
+*How much simpler could it possibly get?*
 
 ---
 
+### Quick Example
+
+```nim
+# nim_math.nim
+
+import nimpy
+
+proc add(a: int, b: int): int {.exportpy.} =
+    return a + b
+```
+
+```python
+# Nimporter is needed prior to importing any Nim code
+import nimporter, nim_math
+
+print(nim_math.add(2, 4))  # 6
+```
+
+### Documentation
+
+For tutorials, advanced usage, and more, head over to the
+[Wiki](<https://github.com/Pebaz/nimporter/wiki>).
+
+Generated documentation can be found
+[here](https://pebaz.github.io/nimporter/index.html).
+
+For a bunch of little examples, look in the `examples/` directory. For more
+rigorous examples testing every feature of Nimporter, you can take a look at the
+files within the `tests/` directory.
 
 
 
 
 
-
-
-
+### Distributing Libraries Using Nimporter
 
 
 
@@ -248,11 +238,36 @@ $ nimporter build mylib/mylib.nim
 
 ### Code Quality
 
-There are [..................] unit tests and [.......] integration tests to
-make sure that Nimporter performs as advertised.
+There are ***44 unit tests*** and ***5 integration tests*** to make sure that
+Nimporter performs as advertised.
+
+In addition, Nimporter has ***94% code coverage*** so a host of bugs have already been
+caught and dealt with in a manner befitting their wretched existence.
+
+Lastly, it has been tested and fully supported on these platforms:
+
+* **Windows 10**
+* **MacOS Mojave**
+* **Linux**
+
+> Just for fun, I got out my Windows laptop, Mac, and SSHed into a Linux box on
+AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
+
+Nimporter likely works on a bunch of other platforms but I cannot justify the
+time required to test them at this point.
+
+#### Running The Tests
 
 To run these on your local machine, you will need to install a Nim compiler.
 
+This example will assume you are cloning the GitHub reposotory.
+
+```bash
+$ git clone https://github.com/Pebaz/Nimporter
+$ cd Nimporter
+$ pip install -r requirements.txt
+$ pytest --cov=. --cov-report=html tests
+```
 
 ### How Does It Work?
 
