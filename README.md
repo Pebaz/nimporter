@@ -13,7 +13,8 @@ were Python modules*, and use them seamlessly with Python code.
 
  * Performance: Nim compiles to C
  * Reduce cloud computing costs without writing C
- * Leverage both language's ecosystems: Python for breadth, Nim for performance.
+ * Leverage both language's ecosystems: [Python](https://pypi.org/) for breadth,
+ [Nim](https://nimble.directory/) for performance.
  * Seamless integration with existing Nim code by using the
    [Nimpy](https://github.com/yglukhov/nimpy) library.
  * Very low effort to create high-performance Python extensions using Nim.
@@ -33,9 +34,10 @@ Dependencies:
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (distributed
  libraries will need access to Nimporter).
 
-Nimporter can work seamlessly when Nim is installed via Choosenim or manually.
-No additional configuration is necessary once installed since Nimporter can find
-the Nim standard library and install
+Nimporter can work seamlessly when Nim is installed via
+[Choosenim](https://nim-lang.org/install_unix.html#installation-using-choosenim)
+or manually. No additional configuration is necessary once installed since
+Nimporter can find the Nim standard library and install
 [Nimpy library](https://github.com/yglukhov/nimpy) if Nimble is on your path.
 
 ## About
@@ -361,6 +363,12 @@ Nimporter's [GitHub Issues](https://github.com/Pebaz/nimporter/issues) page.
 Although I would not seek to add any new features to Nimporter, there may exist
 certain modifications that would enhance the effectiveness of Nimporter's core
 features. Pull requests are welcome, especially for fixing bugs.
+
+## Special Thanks
+
+Nimporter would not be possible without
+[Nimpy](https://github.com/yglukhov/nimpy). Thank you
+[Yuriy Glukhov](https://github.com/yglukhov) for making this project possible!
 
 ## Stargazers Over Time
 
