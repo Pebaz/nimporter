@@ -1,9 +1,12 @@
-# Nimporter
+
+<p align="center"><img width=200px src="https://github.com/Pebaz/Nimporter/blob/dist/Logo.png"></p>
 
 ![License](https://img.shields.io/github/license/Pebaz/Nimporter)
 ![Version](https://img.shields.io/pypi/v/nimporter)
 ![Downloads each Month](https://img.shields.io/pypi/dm/Nimporter)
 ![Wheel Supported](https://img.shields.io/pypi/wheel/Nimporter)
+
+# Nimporter
 
 Compile [Nim](<https://nim-lang.org/>) extensions for Python on import automatically!
 
