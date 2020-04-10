@@ -46,6 +46,26 @@ are cached so that subsequent imports do not trigger a rebuild.
 Nimporter allows you to treat Nim files exactly like Python modules. This means
 that namespacing is maintained for package heirarchies.
 
+Here is a quick example of how to directly import Nim code:
+
+**nim_math.nim**
+
+```nim
+import nimpy
+
+proc add(a: int, b: int): int {.exportpy.} =
+    return a + b
+```
+
+**Python file in same directory**
+
+```python
+# Nimporter is needed prior to importing any Nim code
+import nimporter, nim_math
+
+print(nim_math.add(2, 4))  # 6
+```
+
 Does Nimporter support single-file Nim modules only? No, Nimporter allows you to
 treat an entire Nim project as a single module. The project must contain a
 `.nimble` file that is used to build the project into a single library. Since
@@ -107,25 +127,7 @@ nimporter.build_nim_extensions()
 
 ---
 
-### Quick Example
-
-```nim
-# nim_math.nim
-
-import nimpy
-
-proc add(a: int, b: int): int {.exportpy.} =
-    return a + b
-```
-
-```python
-# Nimporter is needed prior to importing any Nim code
-import nimporter, nim_math
-
-print(nim_math.add(2, 4))  # 6
-```
-
-### Documentation
+## Documentation
 
 For tutorials, advanced usage, and more, head over to the
 [Wiki](<https://github.com/Pebaz/nimporter/wiki>).
@@ -141,33 +143,47 @@ files within the `tests/` directory.
 
 
 
-### Distributing Libraries Using Nimporter
+## Distributing Libraries Using Nimporter
 
+Nimporter supports two methods of distribution:
 
+* Source
+* Binary (Wheel)
 
-PLEASE NOTE THAT NIMPORTER WILL NEED TO REMAIN A DEPENDENCY OF ANY PROJECT THAT
-MAKES USE OF DISTRIBUTING NIM EXTENSIONS.
+If your library makes use of Nimporter for integrating Nim code, you will need
+to include it with your dependency list. Even for binary distributions which
+compile each extension to prevent compilation on the end-users machine.
 
+### Binary Distributions
 
+Binary (wheel) distributions allow you to forego compilation of Nim source files
+on the end user's machine. This has enormous benefit and can be accomplished
+very easily by adding the following line to your `setup.py` file:
 
-NIMPORTER CLI
+```python
+...
+import nimporter
 
+setup(
+    ...,                                          # Keep your existing arguments
+    ext_modules=nimporter.build_nim_extensions()  # Recurse+build Nim extensions
+)
+```
 
+When installing via Pip, the appropriate wheel version will be selected,
+downloaded, and installed, all without requiring users to install a Nim
+compiler.
 
+> Special note for Linux users: Unfortunately, PyPi will not allow you to upload
+just any Linux wheel. There is a special compilation process that can be
+explained [here](https://github.com/pypa/manylinux). Interestingly enough, I got
+around this by simply renaming the resulting Linux build according to the
+**manylinux1** naming convention. You can see my solution in the
+`examples/github_actions_template.yml` file for the `build-linux` job. I expect
+that there could be many downsides of using this hack but it worked for me on 2
+different Linux platforms.
 
-
-
-
-
-
-
-
-
-
-#### Binary Distributions
-
-
-#### Source Distributions
+### Source Distributions
 
 Source distributions allow users to bundle Nim files so that end-users can
 compile them upon import just how they would during normal development.
@@ -175,36 +191,38 @@ compile them upon import just how they would during normal development.
 The only supported way of providing a source distribution is to bundle the Nim
 files along with the Python source files.
 
-
-#### Publish Build Artifacts to PyPi Automatically
-
-Since binary distributions allow Nimporter libraries to be distributed without
-requiring a Nim compiler, the will be most often used. However, building for
-each platform can be tedious. For a dead-simple way to publish Windows, MacOS,
-and Linux wheels to PyPi automatically, use the `` template found in the
-`examples/` directory.
-
-when new releases are created on GitHub
-
-
-Libraries that require Nim source files can easily distribute those files by
-adding the following to their `setup.py` file:
+To do this, add these lines to your `setup.py` file:
 
 ```python
 setup(
-    name='Foo',                     # Keep your existing arguments
-    version='0.1.0',
-    ...,
+    ...,                            # Keep your existing arguments
     package_data={'': ['*.nim']},   # Distribute Nim source files
     include_package_data=True,
     install_requires=['nimporter']  # Depends upon Nimporter
 )
 ```
 
-When creating a source distribution, the Nim source files will be included along
-with the normal Python files it uses.
+When installing via Pip and a binary distribution (wheel) cannot be found for a
+given platform, the source distribution will be installed which will include the
+bundled Nim source files. When the library is imported on the end-users's
+machine, Nimporter compiles all of the Nim files as they are imported
+internally which will cause a small delay to account for compilation. When the
+library is subsequently imported, no compilation is necessary so imports are
+extremely fast.
 
-### Nimporter Command Line Interface
+### Publish Build Artifacts to PyPi Automatically
+
+Since binary distributions allow Nimporter libraries to be distributed without
+requiring a Nim compiler, the will be most often used. However, building for
+each platform can be tedious.
+
+For a dead-simple way to publish Windows, MacOS, and Linux wheels to PyPi
+automatically, use the `github_actions_template.yml` template found in the
+`examples/` directory. This template integrates with your repository's GitHub
+Actions runner to build, package, and deploy your library on Windows, MacOS, and
+Linux automatically when you create a new "Release" is created.
+
+## Nimporter Command Line Interface
 
 Nimporter provides a CLI that you can use to easily clean all cached build and
 hash files from your project recursively. This can be very useful for debugging
@@ -236,7 +254,7 @@ $ nimporter build mylib --dest .
 $ nimporter build mylib/mylib.nim
 ```
 
-### Code Quality
+## Code Quality
 
 There are ***44 unit tests*** and ***5 integration tests*** to make sure that
 Nimporter performs as advertised.
@@ -256,7 +274,7 @@ AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
 Nimporter likely works on a bunch of other platforms but I cannot justify the
 time required to test them at this point.
 
-#### Running The Tests
+### Running The Tests
 
 To run these on your local machine, you will need to install a Nim compiler.
 
@@ -269,7 +287,7 @@ $ pip install -r requirements.txt
 $ pytest --cov=. --cov-report=html tests
 ```
 
-### How Does It Work?
+## How Does Nimporter Work?
 
 Nimporter provides essentially two capabilities:
 
@@ -277,7 +295,9 @@ Nimporter provides essentially two capabilities:
 * The ability to bundle Python-compatible extensions for any supported platform
 
 The way it accomplishes the ability to import Nim code is by adding two custom
-importers to the Python import machinery.
+importers to the Python import machinery. This is why it is required to import
+Nimporter before importing any Nim code because the Python import machinery must
+be amended with the custom importers.
 
 The first one is for the ability to search and import Nim modules. When a Nim
 module is found, Nimporter first looks in the `__pycache__` directory to see if
@@ -320,7 +340,7 @@ files generated by Nim are platform specific, so they would only be of use to
 users on the same exact platform and architecture. This is why the official way
 of distributing Nimporter libraries is by creating binary wheels.
 
-### State Of The Project
+## State Of The Project
 
 I have implemented all of the features that I wanted to add at this time. I made
 sure to validate the effectiveness of each feature with the unit and integration
@@ -328,14 +348,14 @@ tests. This project should be considered "done" and will receive no further
 enhancements except for bug fixes and patches. You can submit a bug report on
 Nimporter's [GitHub Issues](https://github.com/Pebaz/nimporter/issues) page.
 
-### Contributing
+## Contributing
 
 Although I would not seek to add any new features to Nimporter, there may exist
 certain modifications that would enhance the effectiveness of Nimporter's core
 features. Pull requests are welcome, especially for fixing bugs.
 
-### Stargazers over time
+## Stargazers Over Time
 
-[![Stargazers over time](https://starchart.cc/Pebaz/nimporter.svg)](https://starchart.cc/Pebaz/nimporter)
+[![Stargazers Over Time](https://starchart.cc/Pebaz/nimporter.svg)](https://starchart.cc/Pebaz/nimporter)
 
 > Made using <https://starchart.cc/>
