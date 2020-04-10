@@ -11,10 +11,13 @@ were Python modules*, and use them seamlessly with Python code.
 
 ## Possible Benefits
 
+ * Performance: Nim compiles to C
+ * Reduce cloud computing costs without writing C
+ * Leverage both language's ecosystems: Python for breadth, Nim for performance.
  * Seamless integration with existing Nim code by using the
    [Nimpy](https://github.com/yglukhov/nimpy) library.
  * Very low effort to create high-performance Python extensions using Nim.
- * Leverage both language's ecosystems: Python for breadth, Nim for performance.
+ * 100% transparent to end users (doesn't require Nim compiler).
 
 ## Installation
 
@@ -29,6 +32,11 @@ Dependencies:
  2. [Nimpy library](https://github.com/yglukhov/nimpy) (Installed automatically)
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (distributed
  libraries will need access to Nimporter).
+
+Nimporter can work seamlessly when Nim is installed via Choosenim or manually.
+No additional configuration is necessary once installed since Nimporter can find
+the Nim standard library and install
+[Nimpy library](https://github.com/yglukhov/nimpy) if Nimble is on your path.
 
 ## About
 
