@@ -17,22 +17,9 @@ Make sure to star it on GitHub as well while you're up there. ;)
 import sys, shutil
 from setuptools import setup
 
-"""
-Computer with Nim Installed
-
-    pip install meowhash-nim                           # Works (Doesn't run Nim)
-    pip install git+https://github.com/Pebaz/test-nim  # Works (Runs Nim)
-
-Computer without Nim Installed
-
-    pip install meowhash-nim                           # Works (Runs Nim)
-    pip install git+https://github.com/Pebaz/test-nim  # Fails (Cannot run Nim)
-
-"""
-
 setup(
 	name='nimporter',
-	version='0.1.5',
+	version='1.0.0',
 	license="MIT",
 	description='Compile Nim extensions for Python when imported!',
 	long_description=open('README.md').read(),
