@@ -48,30 +48,30 @@ class NimCompileException(NimporterException):
             nim_module = nim_module.splitlines()[-1]
             mod, (line_col) = nim_module.split('(')
             nim_module = Path(mod)
-            line, col = line_col.split(',')
-            line = int(line)
+            src_line, col = line_col.split(',')
+            src_line = int(line)
             col = int(col.replace(')', ''))
             message = error_msg + '\n'
-            
+
             with open(nim_module, 'r') as mod:
                 line = 0
                 for each_line in mod:
                     line += 1
 
-                    if line == line:
+                    if line == src_line:
                         message += f' -> {each_line}'
-                        
-                    elif line > line + 2:
+
+                    elif line > src_line + 2:
                         break
-                    
-                    elif line > line - 3:
+
+                    elif line > src_line - 3:
                         message += f' |  {each_line}'
 
             self.message = message.rstrip() + (
                 f'\n\nAt {nim_module.absolute()} '
                 f'{line}:{col}'
             )
-        
+
     def __str__(self):
         "Return the string representation of the given compiler error."
         return self.message
