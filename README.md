@@ -236,8 +236,8 @@ extremely fast.
 ### Publish Build Artifacts to PyPi Automatically
 
 Since binary distributions allow Nimporter libraries to be distributed without
-requiring a Nim compiler, the will be most often used. However, building for
-each platform can be tedious.
+requiring a Nim compiler, they are the recommended packaging type. However,
+building for each platform can be tedious.
 
 For a dead-simple way to publish Windows, MacOS, and Linux wheels to PyPi
 automatically, use the `github_actions_template.yml` template found in the
@@ -352,9 +352,9 @@ of Nim that specifically supports this.
 Why compile to C? Because Python already has extensive infrastructure to support
 the compilation and distribution of C extensions.
 
-Once they are compiled to C, they are compiled the exact same as how you would
-normally compile a C extension. These extensions are then bundled into the
-resulting binary distribution and can be uploaded to PyPi or similar.
+Once each Nim module and library is compiled to C, Python deals with them the
+exact same way as a typical C extension. These extensions are then bundled into
+the resulting binary distribution and can be uploaded to PyPi or similar.
 
 Are source distributions supported? Yes and no. They are officially supported
 for bundling the Nim source files themselves into the archive, but not the C
