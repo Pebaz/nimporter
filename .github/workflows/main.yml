@@ -22,6 +22,11 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.x'
+
+      - name: Python Pylin GitHub Action
+        uses: fylein/python-pytest-github-action@v1
+        with:
+          args: pip3 install -r requirements.txt && pytest test/unit
         
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
@@ -45,6 +50,11 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.x'
+
+      - name: Python Pylin GitHub Action
+        uses: fylein/python-pytest-github-action@v1
+        with:
+          args: pip3 install -r requirements.txt && pytest test/unit
         
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
@@ -68,6 +78,12 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.x'
+
+      - name: Python Pylin GitHub Action
+        uses: fylein/python-pytest-github-action@v1
+        with:
+          args: pip3 install -r requirements.txt && pytest test/unit
+
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
           nim-version: '1.0.6'
