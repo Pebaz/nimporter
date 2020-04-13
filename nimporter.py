@@ -49,7 +49,7 @@ class NimCompileException(NimporterException):
             mod, (line_col) = nim_module.split('(')
             nim_module = Path(mod)
             src_line, col = line_col.split(',')
-            src_line = int(line)
+            src_line = int(src_line)
             col = int(col.replace(')', ''))
             message = error_msg + '\n'
 
