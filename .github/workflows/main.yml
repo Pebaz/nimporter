@@ -13,40 +13,21 @@ on:
 jobs:
 
   # ----------------------------------------------------------------------------
-  test-linux:
-    runs-on: ubuntu-latest
+  test-all:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.6, 3.7, 3.8]
+
     steps:
       - uses: actions/checkout@v2
       
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
-          python-version: '3.x'
-        
-      - uses: jiro4989/setup-nim-action@v1.0.2
-        with:
-          nim-version: '1.0.6'
-
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel nimporter
-          python3 -m pip install -r requirements.txt
-
-      - name: Test
-        run: pytest --cov=. tests
-
-  # ----------------------------------------------------------------------------
-  test-win32:
-    runs-on: windows-latest
-    needs: test-linux
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.x'
+          python-version: ${{ matrix.python-version }}
         
       - uses: jiro4989/setup-nim-action@v1.0.2
         with:
@@ -57,31 +38,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel nimporter
           python -m pip install -r requirements.txt
-  
-      - name: Test
-        run: pytest --cov=. tests
-
-  # ----------------------------------------------------------------------------
-  test-macos:
-    runs-on: macos-latest
-    needs: [test-linux, test-win32]
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.x'
-
-      - uses: jiro4989/setup-nim-action@v1.0.2
-        with:
-          nim-version: '1.0.6'
-
-      - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel nimporter
-          python3 -m pip install -r requirements.txt
 
       - name: Test
         run: pytest --cov=. tests
