@@ -1,3 +1,0 @@
-# NIMPORTER BUNDLE
-include tests/proj1/nim-extensions/proj1.performance/nimbase.h
-include tests/proj1/nim-extensions/proj1.lib1/nimbase.h
