@@ -72,6 +72,9 @@ def test_invoke_compiler_success():
     try:
         # Since we are full-on invoking the compiler for a working build here,
         # we gotta make sure it has the same flags as normal (for win32, etc.)
+        # This also means Nimpy has to be installed prior to building.
+        NimCompiler.ensure_nimpy()
+
         out, err, war, hin = NimCompiler.invoke_compiler([
             'nim',
             'c',
