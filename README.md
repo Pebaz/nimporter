@@ -307,6 +307,7 @@ This example will assume you are cloning the GitHub reposotory.
 $ git clone https://github.com/Pebaz/Nimporter
 $ cd Nimporter
 $ pip install -r requirements.txt
+$ pip install .  # Nimporter is needed for the integration tests
 $ pytest --cov=. --cov-report=html tests
 ```
 

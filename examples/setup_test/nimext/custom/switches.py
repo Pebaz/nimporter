@@ -5,6 +5,7 @@ if sys.platform == 'win32':
         'import' : [
             'nimble',
             'c',
+            '--cc:vcc',
             '--accept',
             '--app:lib',
             '-d:release',

@@ -413,8 +413,9 @@ class NimCompiler:
         # Copy over needed header(s)
         NIMBASE = 'nimbase.h'
         nimbase = cls.find_nim_std_lib() / NIMBASE
-        nimbase_dest = str(build_dir_relative / NIMBASE)
-        shutil.copyfile(str(nimbase), nimbase_dest)
+        nimbase_dest = build_dir_relative / NIMBASE
+        shutil.copyfile(nimbase, nimbase_dest)
+        assert nimbase_dest.exists()
 
         # Properly handle bundling headers into the source distribution
         manifest = root / 'MANIFEST.in'
