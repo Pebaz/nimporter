@@ -39,6 +39,7 @@ jobs:
   # ----------------------------------------------------------------------------
   test-win32:
     runs-on: windows-latest
+    needs: test-linux
     steps:
       - uses: actions/checkout@v2
 
@@ -63,6 +64,7 @@ jobs:
   # ----------------------------------------------------------------------------
   test-macos:
     runs-on: macos-latest
+    needs: [test-linux, test-win32]
     steps:
       - uses: actions/checkout@v2
 

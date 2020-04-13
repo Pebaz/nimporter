@@ -59,7 +59,7 @@ def test_invoke_compiler():
         return
 
     # Test that any program can be called
-    gold_out = 'Hello World!\n'
+    gold_out = 'Hello World!' + ('\r\n' if sys.platform == 'win32' else '\n')
     out, err, war, hin = NimCompiler.invoke_compiler(['echo', gold_out.strip()])
     assert out == gold_out
 
