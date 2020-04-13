@@ -1,0 +1,2 @@
+# NIMPORTER BUNDLE
+include tests/nim-extensions/lib2/nimbase.h

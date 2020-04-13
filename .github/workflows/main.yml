@@ -53,9 +53,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools wheel nimporter
-          python3 -m pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel nimporter
+          python -m pip install -r requirements.txt
   
       - name: Test
         run: pytest --cov=. tests
