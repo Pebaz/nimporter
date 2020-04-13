@@ -67,16 +67,23 @@ def test_invoke_compiler():
 def test_invoke_compiler_success():
     "Test that warnings are propagated"
     warn_file = Path('tests/pkg1/warn.nim').resolve()
-    ext = '.exe' if sys.platform == 'win32' else ''
-    out_file = Path('tests/pkg1/warn' + ext).resolve()
+    out_file = Path('tests/pkg1/warn' + NimCompiler.EXT).resolve()
 
     try:
+        # Since we are full-on invoking the compiler for a working build here,
+        # we gotta make sure it has the same flags as normal (for win32, etc.)
         out, err, war, hin = NimCompiler.invoke_compiler([
-            'nim', 'c', str(warn_file)
+            'nim',
+            'c',
+            *NimCompiler.NIM_CLI_ARGS,
+            f'--out:{out_file}',
+            str(warn_file)
         ])
 
-        assert out_file.exists()
-        assert any("Warning: imported and not used: 'tables'" in i for i in war)
+        assert out_file.exists(), err
+        assert any(
+            "Warning: imported and not used: 'asyncstreams'" in i for i in war
+        )
         assert any('Hint: system [Processing]' in i for i in hin)
 
     finally:
@@ -90,11 +97,13 @@ def test_invoke_compiler_failure():
     out_file = Path('tests/pkg1/error' + ext).resolve()
 
     try:
+        # Since this will fail at the Nim layer, no need to ensure all the same
+        # flags are set per platform (since it won't ever get that far).
         out, err, war, hin = NimCompiler.invoke_compiler([
-            'nim', 'c', str(err_file)
+            'nim', 'c', *NimCompiler.NIM_CLI_ARGS, str(err_file)
         ])
 
-        assert not out_file.exists()
+        assert not out_file.exists(), err
         assert any('Error: cannot open file: fallacy' in i for i in err)
         assert any('Hint: system [Processing]' in i for i in hin)
 

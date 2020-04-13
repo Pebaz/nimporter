@@ -1,3 +1,4 @@
-import tables
+import nimpy, asyncstreams
 
-echo "Hello World!"
+proc func1(): void {.exportpy.} =
+    echo "Hello World!"
