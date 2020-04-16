@@ -37,13 +37,14 @@ def test_create_sdist():
             for extension in Path('nim-extensions').iterdir():
                 (nim_build_data_file,) = extension.glob('*json')
                 nim_build_data = json.loads(nim_build_data_file.read_text())
-
                 expected = nimporter.NimCompiler.get_compatible_compiler()
                 assert expected, 'No compatible C compiler installed.'
-                installed_compilers = nimporter.NimCompiler.get_installed_compilers()
-                cc_path = installed_compilers[expected]
-                assert nim_build_data['linkcmd'].startswith(cc_path.stem), (
+                installed_ccs = nimporter.NimCompiler.get_installed_compilers()
+                cc_path = installed_ccs[expected]
+                actual = nim_build_data['linkcmd'].split()[0].strip()
+                assert actual.startswith(cc_path.stem), (
                     f'Nim used a different C compiler than what Python expects.'
+                    f'Python uses {cc_path.stem} and Nim used {actual}'
                 )
 
         finally:
@@ -74,10 +75,12 @@ def test_create_bdist():
 
                 expected = nimporter.NimCompiler.get_compatible_compiler()
                 assert expected, 'No compatible C compiler installed.'
-                installed_compilers = nimporter.NimCompiler.get_installed_compilers()
-                cc_path = installed_compilers[expected]
-                assert nim_build_data['linkcmd'].startswith(cc_path.stem), (
-                    'Nim used a different C compiler than what Python expects.'
+                installed_ccs = nimporter.NimCompiler.get_installed_compilers()
+                cc_path = installed_ccs[expected]
+                actual = nim_build_data['linkcmd'].split()[0].strip()
+                assert actual.startswith(cc_path.stem), (
+                    f'Nim used a different C compiler than what Python expects.'
+                    f'Python uses {cc_path.stem} and Nim used {actual}'
                 )
 
         finally:
