@@ -163,7 +163,7 @@ class NimCompiler:
             are not installed are not included in the dict.
         """
         compilers = {
-            'msvc'  : shutil.which('vccexe'),
+            'msc'  : shutil.which('vccexe'),
             'clang' : shutil.which('clang'),
             'gcc'   : shutil.which('gcc')
         }
