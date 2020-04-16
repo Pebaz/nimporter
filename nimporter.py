@@ -871,6 +871,9 @@ class Nimporter:
         extension_dir = root / NimCompiler.EXT_DIR
         assert extension_dir.exists()
         return [
+
+            # NOTE(pebaz): Narrowed this down as a possible root cause for win32
+            # pipeline crashing.
             Extension(
                 name=extension.name,
                 sources=[str(c.absolute()) for c in extension.glob('*.c')],
