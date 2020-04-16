@@ -90,7 +90,11 @@ def test_invoke_compiler_success():
         assert any('Hint: system [Processing]' in i for i in hin)
 
     finally:
-        if out_file.exists(): out_file.unlink()
+        if out_file.exists():
+            out_file.unlink()
+            if sys.platform == 'win32':
+                Path('tests/pkg1/warn.exp').unlink()
+                Path('tests/pkg1/warn.lib').unlink()
     
 
 def test_invoke_compiler_failure():
