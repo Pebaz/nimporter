@@ -128,6 +128,66 @@ class NimCompiler:
     EXT_DIR = 'nim-extensions'
 
     @classmethod
+    def get_python_c_compiler_version(cls):
+        """
+        Gets the compiler name and version that was used to compile Python.
+
+        Returns:
+            A string containing the compiler version, such as:
+
+            > Clang 11.0.0 (clang-1100.0.33.16)
+        """
+        return sys.version.splitlines()[1][1:-1]
+
+    @classmethod
+    def get_python_c_compiler_name(cls):
+        """
+        Gets only the compiler name used to compile Python.
+
+        Useful for determining which compiler to invoke on Win32 for example.
+
+        Returns:
+            A string containing the compiler name, such as:
+
+            > Clang
+        """
+        return cls.get_python_c_compiler_version().split()[0].lower()
+
+    @classmethod
+    def get_installed_compilers(cls):
+        """
+        Gets the list of installed compilers.
+
+        Returns:
+            A dict mapping the compiler name with the path to it. Compilers that
+            are not installed are not included in the dict.
+        """
+        compilers = {
+            'msvc'  : shutil.which('vccexe'),
+            'clang' : shutil.which('clang'),
+            'gcc'   : shutil.which('gcc')
+        }
+
+        return {
+            compiler : path
+            for compiler, path in compilers.items()
+            if path
+        }
+
+    @classmethod
+    def get_compatible_compiler(cls):
+        """
+        Gets compatible compiler name for the running Python instance.
+
+        Returns:
+            A string containing the name of the compiler to use when compiling
+            Nim code.
+        """
+        python_compiler = cls.get_python_c_compiler_name()
+        if python_compiler in cls.get_installed_compilers():
+            return python_compiler
+
+    @classmethod
     def build_artifact(cls, module_path):
         """
         Returns the Path to the built .PYD or .SO. Does not imply it has already
