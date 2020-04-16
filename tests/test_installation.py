@@ -42,8 +42,8 @@ def test_create_sdist():
                 assert expected, 'No compatible C compiler installed.'
                 installed_compilers = nimporter.NimCompiler.get_installed_compilers()
                 cc_path = installed_compilers[expected]
-                assert nim_build_data['linkcmd'].startswith(cc_path.name), (
-                    'Nim used a different C compiler than what Python expects.'
+                assert nim_build_data['linkcmd'].startswith(cc_path.stem), (
+                    f'Nim used a different C compiler than what Python expects.'
                 )
 
         finally:
@@ -76,7 +76,7 @@ def test_create_bdist():
                 assert expected, 'No compatible C compiler installed.'
                 installed_compilers = nimporter.NimCompiler.get_installed_compilers()
                 cc_path = installed_compilers[expected]
-                assert nim_build_data['linkcmd'].startswith(cc_path.name), (
+                assert nim_build_data['linkcmd'].startswith(cc_path.stem), (
                     'Nim used a different C compiler than what Python expects.'
                 )
 
