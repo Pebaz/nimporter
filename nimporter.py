@@ -137,7 +137,7 @@ class NimCompiler:
 
             > Clang 11.0.0 (clang-1100.0.33.16)
         """
-        return sys.version.splitlines()[1][1:-1]
+        return sys.version.split('[').pop()[:-1]
 
     @classmethod
     def get_python_c_compiler_name(cls):
