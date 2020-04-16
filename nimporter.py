@@ -870,14 +870,14 @@ class Nimporter:
         """
         extension_dir = root / NimCompiler.EXT_DIR
         assert extension_dir.exists()
-        return [
 
-            # NOTE(pebaz): Narrowed this down as a possible root cause for win32
-            # pipeline crashing.
+        # NOTE(pebaz): The include dir and C source file paths absolutely must
+        # be relative paths or installing with Pip will not work on Windows.
+        return [
             Extension(
                 name=extension.name,
-                sources=[str(c.absolute()) for c in extension.glob('*.c')],
-                include_dirs=[str(extension.absolute())]
+                sources=[str(c) for c in extension.glob('*.c')],
+                include_dirs=[str(extension)]
             )
             for extension in extension_dir.iterdir()
         ]
