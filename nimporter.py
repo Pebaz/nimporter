@@ -169,7 +169,7 @@ class NimCompiler:
         }
 
         return {
-            compiler : path
+            compiler : Path(path)
             for compiler, path in compilers.items()
             if path
         }

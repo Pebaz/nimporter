@@ -2,7 +2,7 @@
 Test to make sure that libraries built with Nimporter can be installed via Pip.
 """
 
-import sys, os, subprocess, shutil, pkg_resources
+import sys, os, subprocess, shutil, pkg_resources, json
 from pathlib import Path
 import pytest
 import nimporter
@@ -32,6 +32,15 @@ def test_create_sdist():
             targets = list(dist.glob('project1*'))
             assert len(targets) == 1
             assert targets[0].exists()
+
+            # Make sure the appropriate compiler is being used
+            for extension in Path('nim-extensions').iterdir():
+                (nim_build_data_file,) = extension.glob('*json')
+                nim_build_data = json.loads(nim_build_data_file.read_text())
+                assert nim_build_data['linkcmd'].startswith(
+                    nimporter.NimCompiler.get_compatible_compiler()
+                ), 'Nim used a different C compiler than what Python expects.'
+
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(egg.absolute()))
@@ -52,6 +61,15 @@ def test_create_bdist():
             targets = list(Path('dist').glob('project1*.whl'))
             assert len(targets) == 1
             assert targets[0].exists()
+
+            # Make sure the appropriate compiler is being used
+            for extension in Path('nim-extensions').iterdir():
+                (nim_build_data_file,) = extension.glob('*json')
+                nim_build_data = json.loads(nim_build_data_file.read_text())
+                assert nim_build_data['linkcmd'].startswith(
+                    nimporter.NimCompiler.get_compatible_compiler()
+                ), 'Nim used a different C compiler than what Python expects.'
+
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(build.absolute()))
