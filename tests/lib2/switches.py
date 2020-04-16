@@ -10,6 +10,7 @@ if sys.platform == 'win32':
             '--app:lib',
             '-d:release',
             '--opt:speed',
+            '--cc:vcc',
             '-d:ssl',
             f'--out:{BUILD_ARTIFACT}',
             f'{MODULE_PATH}'
