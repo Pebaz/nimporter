@@ -116,7 +116,9 @@ def test_install_sdist():
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.
+    print(os.getcwd())
     with nimporter.cd('../..'):
+        print(os.getcwd())
         import proj1
         assert proj1
         import proj1.performance
@@ -164,7 +166,9 @@ def test_install_bdist():
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.
+    print(os.getcwd())
     with nimporter.cd('../..'):
+        print(os.getcwd())
         import proj1
         assert proj1
         import proj1.performance
