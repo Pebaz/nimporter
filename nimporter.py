@@ -1065,7 +1065,17 @@ class NimModImporter:
             if py_cc:
                 cc = all_ccs[py_cc]
                 try:
-                    cc_ver = (check_output([cc.stem]).decode(errors='ignore'))
+                    if py_cc == 'msc':
+                        cc_ver = check_output([
+                            'vccexe',
+                            '--vccversion:0',
+                            '--printPath',
+                            '--noCommand'
+                        ]).decode(errors='ignore')
+                    else:
+                        cc_ver = (check_output([cc.stem])
+                            .decode(errors='ignore')
+                        )
                 except:
                     cc_ver = '<Error getting version>'
             else:
@@ -1079,7 +1089,7 @@ class NimModImporter:
                 f'CC Version:\n\n    {cc_ver}\n\n'
                 f'Installed CCs:\n\n    {all_ccs}\n\n'
                 f'Please help improve Nimporter by opening a bug report at: '
-                f'https://github.com/Pebaz/nimporter/issues/new and submit the'
+                f'https://github.com/Pebaz/nimporter/issues/new and submit the '
                 f'above information along with your description of the issue.\n'
             )
 
