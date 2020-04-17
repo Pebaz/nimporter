@@ -115,6 +115,7 @@ def test_install_sdist():
             assert proj1
             import proj1.performance
             assert proj1.performance
+            import proj1.lib1
             assert proj1.lib1
             assert proj1.foo
             assert proj1.bar
@@ -153,6 +154,7 @@ def test_install_bdist():
             assert proj1
             import proj1.performance
             assert proj1.performance
+            import proj1.lib1
             assert proj1.lib1
             assert proj1.foo
             assert proj1.bar
