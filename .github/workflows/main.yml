@@ -40,4 +40,5 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Test
-        run: pytest --cov=. tests
+        #run: pytest --cov=. tests
+        run: pytest tests -s -k test_install_bdist

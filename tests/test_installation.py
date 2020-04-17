@@ -148,6 +148,13 @@ def test_install_bdist():
 
             import proj1
             assert proj1
+
+            print(proj1)
+            print(dir(proj1))
+            import proj1.performance
+            print(proj1.performance)
+            print(dir(proj1.performance))
+
             assert proj1.performance
             assert proj1.lib1
             assert proj1.foo
