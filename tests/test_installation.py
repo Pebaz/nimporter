@@ -38,7 +38,7 @@ def test_create_sdist():
                 (nim_build_data_file,) = extension.glob('*json')
                 nim_build_data = json.loads(nim_build_data_file.read_text())
                 expected = nimporter.NimCompiler.get_compatible_compiler()
-                if expected
+                if expected:
                     installed_ccs = (
                         nimporter.NimCompiler.get_installed_compilers()
                     )
