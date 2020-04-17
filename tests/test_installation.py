@@ -122,6 +122,12 @@ def test_install_sdist():
     assert proj1.performance
     import proj1.lib1
     assert proj1.lib1
+
+    print('888888888')
+    print(proj1)
+    print(dir(proj1))
+    print('888888888')
+
     assert proj1.foo
     assert proj1.bar
     assert proj1.baz
@@ -158,8 +164,10 @@ def test_install_bdist():
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.
-    import proj1
-    assert proj1
+    print('888888888')
+    print(proj1)
+    print(dir(proj1))
+    print('888888888')
     import proj1.performance
     assert proj1.performance
     import proj1.lib1

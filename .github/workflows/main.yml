@@ -41,4 +41,4 @@ jobs:
 
       - name: Test
         #run: pytest --cov=. tests
-        run: pytest tests
+        run: pytest tests -k test_install_
