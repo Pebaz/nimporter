@@ -41,5 +41,4 @@ jobs:
 
       - name: Test
         #run: pytest --cov=. tests
-        #run: pytest tests -k test_install_
-        run: python -c 'import sys;print(sys.version)'
+        run: pytest tests -k test_install_
