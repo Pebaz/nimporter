@@ -1044,7 +1044,50 @@ class NimModImporter:
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        return Nimporter.import_nim_code(fullname, path, library=False)
+        spec = Nimporter.import_nim_code(fullname, path, library=False)
+
+        try:
+            util.module_from_spec(spec)
+
+        except ImportError as import_error:
+            py_ver = sys.version.replace('\n', '')
+
+            try:
+                nim_ver = (check_output(['nim', '-v'])
+                    .decode(errors='ignore')
+                    .splitlines()[0]
+                )
+            except:
+                nim_ver = '<Error getting version>'
+
+            all_ccs = NimCompiler.get_installed_compilers()
+            py_cc = NimCompiler.get_compatible_compiler()
+            if py_cc:
+                cc = all_ccs[py_cc]
+                try:
+                    cc_ver = (check_output([cc.stem]).decode(errors='ignore'))
+                except:
+                    cc_ver = '<Error getting version>'
+            else:
+                cc_ver = '<No compatible C compiler installed>'
+            
+            error_message = (
+                f'Error importing {spec.origin}\n'
+                f'Error Message:\n\n    {import_error}\n\n'
+                f'Python Version:\n\n    {py_ver}\n\n'
+                f'Nim Version:\n\n    {nim_ver}\n\n'
+                f'CC Version:\n\n    {cc_ver}\n\n'
+                f'Installed CCs:\n\n    {all_ccs}\n\n'
+                f'Please help improve Nimporter by opening a bug report at: '
+                f'https://github.com/Pebaz/nimporter/issues/new and submit the'
+                f'above information along with your description of the issue.\n'
+            )
+
+            raise NimporterException(error_message) from import_error
+
+        # NOTE(pebaz): It's ok that the module will be imported twice. It's
+        # better to have good error messages than to be fast in this case.
+        return spec
 
 
 @register_importer(0)
