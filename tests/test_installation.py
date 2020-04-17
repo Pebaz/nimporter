@@ -107,9 +107,16 @@ def test_install_sdist():
             assert egg.exists()
             targets = list(dist.glob('project1*'))
             assert len(targets) == 1
-            assert targets[0].exists()
+            (target,) = targets
+            assert target.exists()
 
-            subprocess.Popen(f'{PIP} install .'.split()).wait()
+            if sys.platform == 'win32':
+                subprocess.Popen((
+                    f'{PIP} install --global-option build_ext --global-option '
+                    f'--compiler=msvc {target}'
+                ).split()).wait()
+            else:
+                subprocess.Popen(f'{PIP} install  {target}'.split()).wait()
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(egg.absolute()))
@@ -155,7 +162,14 @@ def test_install_bdist():
             wheel = targets[0]
             assert wheel.exists()
 
-            subprocess.Popen(f'{PIP} install {wheel}'.split()).wait()
+
+            if sys.platform == 'win32':
+                subprocess.Popen((
+                    f'{PIP} install --global-option build_ext --global-option '
+                    f'--compiler=msvc {wheel}'
+                ).split()).wait()
+            else:
+                subprocess.Popen(f'{PIP} install {wheel}'.split()).wait()
 
         finally:
             shutil.rmtree(str(dist.absolute()))
