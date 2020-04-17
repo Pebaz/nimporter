@@ -1074,6 +1074,10 @@ table {
     <li class="mono"><a href="#nimporter.NimCompiler.compile_nim_extension">compile_nim_extension</a></li>
     <li class="mono"><a href="#nimporter.NimCompiler.ensure_nimpy">ensure_nimpy</a></li>
     <li class="mono"><a href="#nimporter.NimCompiler.find_nim_std_lib">find_nim_std_lib</a></li>
+    <li class="mono"><a href="#nimporter.NimCompiler.get_compatible_compiler">get_compatible_compiler</a></li>
+    <li class="mono"><a href="#nimporter.NimCompiler.get_installed_compilers">get_installed_compilers</a></li>
+    <li class="mono"><a href="#nimporter.NimCompiler.get_python_c_compiler_name">get_python_c_compiler_name</a></li>
+    <li class="mono"><a href="#nimporter.NimCompiler.get_python_c_compiler_version">get_python_c_compiler_version</a></li>
     <li class="mono"><a href="#nimporter.NimCompiler.get_switches">get_switches</a></li>
     <li class="mono"><a href="#nimporter.NimCompiler.invoke_compiler">invoke_compiler</a></li>
     <li class="mono"><a href="#nimporter.NimCompiler.pycache_dir">pycache_dir</a></li>
@@ -1285,6 +1289,66 @@ users of the library don't have to install a Nim compiler.</p>
         <span class="s1">&#39;-d:ssl&#39;</span>
     <span class="p">]</span> <span class="o">+</span> <span class="p">([</span><span class="s1">&#39;--cc:vcc&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;win32&#39;</span> <span class="k">else</span> <span class="p">[])</span>
     <span class="n">EXT_DIR</span> <span class="o">=</span> <span class="s1">&#39;nim-extensions&#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_python_c_compiler_version</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the compiler name and version that was used to compile Python.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the compiler version, such as:</span>
+
+<span class="sd">            &gt; Clang 11.0.0 (clang-1100.0.33.16)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_python_c_compiler_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets only the compiler name used to compile Python.</span>
+
+<span class="sd">        Useful for determining which compiler to invoke on Win32 for example.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the compiler name, such as:</span>
+
+<span class="sd">            &gt; Clang</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_version</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_installed_compilers</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the list of installed compilers.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict mapping the compiler name with the path to it. Compilers that</span>
+<span class="sd">            are not installed are not included in the dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">compilers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;msc&#39;</span>  <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;vccexe&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;clang&#39;</span> <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;clang&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;gcc&#39;</span>   <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;gcc&#39;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">compiler</span> <span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">compilers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">path</span>
+        <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_compatible_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets compatible compiler name for the running Python instance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the name of the compiler to use when compiling</span>
+<span class="sd">            Nim code.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">python_compiler</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_name</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">python_compiler</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_installed_compilers</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">python_compiler</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">build_artifact</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
@@ -1572,8 +1636,9 @@ users of the library don't have to install a Nim compiler.</p>
         <span class="c1"># Copy over needed header(s)</span>
         <span class="n">NIMBASE</span> <span class="o">=</span> <span class="s1">&#39;nimbase.h&#39;</span>
         <span class="n">nimbase</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">find_nim_std_lib</span><span class="p">()</span> <span class="o">/</span> <span class="n">NIMBASE</span>
-        <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span><span class="p">)</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">nimbase</span><span class="p">),</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+        <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">nimbase</span><span class="p">,</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">nimbase_dest</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
         <span class="c1"># Properly handle bundling headers into the source distribution</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="s1">&#39;MANIFEST.in&#39;</span>
@@ -1586,7 +1651,7 @@ users of the library don't have to install a Nim compiler.</p>
         <span class="k">return</span> <span class="n">Extension</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">import_path</span><span class="p">,</span>
             <span class="n">sources</span><span class="o">=</span><span class="n">csources</span><span class="p">,</span>
-            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir</span><span class="p">)]</span>
+            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span><span class="p">)]</span>
         <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
@@ -1909,10 +1974,80 @@ users of the library don't have to install a Nim compiler.</p>
 
                 <span class="bp">cls</span><span class="o">.</span><span class="n">update_hash</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
             
-            <span class="k">return</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
                 <span class="n">fullname</span><span class="p">,</span>
                 <span class="n">location</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">build_artifact</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
             <span class="p">)</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__validate_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">spec</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__validate_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validates that a given Nim extension can be successfully imported.</span>
+
+<span class="sd">        Since a spec is used to import a module and the body of this function</span>
+<span class="sd">        attempts an import, successful imports will imply importing the module</span>
+<span class="sd">        twice. However, it&#39;s ok that the module will be imported twice because</span>
+<span class="sd">        it&#39;s better to have good error messages than to be fast in this case.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            spec(Spec): the spec to validate if its module can be imported.</span>
+<span class="sd">        </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            A NimporterException if the spec cannot be used to import the given</span>
+<span class="sd">            Nim module/library.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">import_error</span><span class="p">:</span>
+            <span class="n">py_ver</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">nim_ver</span> <span class="o">=</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;nim&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">])</span>
+                    <span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">nim_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;Error getting version&gt;&#39;</span>
+
+            <span class="n">all_ccs</span> <span class="o">=</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">get_installed_compilers</span><span class="p">()</span>
+            <span class="n">py_cc</span> <span class="o">=</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">get_compatible_compiler</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">py_cc</span><span class="p">:</span>
+                <span class="n">cc</span> <span class="o">=</span> <span class="n">all_ccs</span><span class="p">[</span><span class="n">py_cc</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">py_cc</span> <span class="o">==</span> <span class="s1">&#39;msc&#39;</span><span class="p">:</span>
+                        <span class="n">cc_ver</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span>
+                            <span class="s1">&#39;vccexe&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--vccversion:0&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--printPath&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--noCommand&#39;</span>
+                        <span class="p">])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cc_ver</span> <span class="o">=</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="n">cc</span><span class="o">.</span><span class="n">stem</span><span class="p">])</span>
+                            <span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+                        <span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">cc_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;Error getting version&gt;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cc_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;No compatible C compiler installed&gt;&#39;</span>
+            
+            <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Error importing </span><span class="si">{spec.origin}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Error Message:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{import_error}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Python Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{py_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Nim Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{nim_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;CC Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{cc_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Installed CCs:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{all_ccs}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Please help improve Nimporter by opening a bug report at: &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;https://github.com/Pebaz/nimporter/issues/new and submit the &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;above information along with your description of the issue.</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">import_error</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">should_compile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
@@ -2028,11 +2163,14 @@ users of the library don't have to install a Nim compiler.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">extension_dir</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">EXT_DIR</span>
         <span class="k">assert</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+        <span class="c1"># NOTE(pebaz): The include dir and C source file paths absolutely must</span>
+        <span class="c1"># be relative paths or installing with Pip will not work on Windows.</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">Extension</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
-                <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="o">.</span><span class="n">absolute</span><span class="p">())]</span>
+                <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
+                <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="p">)]</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
         <span class="p">]</span>
@@ -2529,6 +2667,66 @@ returned from Nim as a Python Exception.</p>
     <span class="n">EXT_DIR</span> <span class="o">=</span> <span class="s1">&#39;nim-extensions&#39;</span>
 
     <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_python_c_compiler_version</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the compiler name and version that was used to compile Python.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the compiler version, such as:</span>
+
+<span class="sd">            &gt; Clang 11.0.0 (clang-1100.0.33.16)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_python_c_compiler_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets only the compiler name used to compile Python.</span>
+
+<span class="sd">        Useful for determining which compiler to invoke on Win32 for example.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the compiler name, such as:</span>
+
+<span class="sd">            &gt; Clang</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_version</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_installed_compilers</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the list of installed compilers.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict mapping the compiler name with the path to it. Compilers that</span>
+<span class="sd">            are not installed are not included in the dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">compilers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;msc&#39;</span>  <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;vccexe&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;clang&#39;</span> <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;clang&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;gcc&#39;</span>   <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;gcc&#39;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">compiler</span> <span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">compilers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">path</span>
+        <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_compatible_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets compatible compiler name for the running Python instance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A string containing the name of the compiler to use when compiling</span>
+<span class="sd">            Nim code.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">python_compiler</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_name</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">python_compiler</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_installed_compilers</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">python_compiler</span>
+
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">build_artifact</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the Path to the built .PYD or .SO. Does not imply it has already</span>
@@ -2814,8 +3012,9 @@ returned from Nim as a Python Exception.</p>
         <span class="c1"># Copy over needed header(s)</span>
         <span class="n">NIMBASE</span> <span class="o">=</span> <span class="s1">&#39;nimbase.h&#39;</span>
         <span class="n">nimbase</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">find_nim_std_lib</span><span class="p">()</span> <span class="o">/</span> <span class="n">NIMBASE</span>
-        <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span><span class="p">)</span>
-        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">nimbase</span><span class="p">),</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+        <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">nimbase</span><span class="p">,</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">nimbase_dest</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
 
         <span class="c1"># Properly handle bundling headers into the source distribution</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="s1">&#39;MANIFEST.in&#39;</span>
@@ -2828,7 +3027,7 @@ returned from Nim as a Python Exception.</p>
         <span class="k">return</span> <span class="n">Extension</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">import_path</span><span class="p">,</span>
             <span class="n">sources</span><span class="o">=</span><span class="n">csources</span><span class="p">,</span>
-            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir</span><span class="p">)]</span>
+            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span><span class="p">)]</span>
         <span class="p">)</span>
 
     <span class="nd">@classmethod</span>
@@ -3234,8 +3433,9 @@ library has (can have) dependencies specified in a Nimble file.</p>
     <span class="c1"># Copy over needed header(s)</span>
     <span class="n">NIMBASE</span> <span class="o">=</span> <span class="s1">&#39;nimbase.h&#39;</span>
     <span class="n">nimbase</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">find_nim_std_lib</span><span class="p">()</span> <span class="o">/</span> <span class="n">NIMBASE</span>
-    <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span><span class="p">)</span>
-    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">nimbase</span><span class="p">),</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+    <span class="n">nimbase_dest</span> <span class="o">=</span> <span class="n">build_dir_relative</span> <span class="o">/</span> <span class="n">NIMBASE</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">nimbase</span><span class="p">,</span> <span class="n">nimbase_dest</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">nimbase_dest</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
     <span class="c1"># Properly handle bundling headers into the source distribution</span>
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="s1">&#39;MANIFEST.in&#39;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
@@ -3245,7 +3445,7 @@ library has (can have) dependencies specified in a Nimble file.</p>
     <span class="k">return</span> <span class="n">Extension</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">import_path</span><span class="p">,</span>
         <span class="n">sources</span><span class="o">=</span><span class="n">csources</span><span class="p">,</span>
-        <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir</span><span class="p">)]</span>
+        <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">build_dir_relative</span><span class="p">)]</span>
     <span class="p">)</span>
 </pre></div>
 
@@ -3346,6 +3546,149 @@ using Choosenim.</p>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">result</span> <span class="o">/</span> <span class="s1">&#39;system.nim&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="nimporter.NimCompiler.get_compatible_compiler">
+    <p>def <span class="ident">get_compatible_compiler</span>(</p><p>cls)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Gets compatible compiler name for the running Python instance.</p>
+<p>Returns:
+    A string containing the name of the compiler to use when compiling
+    Nim code.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.get_compatible_compiler', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompiler.get_compatible_compiler" class="source">
+    <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">get_compatible_compiler</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets compatible compiler name for the running Python instance.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A string containing the name of the compiler to use when compiling</span>
+<span class="sd">        Nim code.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">python_compiler</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_name</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">python_compiler</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_installed_compilers</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">python_compiler</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="nimporter.NimCompiler.get_installed_compilers">
+    <p>def <span class="ident">get_installed_compilers</span>(</p><p>cls)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Gets the list of installed compilers.</p>
+<p>Returns:
+    A dict mapping the compiler name with the path to it. Compilers that
+    are not installed are not included in the dict.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.get_installed_compilers', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompiler.get_installed_compilers" class="source">
+    <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">get_installed_compilers</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the list of installed compilers.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A dict mapping the compiler name with the path to it. Compilers that</span>
+<span class="sd">        are not installed are not included in the dict.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">compilers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;msc&#39;</span>  <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;vccexe&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;clang&#39;</span> <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;clang&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;gcc&#39;</span>   <span class="p">:</span> <span class="n">shutil</span><span class="o">.</span><span class="n">which</span><span class="p">(</span><span class="s1">&#39;gcc&#39;</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">compiler</span> <span class="p">:</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">compilers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">path</span>
+    <span class="p">}</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="nimporter.NimCompiler.get_python_c_compiler_name">
+    <p>def <span class="ident">get_python_c_compiler_name</span>(</p><p>cls)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Gets only the compiler name used to compile Python.</p>
+<p>Useful for determining which compiler to invoke on Win32 for example.</p>
+<p>Returns:
+    A string containing the compiler name, such as:</p>
+<div class="codehilite"><pre><span></span>&gt; Clang
+</pre></div></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.get_python_c_compiler_name', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompiler.get_python_c_compiler_name" class="source">
+    <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">get_python_c_compiler_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets only the compiler name used to compile Python.</span>
+<span class="sd">    Useful for determining which compiler to invoke on Win32 for example.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A string containing the compiler name, such as:</span>
+<span class="sd">        &gt; Clang</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_python_c_compiler_version</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="nimporter.NimCompiler.get_python_c_compiler_version">
+    <p>def <span class="ident">get_python_c_compiler_version</span>(</p><p>cls)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Gets the compiler name and version that was used to compile Python.</p>
+<p>Returns:
+    A string containing the compiler version, such as:</p>
+<div class="codehilite"><pre><span></span><span class="err">&gt; Clang 11.0.0 (clang-1100.0.33.16)</span>
+</pre></div></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-nimporter.NimCompiler.get_python_c_compiler_version', this);">Show source &equiv;</a></p>
+  <div id="source-nimporter.NimCompiler.get_python_c_compiler_version" class="source">
+    <div class="codehilite"><pre><span></span><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">get_python_c_compiler_version</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the compiler name and version that was used to compile Python.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        A string containing the compiler version, such as:</span>
+<span class="sd">        &gt; Clang 11.0.0 (clang-1100.0.33.16)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pop</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </pre></div>
 
   </div>
@@ -4088,10 +4431,80 @@ This Nimporter can only import Nim modules with procedures exposed via the
 
                 <span class="bp">cls</span><span class="o">.</span><span class="n">update_hash</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
             
-            <span class="k">return</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
                 <span class="n">fullname</span><span class="p">,</span>
                 <span class="n">location</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">build_artifact</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
             <span class="p">)</span>
+
+            <span class="bp">cls</span><span class="o">.</span><span class="n">__validate_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">spec</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">__validate_spec</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validates that a given Nim extension can be successfully imported.</span>
+
+<span class="sd">        Since a spec is used to import a module and the body of this function</span>
+<span class="sd">        attempts an import, successful imports will imply importing the module</span>
+<span class="sd">        twice. However, it&#39;s ok that the module will be imported twice because</span>
+<span class="sd">        it&#39;s better to have good error messages than to be fast in this case.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            spec(Spec): the spec to validate if its module can be imported.</span>
+<span class="sd">        </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            A NimporterException if the spec cannot be used to import the given</span>
+<span class="sd">            Nim module/library.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">import_error</span><span class="p">:</span>
+            <span class="n">py_ver</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">nim_ver</span> <span class="o">=</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="s1">&#39;nim&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">])</span>
+                    <span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">nim_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;Error getting version&gt;&#39;</span>
+
+            <span class="n">all_ccs</span> <span class="o">=</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">get_installed_compilers</span><span class="p">()</span>
+            <span class="n">py_cc</span> <span class="o">=</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">get_compatible_compiler</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">py_cc</span><span class="p">:</span>
+                <span class="n">cc</span> <span class="o">=</span> <span class="n">all_ccs</span><span class="p">[</span><span class="n">py_cc</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">py_cc</span> <span class="o">==</span> <span class="s1">&#39;msc&#39;</span><span class="p">:</span>
+                        <span class="n">cc_ver</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span>
+                            <span class="s1">&#39;vccexe&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--vccversion:0&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--printPath&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;--noCommand&#39;</span>
+                        <span class="p">])</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cc_ver</span> <span class="o">=</span> <span class="p">(</span><span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">([</span><span class="n">cc</span><span class="o">.</span><span class="n">stem</span><span class="p">])</span>
+                            <span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+                        <span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">cc_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;Error getting version&gt;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cc_ver</span> <span class="o">=</span> <span class="s1">&#39;&lt;No compatible C compiler installed&gt;&#39;</span>
+            
+            <span class="n">error_message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Error importing </span><span class="si">{spec.origin}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Error Message:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{import_error}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Python Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{py_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Nim Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{nim_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;CC Version:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{cc_ver}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Installed CCs:</span><span class="se">\n\n</span><span class="s1">    </span><span class="si">{all_ccs}</span><span class="se">\n\n</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;Please help improve Nimporter by opening a bug report at: &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;https://github.com/Pebaz/nimporter/issues/new and submit the &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;above information along with your description of the issue.</span><span class="se">\n</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+            <span class="k">raise</span> <span class="n">NimporterException</span><span class="p">(</span><span class="n">error_message</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">import_error</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">should_compile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">module_path</span><span class="p">):</span>
@@ -4207,11 +4620,14 @@ This Nimporter can only import Nim modules with procedures exposed via the
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">extension_dir</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">EXT_DIR</span>
         <span class="k">assert</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+        <span class="c1"># NOTE(pebaz): The include dir and C source file paths absolutely must</span>
+        <span class="c1"># be relative paths or installing with Pip will not work on Windows.</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">Extension</span><span class="p">(</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
-                <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="o">.</span><span class="n">absolute</span><span class="p">())]</span>
+                <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
+                <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="p">)]</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
         <span class="p">]</span>
@@ -4549,11 +4965,13 @@ to Python-compatible shared objects.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">extension_dir</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">NimCompiler</span><span class="o">.</span><span class="n">EXT_DIR</span>
     <span class="k">assert</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+    <span class="c1"># NOTE(pebaz): The include dir and C source file paths absolutely must</span>
+    <span class="c1"># be relative paths or installing with Pip will not work on Windows.</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="n">Extension</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
-            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="o">.</span><span class="n">absolute</span><span class="p">())]</span>
+            <span class="n">sources</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">extension</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*.c&#39;</span><span class="p">)],</span>
+            <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">extension</span><span class="p">)]</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">extension</span> <span class="ow">in</span> <span class="n">extension_dir</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span>
     <span class="p">]</span>
@@ -4701,10 +5119,12 @@ capabilities.</p>
             <span class="p">)</span>
             <span class="bp">cls</span><span class="o">.</span><span class="n">update_hash</span><span class="p">(</span><span class="n">module_path</span><span class="p">)</span>
         
-        <span class="k">return</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
             <span class="n">fullname</span><span class="p">,</span>
             <span class="n">location</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">build_artifact</span><span class="o">.</span><span class="n">absolute</span><span class="p">())</span>
         <span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__validate_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spec</span>
 </pre></div>
 
   </div>
