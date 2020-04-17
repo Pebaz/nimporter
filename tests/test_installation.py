@@ -113,6 +113,7 @@ def test_install_sdist():
 
             import proj1
             assert proj1
+            import proj1.performance
             assert proj1.performance
             assert proj1.lib1
             assert proj1.foo
@@ -120,7 +121,9 @@ def test_install_sdist():
             assert proj1.baz
             assert proj1.baz() == 1
 
-            subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
+            # Cannot delete a DLL in use by another process on Windows
+            if sys.platform != 'win32':
+                subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
 
         finally:
             shutil.rmtree(str(dist.absolute()))
@@ -148,13 +151,7 @@ def test_install_bdist():
 
             import proj1
             assert proj1
-
-            print(proj1)
-            print(dir(proj1))
             import proj1.performance
-            print(proj1.performance)
-            print(dir(proj1.performance))
-
             assert proj1.performance
             assert proj1.lib1
             assert proj1.foo
@@ -162,7 +159,9 @@ def test_install_bdist():
             assert proj1.baz
             assert proj1.baz() == 1
 
-            subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
+            # Cannot delete a DLL in use by another process on Windows
+            if sys.platform != 'win32':
+                subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
 
         finally:
             shutil.rmtree(str(dist.absolute()))

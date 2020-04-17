@@ -41,4 +41,4 @@ jobs:
 
       - name: Test
         #run: pytest --cov=. tests
-        run: pytest tests -s -k test_install_bdist
+        run: pytest tests
