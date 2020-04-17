@@ -755,8 +755,6 @@ class Nimporter:
         if not spec:
             raise ImportError(f'No module named {fullname}')
 
-        cls.validate_spec(spec)
-
         module = spec.loader.create_module(spec)
         return module
 
@@ -813,13 +811,17 @@ class Nimporter:
 
                 cls.update_hash(module_path)
             
-            return util.spec_from_file_location(
+            spec = util.spec_from_file_location(
                 fullname,
                 location=str(build_artifact.absolute())
             )
 
+            cls.__validate_spec(spec)
+
+            return spec
+
     @classmethod
-    def validate_spec(cls, spec):
+    def __validate_spec(cls, spec):
         """
         Validates that a given Nim extension can be successfully imported.
 
@@ -1112,9 +1114,7 @@ class NimModImporter:
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        spec = Nimporter.import_nim_code(fullname, path, library=False)
-        if spec: Nimporter.validate_spec(spec)
-        return spec
+        return Nimporter.import_nim_code(fullname, path, library=False)
 
 
 @register_importer(0)
@@ -1145,9 +1145,7 @@ class NimLibImporter:
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        spec = Nimporter.import_nim_code(fullname, path, library=True)
-        if spec: Nimporter.validate_spec(spec)
-        return spec
+        return Nimporter.import_nim_code(fullname, path, library=True)
 
 
 # This should be the only real usage of the Nimporter module beyond importing it
