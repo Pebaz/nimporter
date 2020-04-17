@@ -1071,7 +1071,7 @@ class NimModImporter:
                             '--vccversion:0',
                             '--printPath',
                             '--noCommand'
-                        ]).decode(errors='ignore')
+                        ]).decode(errors='ignore').strip()
                     else:
                         cc_ver = (subprocess.check_output([cc.stem])
                             .decode(errors='ignore')
