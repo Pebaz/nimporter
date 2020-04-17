@@ -1053,7 +1053,7 @@ class NimModImporter:
             py_ver = sys.version.replace('\n', '')
 
             try:
-                nim_ver = (check_output(['nim', '-v'])
+                nim_ver = (subprocess.check_output(['nim', '-v'])
                     .decode(errors='ignore')
                     .splitlines()[0]
                 )
@@ -1066,14 +1066,14 @@ class NimModImporter:
                 cc = all_ccs[py_cc]
                 try:
                     if py_cc == 'msc':
-                        cc_ver = check_output([
+                        cc_ver = subprocess.check_output([
                             'vccexe',
                             '--vccversion:0',
                             '--printPath',
                             '--noCommand'
                         ]).decode(errors='ignore')
                     else:
-                        cc_ver = (check_output([cc.stem])
+                        cc_ver = (subprocess.check_output([cc.stem])
                             .decode(errors='ignore')
                         )
                 except:
