@@ -109,40 +109,34 @@ def test_install_sdist():
             assert len(targets) == 1
             (target,) = targets
             assert target.exists()
-
-            if sys.platform == 'win32':
-                subprocess.Popen((
-                    f'{PIP} install --global-option build_ext --global-option '
-                    f'--compiler=msvc {target}'
-                ).split()).wait()
-            else:
-                subprocess.Popen(f'{PIP} install  {target}'.split()).wait()
+            subprocess.Popen(f'{PIP} install {target}'.split()).wait()
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(egg.absolute()))
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.
-    import proj1
-    assert proj1
-    import proj1.performance
-    assert proj1.performance
-    import proj1.lib1
-    assert proj1.lib1
+    with nimporter.cd('../..'):
+        import proj1
+        assert proj1
+        import proj1.performance
+        assert proj1.performance
+        import proj1.lib1
+        assert proj1.lib1
 
-    print('888888888')
-    print(proj1)
-    print(dir(proj1))
-    print('888888888')
+        print('888888888')
+        print(proj1)
+        print(dir(proj1))
+        print('888888888')
 
-    assert proj1.foo
-    assert proj1.bar
-    assert proj1.baz
-    assert proj1.baz() == 1
+        assert proj1.foo
+        assert proj1.bar
+        assert proj1.baz
+        assert proj1.baz() == 1
 
-    # Cannot delete a DLL in use by another process on Windows
-    if sys.platform != 'win32':
-        subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
+        # Cannot delete a DLL in use by another process on Windows
+        if sys.platform != 'win32':
+            subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
 
 
 @pytest.mark.slow_integration_test
@@ -161,15 +155,7 @@ def test_install_bdist():
             assert len(targets) == 1
             wheel = targets[0]
             assert wheel.exists()
-
-
-            if sys.platform == 'win32':
-                subprocess.Popen((
-                    f'{PIP} install --global-option build_ext --global-option '
-                    f'--compiler=msvc {wheel}'
-                ).split()).wait()
-            else:
-                subprocess.Popen(f'{PIP} install {wheel}'.split()).wait()
+            subprocess.Popen(f'{PIP} install {wheel}'.split()).wait()
 
         finally:
             shutil.rmtree(str(dist.absolute()))
@@ -178,23 +164,24 @@ def test_install_bdist():
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.
-    import proj1
-    assert proj1
-    import proj1.performance
-    assert proj1.performance
-    import proj1.lib1
-    assert proj1.lib1
+    with nimporter.cd('../..'):
+        import proj1
+        assert proj1
+        import proj1.performance
+        assert proj1.performance
+        import proj1.lib1
+        assert proj1.lib1
 
-    print('888888888')
-    print(proj1)
-    print(dir(proj1))
-    print('888888888')
+        print('888888888')
+        print(proj1)
+        print(dir(proj1))
+        print('888888888')
 
-    assert proj1.foo
-    assert proj1.bar
-    assert proj1.baz
-    assert proj1.baz() == 1
+        assert proj1.foo
+        assert proj1.bar
+        assert proj1.baz
+        assert proj1.baz() == 1
 
-    # Cannot delete a DLL in use by another process on Windows
-    if sys.platform != 'win32':
-        subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
+        # Cannot delete a DLL in use by another process on Windows
+        if sys.platform != 'win32':
+            subprocess.Popen(f'{PIP} uninstall project1 -y'.split()).wait()
