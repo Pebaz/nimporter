@@ -488,7 +488,7 @@ class NimCompiler:
         return Extension(
             name=import_path,
             sources=csources,
-            include_dirs=[str(build_dir)]
+            include_dirs=[str(build_dir_relative)]
         )
 
     @classmethod
