@@ -755,6 +755,8 @@ class Nimporter:
         if not spec:
             raise ImportError(f'No module named {fullname}')
 
+        cls.validate_spec(spec)
+
         module = spec.loader.create_module(spec)
         return module
 
@@ -815,6 +817,72 @@ class Nimporter:
                 fullname,
                 location=str(build_artifact.absolute())
             )
+
+    @classmethod
+    def validate_spec(cls, spec):
+        """
+        Validates that a given Nim extension can be successfully imported.
+
+        Since a spec is used to import a module and the body of this function
+        attempts an import, successful imports will imply importing the module
+        twice. However, it's ok that the module will be imported twice because
+        it's better to have good error messages than to be fast in this case.
+
+        Args:
+            spec(Spec): the spec to validate if its module can be imported.
+        
+        Raises:
+            A NimporterException if the spec cannot be used to import the given
+            Nim module/library.
+        """
+        try:
+            util.module_from_spec(spec)
+
+        except ImportError as import_error:
+            py_ver = sys.version.replace('\n', '')
+
+            try:
+                nim_ver = (subprocess.check_output(['nim', '-v'])
+                    .decode(errors='ignore')
+                    .splitlines()[0]
+                )
+            except:
+                nim_ver = '<Error getting version>'
+
+            all_ccs = NimCompiler.get_installed_compilers()
+            py_cc = NimCompiler.get_compatible_compiler()
+            if py_cc:
+                cc = all_ccs[py_cc]
+                try:
+                    if py_cc == 'msc':
+                        cc_ver = subprocess.check_output([
+                            'vccexe',
+                            '--vccversion:0',
+                            '--printPath',
+                            '--noCommand'
+                        ]).decode(errors='ignore').strip()
+                    else:
+                        cc_ver = (subprocess.check_output([cc.stem])
+                            .decode(errors='ignore')
+                        )
+                except:
+                    cc_ver = '<Error getting version>'
+            else:
+                cc_ver = '<No compatible C compiler installed>'
+            
+            error_message = (
+                f'Error importing {spec.origin}\n'
+                f'Error Message:\n\n    {import_error}\n\n'
+                f'Python Version:\n\n    {py_ver}\n\n'
+                f'Nim Version:\n\n    {nim_ver}\n\n'
+                f'CC Version:\n\n    {cc_ver}\n\n'
+                f'Installed CCs:\n\n    {all_ccs}\n\n'
+                f'Please help improve Nimporter by opening a bug report at: '
+                f'https://github.com/Pebaz/nimporter/issues/new and submit the '
+                f'above information along with your description of the issue.\n'
+            )
+
+            raise NimporterException(error_message) from import_error
 
     @classmethod
     def should_compile(cls, module_path):
@@ -1045,58 +1113,7 @@ class NimModImporter:
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
         spec = Nimporter.import_nim_code(fullname, path, library=False)
-
-        try:
-            util.module_from_spec(spec)
-
-        except ImportError as import_error:
-            py_ver = sys.version.replace('\n', '')
-
-            try:
-                nim_ver = (subprocess.check_output(['nim', '-v'])
-                    .decode(errors='ignore')
-                    .splitlines()[0]
-                )
-            except:
-                nim_ver = '<Error getting version>'
-
-            all_ccs = NimCompiler.get_installed_compilers()
-            py_cc = NimCompiler.get_compatible_compiler()
-            if py_cc:
-                cc = all_ccs[py_cc]
-                try:
-                    if py_cc == 'msc':
-                        cc_ver = subprocess.check_output([
-                            'vccexe',
-                            '--vccversion:0',
-                            '--printPath',
-                            '--noCommand'
-                        ]).decode(errors='ignore').strip()
-                    else:
-                        cc_ver = (subprocess.check_output([cc.stem])
-                            .decode(errors='ignore')
-                        )
-                except:
-                    cc_ver = '<Error getting version>'
-            else:
-                cc_ver = '<No compatible C compiler installed>'
-            
-            error_message = (
-                f'Error importing {spec.origin}\n'
-                f'Error Message:\n\n    {import_error}\n\n'
-                f'Python Version:\n\n    {py_ver}\n\n'
-                f'Nim Version:\n\n    {nim_ver}\n\n'
-                f'CC Version:\n\n    {cc_ver}\n\n'
-                f'Installed CCs:\n\n    {all_ccs}\n\n'
-                f'Please help improve Nimporter by opening a bug report at: '
-                f'https://github.com/Pebaz/nimporter/issues/new and submit the '
-                f'above information along with your description of the issue.\n'
-            )
-
-            raise NimporterException(error_message) from import_error
-
-        # NOTE(pebaz): It's ok that the module will be imported twice. It's
-        # better to have good error messages than to be fast in this case.
+        if spec: Nimporter.validate_spec(spec)
         return spec
 
 
@@ -1128,7 +1145,9 @@ class NimLibImporter:
 
     @classmethod
     def find_spec(cls, fullname, path=None, target=None):
-        return Nimporter.import_nim_code(fullname, path, library=True)
+        spec = Nimporter.import_nim_code(fullname, path, library=True)
+        if spec: Nimporter.validate_spec(spec)
+        return spec
 
 
 # This should be the only real usage of the Nimporter module beyond importing it
