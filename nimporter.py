@@ -244,8 +244,8 @@ class NimCompiler:
             nim_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         out, err = process.stdout, process.stderr
-        out = out.decode() if out else ''
-        err = err.decode() if err else ''
+        out = out.decode(errors='ignore') if out else ''
+        err = err.decode(errors='ignore') if err else ''
         lines = (out + err).splitlines()
 
         errors   = [line for line in lines if 'Error:' in line]
