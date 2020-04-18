@@ -43,14 +43,15 @@ def test_create_sdist():
                     warnings.warn(
                         f'No compatible C compiler installed: {installed_ccs}'
                     )
-                cc_path = installed_ccs[expected]
-                actual = nim_build_data['linkcmd'].split()[0].strip()
-                if not actual.startswith(cc_path.stem):
-                    warnings.warn(
-                        f'Nim used a different C compiler than what Python '
-                        f'expects. Python uses {cc_path.stem} and Nim used '
-                        f'{actual}'
-                    )
+                else:
+                    cc_path = installed_ccs[expected]
+                    actual = nim_build_data['linkcmd'].split()[0].strip()
+                    if not actual.startswith(cc_path.stem):
+                        warnings.warn(
+                            f'Nim used a different C compiler than what Python '
+                            f'expects. Python uses {cc_path.stem} and Nim used '
+                            f'{actual}'
+                        )
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(egg.absolute()))
@@ -82,14 +83,15 @@ def test_create_bdist():
                     warnings.warn(
                         f'No compatible C compiler installed: {installed_ccs}'
                     )
-                cc_path = installed_ccs[expected]
-                actual = nim_build_data['linkcmd'].split()[0].strip()
-                if not actual.startswith(cc_path.stem):
-                    warnings.warn(
-                        f'Nim used a different C compiler than what Python '
-                        f'expects. Python uses {cc_path.stem} and Nim used '
-                        f'{actual}'
-                    )
+                else:
+                    cc_path = installed_ccs[expected]
+                    actual = nim_build_data['linkcmd'].split()[0].strip()
+                    if not actual.startswith(cc_path.stem):
+                        warnings.warn(
+                            f'Nim used a different C compiler than what Python '
+                            f'expects. Python uses {cc_path.stem} and Nim used '
+                            f'{actual}'
+                        )
         finally:
             shutil.rmtree(str(dist.absolute()))
             shutil.rmtree(str(build.absolute()))
