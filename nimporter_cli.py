@@ -103,13 +103,8 @@ def main(cli_args=None):
             shutil.rmtree(temp_build_dir)
 
     elif args.cmd == 'bundle':
-        print(args)
-
-        # 1. If there is a setup.py, use it.
         setup = pathlib.Path('setup.py')
 
-        # 2. If there is not a setup.py, generate a new example one that the
-        #    user must modify in order to work (what source file/packages?)
         if not setup.exists():
             print('No setup.py found in dir, would you like to generate one?')
 
@@ -124,7 +119,7 @@ def main(cli_args=None):
                     f'# Edit `packages=` to fit your requirements\n'
                     f'import setuptools, nimporter\n\n'
                     f'setuptools.setup(\n'
-                    f'    name={pathlib.Path().name},\n'
+                    f'    name="{pathlib.Path().absolute().name}",\n'
                     f'    packages=[..],  # Please read the above tutorial\n'
                     f'    ext_modules=nimporter.build_nim_extensions()\n'
                     f')\n'
