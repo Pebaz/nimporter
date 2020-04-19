@@ -277,6 +277,23 @@ $ nimporter build mylib --dest .
 $ nimporter build mylib/mylib.nim
 ```
 
+Finally, the CLI has provisions for quickly bundling your project into a source
+or binary distribution:
+
+```bash
+# Bundles your code into a wheel (look in dist/)
+$ nimporter bundle bin
+
+# Bundles your code into a source archive (look in dist/)
+$ nimporter bundle src
+```
+
+If you do not have a `setup.py` in your current directory, the CLI will generate
+one for you but you will have to edit it to make sure that all of your code is
+included in the resulting package. You can look
+[here](https://github.com/navdeep-G/setup.py) for an excellent tutorial on how
+to use `setup.py`.
+
 ## Code Quality
 
 There are ***44 unit tests*** and ***5 integration tests*** to make sure that

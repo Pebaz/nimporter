@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
 	name='nimporter',
-	version='1.0.0',
+	version='1.0.1',
 	license="MIT",
 	description='Compile Nim extensions for Python when imported!',
 	long_description=open('README.md').read(),
