@@ -53,6 +53,31 @@ def main(args=None):
         help='the folder to store the build artifact'
     )
 
+    bundle_parser = subs.add_parser('bundle')
+    bundle = bundle_parser.add_subparsers(dest='exp', required=True)
+    bin_ = bundle.add_parser('bin')
+    src = bundle.add_parser('src')
+
+    # bundle = subs.add_parser('bundle')
+    # bundle.add_argument(
+    #     '-b', '--bin',
+    #     action='store_true',
+    #     help=(
+    #         'generate a wheel containing prebuilt artifacts for the current '
+    #         'platform'
+    #     ),
+    #     required=True
+    # )
+    # bundle.add_argument(
+    #     '-s', '--src',
+    #     action='store_true',
+    #     help=(
+    #         'generate an archive containing both Python and Nim extension '
+    #         'source files (platform agnostic).'
+    #     ),
+    #     required=True
+    # )
+
     args = parser.parse_args(args or sys.argv[1:])
 
     if args.cmd == 'clean':
@@ -98,6 +123,8 @@ def main(args=None):
         finally:
             shutil.rmtree(temp_build_dir)
 
+    elif args.cmd == 'bundle':
+        print(args)
 
 if __name__ == '__main__':
     main()
