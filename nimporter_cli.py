@@ -2,7 +2,7 @@
 Iterates through all sub directories and removes any build artifacts and hashes.
 """
 
-import sys, os, pathlib, argparse, tempfile, shutil
+import sys, os, pathlib, argparse, tempfile, shutil, subprocess
 from nimporter import NimCompiler, Nimporter
 
 def clean(dir=pathlib.Path()):
@@ -57,27 +57,6 @@ def main(args=None):
     bundle = bundle_parser.add_subparsers(dest='exp', required=True)
     bin_ = bundle.add_parser('bin')
     src = bundle.add_parser('src')
-
-    # bundle = subs.add_parser('bundle')
-    # bundle.add_argument(
-    #     '-b', '--bin',
-    #     action='store_true',
-    #     help=(
-    #         'generate a wheel containing prebuilt artifacts for the current '
-    #         'platform'
-    #     ),
-    #     required=True
-    # )
-    # bundle.add_argument(
-    #     '-s', '--src',
-    #     action='store_true',
-    #     help=(
-    #         'generate an archive containing both Python and Nim extension '
-    #         'source files (platform agnostic).'
-    #     ),
-    #     required=True
-    # )
-
     args = parser.parse_args(args or sys.argv[1:])
 
     if args.cmd == 'clean':
@@ -125,6 +104,31 @@ def main(args=None):
 
     elif args.cmd == 'bundle':
         print(args)
+
+        # 1. If there is a setup.py, use it.
+        setup = pathlib.Path('setup.py')
+
+        # 2. If there is not a setup.py, generate a new example one that the
+        #    user must modify in order to work (what source file/packages?)
+        if not setup.exists():
+            print('No setup.py found in current dir, would you like to generate one?')
+            if input('y/n: '):
+                print('Generating reference setup.py')
+                setup.write_text(
+                    f'import this\n'
+                    f'print("hi")'
+                )
+            else:
+                print('Ok =)')
+
+        PYTHON = 'python' if sys.platform == 'win32' else 'python3'
+            
+        # 3. Depending upon the command, run the appropriate Python command.
+        if args.exp == 'bin':
+            subprocess.Popen(f'{PYTHON} setup.py bdist_wheel'.split()).wait()
+
+        elif args.exp == 'src':
+            subprocess.Popen(f'{PYTHON} setup.py sdist'.split()).wait()
 
 if __name__ == '__main__':
     main()
