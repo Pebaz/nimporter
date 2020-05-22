@@ -2,7 +2,7 @@
 Iterates through all sub directories and removes any build artifacts and hashes.
 """
 
-import sys, os, pathlib, argparse, tempfile, shutil, subprocess
+import sys, os, pathlib, argparse, tempfile, shutil, subprocess, time
 from nimporter import NimCompiler, Nimporter
 
 def clean(dir=pathlib.Path()):
@@ -40,8 +40,22 @@ def main(cli_args=None):
     parser = argparse.ArgumentParser(description='Nimporter CLI')
     subs = parser.add_subparsers(dest='cmd', required=True)
 
-    subs.add_parser('clean')
-    build = subs.add_parser('build')
+    # Clean command
+    subs.add_parser(
+        'clean',
+        help=(
+            'Run in project root to recursively remove all Nimporter-specific '
+            'build artifacts and hash files'
+        )
+    )
+
+    # Build command
+    build = subs.add_parser(
+        'build',
+        help=(
+            'Builds a Nim module/library into an importable Python extension'
+        )
+    )
     build.add_argument(
         'source',
         type=pathlib.Path,
@@ -53,10 +67,26 @@ def main(cli_args=None):
         help='the folder to store the build artifact'
     )
 
-    bundle_parser = subs.add_parser('bundle')
+    # Bundle command
+    bundle_parser = subs.add_parser(
+        'bundle',
+        help=(
+            'Convenience command for running: python setup.py sdist/bdist_wheel'
+        )
+    )
     bundle = bundle_parser.add_subparsers(dest='exp', required=True)
     bin_ = bundle.add_parser('bin')
     src = bundle.add_parser('src')
+
+    # Compile command
+    compile_ = subs.add_parser(
+        'compile',
+        help=(
+            'Clean project and then recurse through and build all Nim '
+            'modules/libraries'
+        )
+    )
+
     args = parser.parse_args(cli_args or sys.argv[1:])
 
     if args.cmd == 'clean':
@@ -142,6 +172,38 @@ def main(cli_args=None):
 
             elif args.exp == 'src':
                 subprocess.Popen(f'{pyexe} setup.py sdist'.split()).wait()
+
+    elif args.cmd == 'compile':
+        clean()
+
+        CTM = lambda: round(time.time() * 1000)
+        start = CTM()
+        extensions = Nimporter._find_extensions(pathlib.Path())
+
+        for extension in extensions:
+            is_lib = extension.is_dir()
+
+            print(
+                f'Building Extension {"Lib" if is_lib else "Mod"}: '
+                f'{extension.name}'
+            )
+
+            NimCompiler.compile_nim_code(
+                extension.absolute(),
+                NimCompiler.build_artifact(extension.absolute()),
+                library=is_lib
+            )
+
+            if is_lib:
+                Nimporter.update_hash(extension / (extension.name + '.nim'))
+            else:
+                Nimporter.update_hash(extension)
+
+        print('Done.')
+        print(
+            f'Built {len(extensions)} Extensions In '
+            f'{(CTM() - start) / 1000.0} secs'
+        )
 
     return 0
 
