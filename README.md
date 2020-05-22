@@ -245,6 +245,19 @@ automatically, use the `github_actions_template.yml` template found in the
 Actions runner to build, package, and deploy your library on Windows, MacOS, and
 Linux automatically when you create a new "Release" is created.
 
+### Usage with Docker
+
+Nimporter can easily be used within a Docker container. To prevent the need for
+a Nim compiler toolchain to be installed into the container to run Nim code, you
+can pre-compile all of your extensions and copy the resulting artifacts into the
+container. This process is roughly as follows:
+
+1. Create a project that uses Python and Nim
+2. Run `nimporter compile` to recursively-compile all extensions in the project
+3. Ensure that in your Dockerfile that the `__pycache__` directories are
+   included as they will contain the Nim shared objects as well as the Nimporter
+   hash files to prevent a recompilation.
+
 ## Nimporter Command Line Interface
 
 Nimporter provides a CLI that you can use to easily clean all cached build and
@@ -275,6 +288,16 @@ $ nimporter build mylib --dest .
 
 # Although you can specify a Nim library's source file, please don't
 $ nimporter build mylib/mylib.nim
+```
+
+The Nimporter CLI can also precompile all extensions within a project without
+needing to run the project. This is useful in situations where you do not want
+to package your application using a `setup.py` (such as a zip file) or for use
+within Docker containers.
+
+```bash
+# Recursively compile all Nim extension modules and libraries:
+$ nimporter compile
 ```
 
 Finally, the CLI has provisions for quickly bundling your project into a source
