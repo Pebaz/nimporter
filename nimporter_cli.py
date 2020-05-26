@@ -11,6 +11,15 @@ def clean(dir=pathlib.Path()):
     # .exp and .lib are generated on Windows
     remove_these = NimCompiler.EXT, '.hash', '.exp', '.lib'
 
+    # Check for MANIFEST.in in CWD
+    if list(dir.glob('MANIFEST.in')):
+        item = dir / 'MANIFEST.in'
+        header = 'NIMPORTER BUNDLE'
+        for line in item.read_text().splitlines():
+            if header in line:
+                os.remove(str(item.resolve()))
+                print('Deleted:'.ljust(19), item.resolve())
+
     for folder in filter(lambda p: p.is_dir(), dir.iterdir()):
         if folder.name == '__pycache__':
             for item in folder.iterdir():
