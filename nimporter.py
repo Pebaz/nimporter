@@ -924,11 +924,22 @@ class Nimporter:
             A list of Path objects. File Paths indicate a Nim Module. Folder
             Paths indicate Nim Libraries.
         """
-        exclude_dirs = {p.expanduser().absolute() for i in exclude_dirs}
+
+        exclude_dirs = [ os.path.abspath(os.path.expanduser(p)) for p in exclude_dirs ]
+        excludes_with_slash = [ p + os.path.sep for p in exclude_dirs ]
         nim_exts = []
 
+        def excluded ( abs_path ) :
+            for idx, exclude_dir in enumerate(exclude_dirs) :
+                if abs_path == exclude_dir :
+                    return True
+                if abs_path.startswith(excludes_with_slash[idx]) :
+                    return True
+            return False
+
         for item in path.iterdir():
-            if item.expanduser().absolute() in exclude_dirs:
+
+            if excluded(str(item.expanduser().absolute())):
                 continue
 
             if item.is_dir() and list(item.glob('*.nimble')):
