@@ -119,7 +119,7 @@ class NimCompiler:
     NIM_CLI_ARGS = [
         '--opt:speed',
         '--parallelBuild:0',
-        '--gc:markAndSweep',
+        '--gc:refc',
         '--threads:on',
         '--app:lib',
         '-d:release',
