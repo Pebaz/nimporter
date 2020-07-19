@@ -1013,7 +1013,7 @@ class Nimporter:
         ]
 
     @classmethod
-    def build_nim_extensions(cls, root=None, exclude_dirs=[]):
+    def build_nim_extensions(cls, root=None, exclude_dirs=[], danger=False):
         """
         Gathers all Nim Extensions by recursing through a Python project.
 
@@ -1052,6 +1052,9 @@ class Nimporter:
             A list of Extensions that can be added to the setup() function's
             "ext_modules" keyword argument.
         """
+        if danger:
+            NimCompiler.NIM_CLI_ARGS.insert(3, '-d:danger')
+
         #root = (root or Path()).expanduser().absolute()
         root = root or Path()
 
