@@ -154,6 +154,87 @@ For a bunch of little examples, look in the `examples/` directory. For more
 rigorous examples testing every feature of Nimporter, you can take a look at the
 files within the `tests/` directory.
 
+## Suggested Project Structure
+
+Although there are lots of ways that Nimporter can integrate into new and
+existing applications, here is how to reduce issues arising from unstructured
+usage:
+
+```bash
+Project/
+    # Not required if you use `nimporter compile` but highly recommended
+    setup.py
+    main_package_name/
+        some_file.py
+        calculator.nim  # Directly imported as if it was written in Python
+        some_python_package/
+            something1.py
+            something2.py
+        # some_nim_library is used as a single Python module
+        # Can be directly imported but supports dependencies and custom switches
+        some_nim_library/  # Allows the use of `switches.py` and .nimble
+            some_nim_library.nimble  # Dependency info
+            some_nim_file1.nim
+            some_nim_file2.nim
+        other_python_files.py
+        other_nim_files.nim
+        # Python and Nim code can coexist right next to each other
+```
+
+It is not recommended to split your Nim code and your Python code. The entire
+point of Nimporter was to allow close cooperation between these two languages.
+
+> The suggested (not imposed) project structure is to place a lone Nim file
+within a Python package. If your Nim file requires any other dependencies other
+than `nimpy`, you *must* place your Nim file into a folder of the same name with
+a Nimble file of the same name with the dependencies listed out.
+
+**To recap**
+
+```bash
+Project/
+    (setup.py)
+    main_package_name/
+        some_file.py
+        nim_ext_with_no_dependencies.nim
+        some_other_file.py
+        nim_ext_requiring_dependencies/
+            # List your dependencies here
+            nim_ext_requiring_dependencies.nimble
+            # Must be named the same as the folder
+            nim_ext_requiring_dependencies.nim
+            # Can be used to customize Nim compiler switches per platform
+            switches.py
+            # You can have `nim_ext_requiring_dependencies.nim` import other
+            # Nim code as well
+            other_necessary_nim_files.nim
+```
+
+For several examples of how to structure a project, look in the `tests/` folder.
+
+## Compiler Switches using `switches.py`
+
+For Nim extension libraries only (a folder, nimble file, and Nim file of the
+same name), you can place a file called `switches.py` that Nimporter will use to
+customize what flags get passed to the Nim compiler when it compiles that
+extension. For examples on how to do this, please look in the `tests/` folder.
+
+### Increasing Speed by using the `-d:danger` flag
+
+Since this flag is one that is desirable for Nim extension modules/libraries
+alike, you can request that it be used during compilation by adding
+`danger=True` to `build_nim_extensions()`. For example:
+
+```python
+from setuptools import setup
+import nimporter
+
+setup(
+    ...
+    ext_modules=nimporter.build_nim_extensions(danger=True)
+)
+```
+
 ## Distributing Libraries Using Nimporter
 
 Nimporter supports two methods of distribution:
