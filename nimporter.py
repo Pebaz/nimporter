@@ -1052,14 +1052,15 @@ class Nimporter:
             A list of Extensions that can be added to the setup() function's
             "ext_modules" keyword argument.
         """
-        if danger:
-            NimCompiler.NIM_CLI_ARGS.insert(3, '-d:danger')
+        if danger: NimCompiler.NIM_CLI_ARGS.insert(3, '-d:danger')
 
         #root = (root or Path()).expanduser().absolute()
         root = root or Path()
 
         # Check for bundled C source files
         if cls.check_nim_extensions(root):
+
+            if danger: NimCompiler.NIM_CLI_ARGS.pop(3)
 
             # NOTE(pebaz): Run only on end-user's machine.
             return cls.get_nim_extensions(root)
@@ -1072,6 +1073,8 @@ class Nimporter:
             # NOTE(pebaz): Run on author's machine or when building from source
             ext = cls._build_nim_extension(extension, root)
             if ext: extensions.append(ext)
+
+        if danger: NimCompiler.NIM_CLI_ARGS.pop(3)
 
         return extensions
 
