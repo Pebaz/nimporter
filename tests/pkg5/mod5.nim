@@ -68,11 +68,9 @@ proc receive_list(val: seq[int]): bool {.exportpy.} =
 proc receive_dict(val: JsonNode): bool {.exportpy.} =
     var res = val["Name"].getStr() == "Pebaz"
     res = res and val["Age"].getInt() == 25
-    res = res and val["Alive"].getBool() == false
+    res = res and val["Alive"].getBool() == true
     res = res and val["Height"].getFloat() > 5
     res = res and val["Height"].getFloat() < 7
-    echo val
-    echo res
     return val.type.name == "JsonNode" and res
 
 
