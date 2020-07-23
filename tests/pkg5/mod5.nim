@@ -71,7 +71,7 @@ proc receive_dict(val: JsonNode): bool {.exportpy.} =
     res = res and val["Alive"].getBool() == false
     res = res and val["Height"].getFloat() > 5
     res = res and val["Height"].getFloat() < 7
-    return val.type.name == "JsonNode" and res
+    return res
 
 
 proc receive_object(val: MyObject): bool {.exportpy.} =
