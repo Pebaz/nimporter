@@ -16,16 +16,16 @@ from setuptools.command.build_ext import build_ext
 import nimporter
 
 class NoSuffixBuilder(build_ext):
-  # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
-  def get_ext_filename(self, ext_name):
-    filename = super().get_ext_filename(ext_name)
-    return filename.replace(sysconfig.get_config_var('EXT_SUFFIX'), "") + pathlib.Path(filename).suffix
+    # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
+    def get_ext_filename(self, ext_name):
+        filename = super().get_ext_filename(ext_name)
+        return filename.replace(sysconfig.get_config_var('EXT_SUFFIX'), "") + pathlib.Path(filename).suffix
 
 setuptools.setup(
     name="{ pathlib.Path().absolute().name }",
     packages=[..],  # Please read the above tutorial
     ext_modules=nimporter.build_nim_extensions()
-    cmdclass = {{"build_ext": NoSuffixBuilder}},
+    cmdclass={{"build_ext": NoSuffixBuilder}},
 )
 """
 
