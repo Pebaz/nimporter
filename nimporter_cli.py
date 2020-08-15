@@ -5,6 +5,31 @@ Iterates through all sub directories and removes any build artifacts and hashes.
 import sys, os, pathlib, argparse, tempfile, shutil, subprocess, time
 from nimporter import NimCompiler, Nimporter
 
+
+SETUPPY_TEMPLATE = f"""
+# Setup.py tutorial:
+# https://github.com/navdeep-G/setup.py
+# Edit `packages=` to fit your requirements
+
+import setuptools, pathlib, sysconfig
+from setuptools.command.build_ext import build_ext
+import nimporter
+
+class NoSuffixBuilder(build_ext):
+    # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
+    def get_ext_filename(self, ext_name):
+        filename = super().get_ext_filename(ext_name)
+        return filename.replace(sysconfig.get_config_var('EXT_SUFFIX'), "") + pathlib.Path(filename).suffix
+
+setuptools.setup(
+    name="{ pathlib.Path().absolute().name }",
+    packages=[..],  # Please read the above tutorial
+    ext_modules=nimporter.build_nim_extensions()
+    cmdclass={{"build_ext": NoSuffixBuilder}},
+)
+"""
+
+
 def clean(dir=pathlib.Path()):
     "Recursively clear hash files and extensions stored in __pycache__ folders."
 
@@ -152,17 +177,7 @@ def main(cli_args=None):
                 answer = input('  Y/N: ').upper() or 'a'
 
             if answer == 'Y':
-                setup.write_text(
-                    f'# Setup.py tutorial:\n'
-                    f'# https://github.com/navdeep-G/setup.py\n'
-                    f'# Edit `packages=` to fit your requirements\n'
-                    f'import setuptools, nimporter\n\n'
-                    f'setuptools.setup(\n'
-                    f'    name="{pathlib.Path().absolute().name}",\n'
-                    f'    packages=[..],  # Please read the above tutorial\n'
-                    f'    ext_modules=nimporter.build_nim_extensions()\n'
-                    f')\n'
-                )
+                setup.write_text(SETUPPY_TEMPLATE)
 
                 print('Generated reference setup.py')
                 print('Modify setup.py to point to your modules/packages.')
