@@ -11,9 +11,11 @@ SETUPPY_TEMPLATE = f"""
 # https://github.com/navdeep-G/setup.py
 # Edit `packages=` to fit your requirements
 
-import setuptools, pathlib, sysconfig
+import setuptools, pathlib, sysconfig, platform
 from setuptools.command.build_ext import build_ext
 import nimporter
+
+assert platform.architecture()[0] == "64bit", "ERROR: Python must be 64 Bit!." # Delete this line for 32Bit binaries.
 
 class NoSuffixBuilder(build_ext):
     # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
