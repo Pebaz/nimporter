@@ -110,7 +110,7 @@ class NimCompiler:
      - Store hashes of Nim source files to only recompile when module changes.
      - Stores hash in __pycache__ directory to not clutter up file system.
      - Compile Nim files to C and bundle them as an Extension for distribution.
-    
+
     Attributes:
         EXT(str): the extension to use for the importable build artifact.
         NIM_CLI_ARGS(list): compiler switches common to all builds.
@@ -123,6 +123,8 @@ class NimCompiler:
         '--threads:on',
         '--app:lib',
         '-d:release',
+        '-d:strip',
+        '-d:lto',
         '-d:ssl'
     ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
     EXT_DIR = 'nim-extensions'
@@ -409,7 +411,7 @@ class NimCompiler:
 
         if module_path.is_file():
             library_path = module_path.parent.resolve()
-            
+
         elif module_path.is_dir():
             library_path = module_path.resolve()
             module_path = library_path / (library_path.name + '.nim')
@@ -588,7 +590,7 @@ class Nimporter:
     def hash_filename(cls, module_path):
         """
         Gets the filename that should contain a given module's hash.
-    
+
         Args:
             module_path(Path): the Nim module the hash file pertains to.
 
@@ -683,7 +685,7 @@ class Nimporter:
 
         Args:
             module_path(Path): the file to hash.
-        
+
         Returns:
             The hash bytes of the Nim file.
         """
@@ -736,7 +738,7 @@ class Nimporter:
             ignore_cache(bool): whether or not to use a cached build if found.
 
         Returns:
-            The Python Module object representing the imported PYD or SO file.            
+            The Python Module object representing the imported PYD or SO file.
         """
         if ignore_cache != None:
             tmp = cls.IGNORE_CACHE
@@ -810,7 +812,7 @@ class Nimporter:
                 )
 
                 cls.update_hash(module_path)
-            
+
             spec = util.spec_from_file_location(
                 fullname,
                 location=str(build_artifact.absolute())
@@ -832,7 +834,7 @@ class Nimporter:
 
         Args:
             spec(Spec): the spec to validate if its module can be imported.
-        
+
         Raises:
             A NimporterException if the spec cannot be used to import the given
             Nim module/library.
@@ -871,7 +873,7 @@ class Nimporter:
                     cc_ver = '<Error getting version>'
             else:
                 cc_ver = '<No compatible C compiler installed>'
-            
+
             error_message = (
                 f'Error importing {spec.origin}\n'
                 f'Error Message:\n\n    {import_error}\n\n'
@@ -891,7 +893,7 @@ class Nimporter:
         """
         Determines if a module should be rebuilt using only the path to it.
 
-        Factors included in the decision to compile a module include: 
+        Factors included in the decision to compile a module include:
 
          * If `IGNORE_CACHE` is set
          * If the module has been modified since the last build
@@ -1094,7 +1096,7 @@ def register_importer(list_position):
         # Make the list_position act like how a list is normally indexed
         if list_position < 0:
             list_position = len(sys.meta_path) + 1 - list_position
- 
+
         sys.meta_path.insert(list_position, importer)
 
         # Ensure that Nim files won't be passed up because of other Importers.
