@@ -126,7 +126,7 @@ class NimCompiler:
         '-d:strip',
         '-d:lto',
         '-d:ssl'
-    ] + (['--cc:vcc'] if shutil.which('vccexe') else [])
+    ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
     EXT_DIR = 'nim-extensions'
 
     @classmethod
