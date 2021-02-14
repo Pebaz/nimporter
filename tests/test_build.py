@@ -87,14 +87,20 @@ def test_invoke_compiler_success():
         assert any(
             "Warning: imported and not used: 'asyncstreams'" in i for i in war
         )
-        assert any('Hint: system [Processing]' in i for i in hin)
+        assert any('Hint' in i for i in hin)
 
     finally:
         if out_file.exists():
             out_file.unlink()
             if sys.platform == 'win32':
-                Path('tests/pkg1/warn.exp').unlink()
-                Path('tests/pkg1/warn.lib').unlink()
+                warn_exp = Path('tests/pkg1/warn.exp')
+                warn_lib = Path('tests/pkg1/warn.lib')
+
+                if warn_exp.exists():
+                    warn_exp.unlink()
+
+                if warn_lib.exists():
+                    warn_lib.unlink()
     
 
 def test_invoke_compiler_failure():
@@ -112,7 +118,7 @@ def test_invoke_compiler_failure():
 
         assert not out_file.exists(), err
         assert any('Error: cannot open file: fallacy' in i for i in err)
-        assert any('Hint: system [Processing]' in i for i in hin)
+        assert any('Hint' in i for i in hin)
 
     finally:
         if out_file.exists(): out_file.unlink()

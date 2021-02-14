@@ -126,7 +126,7 @@ class NimCompiler:
         '-d:strip',
         '-d:lto',
         '-d:ssl'
-    ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
+    ] + (['--cc:vcc'] if shutil.which('vccexe') else [])
     EXT_DIR = 'nim-extensions'
 
     @classmethod
@@ -313,6 +313,27 @@ class NimCompiler:
             The Path to the Nim stdlib 'lib' directory if it exists and None
             otherwise.
         """
+        # If Nim is not installed there's nothing to be done
+        nimexe = shutil.which('nim')
+        if not nimexe:
+            return None
+
+        # Installed via choosenim_install Pypi package
+        choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
+        if choosenim_dir.exists:
+            try:
+                nim_ver = (subprocess.check_output(['nim', '-v'])
+                    .decode(errors='ignore')
+                    .splitlines()[0]
+                )
+
+                version_string = nim_ver.split()[3]
+                stdlib = choosenim_dir / f'nim-{version_string}/lib'
+
+                if (stdlib / 'system.nim').exists():
+                    return stdlib.resolve().absolute()
+            except:
+                "Keep trying other methods"
 
         # Installed via ChooseNim
         if shutil.which('choosenim'):
@@ -322,20 +343,19 @@ class NimCompiler:
             (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
             toolchain = Path(choosenim.split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
-            if not (stdlib / 'system.nim').exists():
-                return None
-            return stdlib.resolve().absolute()
+
+            if (stdlib / 'system.nim').exists():
+                return stdlib.resolve().absolute()
 
         # Installed manually
-        nimexe = shutil.which('nim')
-        if not nimexe:
-            return None
         nimexe = Path(nimexe)
         result = nimexe.parent / '../lib'
         if not (result / 'system.nim').exists():
             result = nimexe.resolve().parent / '../lib'
+
             if not (result / 'system.nim').exists():
                 return None
+
         return result.resolve().absolute()
 
     @classmethod
