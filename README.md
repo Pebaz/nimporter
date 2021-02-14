@@ -296,7 +296,10 @@ setup(
     ...,                            # Keep your existing arguments
     package_data={'': ['*.nim']},   # Distribute Nim source files
     include_package_data=True,
-    install_requires=['nimporter']  # Depends upon Nimporter
+    install_requires=[
+        'nimporter',  # Must depend on Nimporter
+        'choosenim_install'  # Optional. Auto-installs Nim compiler
+    ]
 )
 ```
 
