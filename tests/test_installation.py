@@ -93,9 +93,12 @@ def test_create_bdist():
                             f'{actual}'
                         )
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(build.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.absolute().exists():
+                shutil.rmtree(str(dist.absolute()))
+            if build.absolute().exists():
+                shutil.rmtree(str(build.absolute()))
+            if egg.absolute().exists():
+                shutil.rmtree(str(egg.absolute()))
 
 
 @pytest.mark.slow_integration_test
@@ -114,8 +117,10 @@ def test_install_sdist():
             assert target.exists()
             subprocess.Popen(f'{PIP} install {target}'.split()).wait()
         finally:
-            shutil.rmtree(str(dist.absolute()))
-            shutil.rmtree(str(egg.absolute()))
+            if dist.absolute().exists():
+                shutil.rmtree(str(dist.absolute()))
+            if egg.absolute().exists():
+                shutil.rmtree(str(egg.absolute()))
 
     # Make sure that `tests/proj1` is not imported as a SimpleNamespace and that
     # the installed library in `site-packages` is used.

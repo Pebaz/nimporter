@@ -126,7 +126,7 @@ class NimCompiler:
         '-d:strip',
         '-d:lto',
         '-d:ssl'
-    ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
+    ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
     EXT_DIR = 'nim-extensions'
 
     @classmethod
