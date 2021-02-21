@@ -294,8 +294,8 @@ To do this, add these lines to your `setup.py` file:
 ```python
 setup(
     ...,                            # Keep your existing arguments
-    package_data={'': ['*.nim']},   # Distribute Nim source files
-    include_package_data=True,
+    package_data={'': ['*.nim*']},  # Distribute *.nim & *.nim.cfg source files
+    # include_package_data=True,    # <- This line cannot work with package_data
     install_requires=[
         'nimporter',  # Must depend on Nimporter
         'choosenim_install'  # Optional. Auto-installs Nim compiler
