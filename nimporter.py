@@ -128,7 +128,11 @@ class NimCompiler:
         '-d:release',
         '-d:strip',
         '-d:lto',
-        '-d:ssl'
+        '-d:ssl',
+
+        # https://github.com/Pebaz/nimporter/issues/41
+        '--warning[ProveInit]:off',
+
     ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
     EXT_DIR = 'nim-extensions'
 
