@@ -14,24 +14,27 @@ jobs:
 
   # ----------------------------------------------------------------------------
   test-all:
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]')
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: [3.8, 3.7, 3.6]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-        
+
       - uses: jiro4989/setup-nim-action@v1.3
         with:
-          nim-version: '1.0.6'
+          nim-version: '1.4.6'
+          no-color: true  # --noColor
 
       - name: Install dependencies
         run: |
