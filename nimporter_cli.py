@@ -10,14 +10,17 @@ SETUPPY_TEMPLATE = f"""
 # Setup.py tutorial:
 # https://github.com/navdeep-G/setup.py
 # Edit `packages=` to fit your requirements
+
 import setuptools, pathlib, sysconfig
 from setuptools.command.build_ext import build_ext
 import nimporter
+
 class NoSuffixBuilder(build_ext):
     # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
     def get_ext_filename(self, ext_name):
         filename = super().get_ext_filename(ext_name)
         return filename.replace(sysconfig.get_config_var('EXT_SUFFIX'), "") + pathlib.Path(filename).suffix
+
 setuptools.setup(
     name="{ pathlib.Path().absolute().name }",
     packages=[..],  # Please read the above tutorial
