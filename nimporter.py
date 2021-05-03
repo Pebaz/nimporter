@@ -44,33 +44,36 @@ class NimCompileException(NimporterException):
             self.message = msg
 
         else:
-            nim_module, error_msg = msg.split('Error:')
-            nim_module = nim_module.splitlines()[-1]
-            mod, (line_col) = nim_module.split('(')
-            nim_module = Path(mod)
-            src_line, col = line_col.split(',')
-            src_line = int(src_line)
-            col = int(col.replace(')', ''))
-            message = error_msg + '\n'
+            try:
+                nim_module, error_msg = msg.split('Error:')
+                nim_module = nim_module.splitlines()[-1]
+                mod, (line_col) = nim_module.split('(')
+                nim_module = Path(mod)
+                src_line, col = line_col.split(',')
+                src_line = int(src_line)
+                col = int(col.replace(')', ''))
+                message = error_msg + '\n'
 
-            with open(nim_module, 'r') as mod:
-                line = 0
-                for each_line in mod:
-                    line += 1
+                with open(nim_module, 'r') as mod:
+                    line = 0
+                    for each_line in mod:
+                        line += 1
 
-                    if line == src_line:
-                        message += f' -> {each_line}'
+                        if line == src_line:
+                            message += f' -> {each_line}'
 
-                    elif line > src_line + 2:
-                        break
+                        elif line > src_line + 2:
+                            break
 
-                    elif line > src_line - 3:
-                        message += f' |  {each_line}'
+                        elif line > src_line - 3:
+                            message += f' |  {each_line}'
 
-            self.message = message.rstrip() + (
-                f'\n\nAt {nim_module.absolute()} '
-                f'{line}:{col}'
-            )
+                self.message = message.rstrip() + (
+                    f'\n\nAt {nim_module.absolute()} '
+                    f'{line}:{col}'
+                )
+            except:
+                self.message = msg
 
     def __str__(self):
         "Return the string representation of the given compiler error."
@@ -125,8 +128,12 @@ class NimCompiler:
         '-d:release',
         '-d:strip',
         '-d:lto',
-        '-d:ssl'
-    ] + (['--cc:vcc'] if sys.platform == 'win32' else [])
+        '-d:ssl',
+
+        # https://github.com/Pebaz/nimporter/issues/41
+        '--warning[ProveInit]:off',
+
+    ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
     EXT_DIR = 'nim-extensions'
 
     @classmethod
@@ -313,6 +320,27 @@ class NimCompiler:
             The Path to the Nim stdlib 'lib' directory if it exists and None
             otherwise.
         """
+        # If Nim is not installed there's nothing to be done
+        nimexe = shutil.which('nim')
+        if not nimexe:
+            return None
+
+        # Installed via choosenim_install Pypi package
+        choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
+        if choosenim_dir.exists:
+            try:
+                nim_ver = (subprocess.check_output(['nim', '-v'])
+                    .decode(errors='ignore')
+                    .splitlines()[0]
+                )
+
+                version_string = nim_ver.split()[3]
+                stdlib = choosenim_dir / f'nim-{version_string}/lib'
+
+                if (stdlib / 'system.nim').exists():
+                    return stdlib.resolve().absolute()
+            except:
+                "Keep trying other methods"
 
         # Installed via ChooseNim
         if shutil.which('choosenim'):
@@ -322,20 +350,19 @@ class NimCompiler:
             (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
             toolchain = Path(choosenim.split('Path:').pop().strip())
             stdlib = toolchain / 'lib'
-            if not (stdlib / 'system.nim').exists():
-                return None
-            return stdlib.resolve().absolute()
+
+            if (stdlib / 'system.nim').exists():
+                return stdlib.resolve().absolute()
 
         # Installed manually
-        nimexe = shutil.which('nim')
-        if not nimexe:
-            return None
         nimexe = Path(nimexe)
         result = nimexe.parent / '../lib'
         if not (result / 'system.nim').exists():
             result = nimexe.resolve().parent / '../lib'
+
             if not (result / 'system.nim').exists():
                 return None
+
         return result.resolve().absolute()
 
     @classmethod
@@ -926,11 +953,16 @@ class Nimporter:
             A list of Path objects. File Paths indicate a Nim Module. Folder
             Paths indicate Nim Libraries.
         """
-        exclude_dirs = {p.expanduser().absolute() for i in exclude_dirs}
+        exclude_dirs = {Path(p).expanduser().absolute() for p in exclude_dirs}
         nim_exts = []
 
         for item in path.iterdir():
-            if item.expanduser().absolute() in exclude_dirs:
+            absolute = item.expanduser().absolute()
+
+            if absolute in exclude_dirs:
+                continue
+
+            elif any(str(absolute).startswith(str(p)) for p in exclude_dirs):
                 continue
 
             if item.is_dir() and list(item.glob('*.nimble')):
