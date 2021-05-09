@@ -15,23 +15,26 @@ jobs:
   # ----------------------------------------------------------------------------
   test-all:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: [3.8, 3.7, 3.6]
+        # os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [macos-latest]
+        # python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7]
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-        
+
       - uses: jiro4989/setup-nim-action@v1.3
         with:
-          nim-version: '1.0.6'
+          nim-version: '1.4.6'
+          no-color: true
 
       - name: Install dependencies
         run: |
