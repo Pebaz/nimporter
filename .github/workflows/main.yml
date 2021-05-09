@@ -33,7 +33,7 @@ jobs:
 
       - uses: jiro4989/setup-nim-action@v1.3
         with:
-          nim-version: '1.4.6'
+          nim-version: '1.0.6'
           no-color: true
 
       - name: Install dependencies
