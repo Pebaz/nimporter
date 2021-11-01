@@ -483,7 +483,11 @@ class NimCompiler:
         switch_file = library_path / 'switches.py'
         if cls.has_nim_config(library_path):
             exe = ['nimble' if library else 'nim', 'cc', '-c']
-            nim_args = (exe,)
+            nim_args = (
+                exe +
+                [f'--nimcache:{build_dir}', f'{module_path}'] +
+                (['--accept'] if library else [])
+            )
         elif switch_file.exists():
             switches = cls.get_switches(
                 switch_file,
@@ -586,8 +590,12 @@ class NimCompiler:
         switch_file = library_path / 'switches.py'
 
         if cls.has_nim_config(library_path):
-            exe = ['nimble' if library else 'nim', 'cc', '-c']
-            nim_args = (exe,)
+            exe = [('nimble' if library else 'nim'), 'c']
+            nim_args = (
+                exe +
+                [f'--out:{build_artifact}', f'{module_path}'] +
+                (['--accept'] if library else [])
+            )
         elif switch_file.exists(): # Switches file found
             switches = cls.get_switches(
                 switch_file,
