@@ -412,6 +412,17 @@ class NimCompiler:
         return global_scope['__switches__']
 
     @classmethod
+    def has_nim_config(cls, library_path):
+        """
+
+        Args:
+            library_path(Path): path to nim library.
+        Returns:
+            Boolean. Returns True if a nim configuration is found, False otherwise.
+        """
+        return any(library_path.glob('*.nim.cfg')) or any(library_path.glob('*.nims'))
+
+    @classmethod
     def compile_nim_extension(cls, module_path, root, *, library: bool):
         """
         Compiles/returns an Extension and installs `.nimble` dependencies.
@@ -470,7 +481,10 @@ class NimCompiler:
 
         # Switches file found
         switch_file = library_path / 'switches.py'
-        if switch_file.exists():
+        if cls.has_nim_config(library_path):
+            exe = ['nimble' if library else 'nim', 'cc', '-c']
+            nim_args = (exe,)
+        elif switch_file.exists():
             switches = cls.get_switches(
                 switch_file,
                 MODULE_PATH=module_path,
@@ -571,8 +585,10 @@ class NimCompiler:
         cls.ensure_nimpy()
         switch_file = library_path / 'switches.py'
 
-        # Switches file found
-        if switch_file.exists():
+        if cls.has_nim_config(library_path):
+            exe = ['nimble' if library else 'nim', 'cc', '-c']
+            nim_args = (exe,)
+        elif switch_file.exists(): # Switches file found
             switches = cls.get_switches(
                 switch_file,
                 MODULE_PATH=module_path,
