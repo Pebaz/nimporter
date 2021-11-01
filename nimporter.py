@@ -127,13 +127,19 @@ class NimCompiler:
         '--app:lib',
         '-d:release',
         '-d:strip',
-        '-d:lto',
         '-d:ssl',
 
         # https://github.com/Pebaz/nimporter/issues/41
         '--warning[ProveInit]:off',
 
     ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
+    # The following check to include '-d:lto' into NIM_CLI_ARGS is to fix a bug on MacOS when
+    # users of a nim library tried importing it in their python code.
+    # See https://github.com/Pebaz/nimporter/issues/51 for details.
+    # The root issue is caused by the nim compiler and has not been fixed yet.
+    # See https://github.com/nim-lang/Nim/pull/15614 for more details.
+    if sys.platform != "darwin":
+        NIM_CLI_ARGS.append('-d:lto')
     EXT_DIR = 'nim-extensions'
 
     @classmethod
