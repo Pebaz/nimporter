@@ -14,7 +14,6 @@ jobs:
 
   # ----------------------------------------------------------------------------
   test-all:
-    name: Build and test on ${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.nim-version }}
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -40,7 +39,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel
-          python -m pip install .
+          python -m pip install git+https://github.com/SekouDiaoNlp/nimporter.git@/dev
           python -m pip install -r requirements.txt
 
       - name: Test
