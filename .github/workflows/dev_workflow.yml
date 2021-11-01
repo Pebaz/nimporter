@@ -31,7 +31,7 @@ jobs:
 
       - uses: jiro4989/setup-nim-action@v1.3
         with:
-          nim-version: '1.0.6'
+          nim-version: 'stable'
 
       - name: Install dependencies
         run: |
