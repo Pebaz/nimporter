@@ -125,3 +125,20 @@ def test_compile_switches():
         src = Path(source).absolute()
         assert src.suffix == '.c'
         # assert src.parent in includes
+
+
+def test_compile_nim_config():
+    """
+    Make sure that an extension can still be compiled when nim configuration files are detected.
+
+    """
+    ext = NimCompiler.compile_nim_extension(
+        Path('tests/lib9'), Path('tests'), library=True
+    )
+
+    assert isinstance(ext, Extension)
+    assert ext.name == 'lib9'
+
+    for source in ext.sources:
+        src = Path(source).absolute()
+        assert src.suffix == '.c'
