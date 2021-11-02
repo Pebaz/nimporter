@@ -3,12 +3,12 @@
 name: CI
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# events for the master and dev branches
 on:
   push:
     branches: [ dev ]
   pull_request:
-    branches: [ dev ]
+    branches: [ master, dev ]
 
 jobs:
 
