@@ -91,7 +91,7 @@ and still be imported and compiled at runtime.
 
 Have a complex build requirement that would normally entail tweaking Nim
 compiler switches for each supported platform? Nimporter fully supports adding a
-`switches.py` file for libraries that need to customize the CLI flags for any
+`*.nim.cfg` or `*.nims` files for libraries that need to customize the CLI flags for any
 platform seamlessly for both developing and bundling extensions.
 
 Since Nimporter relies on [Nimpy](https://github.com/yglukhov/nimpy) for Nim <->
@@ -172,7 +172,7 @@ Project/
             something2.py
         # some_nim_library is used as a single Python module
         # Can be directly imported but supports dependencies and custom switches
-        some_nim_library/  # Allows the use of `switches.py` and .nimble
+        some_nim_library/  # Allows the use of .nim.cfg, .nims and .nimble
             some_nim_library.nimble  # Dependency info
             some_nim_file1.nim
             some_nim_file2.nim
@@ -204,7 +204,7 @@ Project/
             # Must be named the same as the folder
             nim_ext_requiring_dependencies.nim
             # Can be used to customize Nim compiler switches per platform
-            switches.py
+            nim_ext_requiring_dependencies.nim.cfg
             # You can have `nim_ext_requiring_dependencies.nim` import other
             # Nim code as well
             other_necessary_nim_files.nim
@@ -212,12 +212,14 @@ Project/
 
 For several examples of how to structure a project, look in the `tests/` folder.
 
-## Compiler Switches using `switches.py`
+## Compiler Switches using `*.nim.cfg` or `*.nims`
 
 For Nim extension libraries only (a folder, nimble file, and Nim file of the
-same name), you can place a file called `switches.py` that Nimporter will use to
+same name), you can place a file called `*.nim.cfg` or `*.nims` to
 customize what flags get passed to the Nim compiler when it compiles that
 extension. For examples on how to do this, please look in the `tests/` folder.
+For documentation on the Nim compiler configuration files,
+please look [here](https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files).
 
 ### Increasing Speed by using the `-d:danger` flag
 
