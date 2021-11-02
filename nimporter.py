@@ -8,6 +8,7 @@ users of the library don't have to install a Nim compiler.
 """
 
 import sys, os, subprocess, importlib, hashlib, tempfile, shutil
+from warnings import warn as show_warning
 from pathlib import Path
 from contextlib import contextmanager
 from setuptools import Extension
@@ -39,6 +40,7 @@ class NimCompileException(NimporterException):
 
     NOTE: The provided message must contain the string: 'Error:'
     """
+
     def __init__(self, msg):
         if sys.platform == 'win32' and 'external' in msg:
             self.message = msg
@@ -120,19 +122,19 @@ class NimCompiler:
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
     NIM_CLI_ARGS = [
-        '--opt:speed',
-        '--parallelBuild:0',
-        '--gc:refc',
-        '--threads:on',
-        '--app:lib',
-        '-d:release',
-        '-d:strip',
-        '-d:ssl',
+                       '--opt:speed',
+                       '--parallelBuild:0',
+                       '--gc:refc',
+                       '--threads:on',
+                       '--app:lib',
+                       '-d:release',
+                       '-d:strip',
+                       '-d:ssl',
 
-        # https://github.com/Pebaz/nimporter/issues/41
-        '--warning[ProveInit]:off',
+                       # https://github.com/Pebaz/nimporter/issues/41
+                       '--warning[ProveInit]:off',
 
-    ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
+                   ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
     # The following check to include '-d:lto' into NIM_CLI_ARGS is to fix a bug on MacOS when
     # users of a nim library tried importing it in their python code.
     # See https://github.com/Pebaz/nimporter/issues/51 for details.
@@ -178,13 +180,13 @@ class NimCompiler:
             are not installed are not included in the dict.
         """
         compilers = {
-            'msc'  : shutil.which('vccexe'),
-            'clang' : shutil.which('clang'),
-            'gcc'   : shutil.which('gcc')
+            'msc': shutil.which('vccexe'),
+            'clang': shutil.which('clang'),
+            'gcc': shutil.which('gcc')
         }
 
         return {
-            compiler : Path(path)
+            compiler: Path(path)
             for compiler, path in compilers.items()
             if path
         }
@@ -263,9 +265,9 @@ class NimCompiler:
         err = err.decode(errors='ignore') if err else ''
         lines = (out + err).splitlines()
 
-        errors   = [line for line in lines if 'Error:' in line]
+        errors = [line for line in lines if 'Error:' in line]
         warnings = [line for line in lines if 'Warning:' in line]
-        hints    = [line for line in lines if 'Hint:' in line]
+        hints = [line for line in lines if 'Hint:' in line]
 
         return out, errors, warnings, hints
 
@@ -338,7 +340,7 @@ class NimCompiler:
                 nim_ver = (subprocess.check_output(['nim', '-v'])
                     .decode(errors='ignore')
                     .splitlines()[0]
-                )
+                    )
 
                 version_string = nim_ver.split()[3]
                 stdlib = choosenim_dir / f'nim-{version_string}/lib'
@@ -422,10 +424,15 @@ class NimCompiler:
 
         if library and not any(library_path.glob('*.nimble')):
             raise NimporterException(
-            f"Library: {library_path} doesn't contain a .nimble file"
-        )
+                f"Library: {library_path} doesn't contain a .nimble file"
+            )
 
         cls.ensure_nimpy()
+
+        if any(library_path.glob('switches.py')):
+            show_warning("The use of the file 'switches.py to specify compiler flags has been deprecated.\n"
+                         "Use '*.nim.cfg' or '*.nims' files instead.\n"
+                         "See: https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files")
 
         # Coerce proper import path using root path
         import_prefix = cls.get_import_prefix(module_path.parent, root)
@@ -442,17 +449,17 @@ class NimCompiler:
         if cls.has_nim_config(library_path):
             exe = ['nimble' if library else 'nim', 'cc', '-c']
             nim_args = (
-                exe +
-                [f'--nimcache:{build_dir}', f'{module_path}'] +
-                (['--accept'] if library else [])
+                    exe +
+                    [f'--nimcache:{build_dir}', f'{module_path}'] +
+                    (['--accept'] if library else [])
             )
         # Use standard switches
         else:
             exe = ['nimble' if library else 'nim', 'cc', '-c']
             nim_args = (
-                exe + cls.NIM_CLI_ARGS +
-                [f'--nimcache:{build_dir}', f'{module_path}'] +
-                (['--accept'] if library else [])
+                    exe + cls.NIM_CLI_ARGS +
+                    [f'--nimcache:{build_dir}', f'{module_path}'] +
+                    (['--accept'] if library else [])
             )
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
@@ -530,25 +537,30 @@ class NimCompiler:
 
         if library and not any(library_path.glob('*.nimble')):
             raise NimporterException(
-            f"Library: {library_path} doesn't contain a .nimble file"
-        )
+                f"Library: {library_path} doesn't contain a .nimble file"
+            )
 
         cls.ensure_nimpy()
+
+        if any(library_path.glob('switches.py')):
+            show_warning("The use of the file 'switches.py to specify compiler flags has been deprecated.\n"
+                         "Use '*.nim.cfg' or '*.nims' files instead.\n"
+                         "See: https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files")
 
         if cls.has_nim_config(library_path):
             exe = [('nimble' if library else 'nim'), 'c']
             nim_args = (
-                exe +
-                [f'--out:{build_artifact}', f'{module_path}'] +
-                (['--accept'] if library else [])
+                    exe +
+                    [f'--out:{build_artifact}', f'{module_path}'] +
+                    (['--accept'] if library else [])
             )
         # Use standard switches
         else:
             exe = [('nimble' if library else 'nim'), 'c']
             nim_args = (
-                exe + cls.NIM_CLI_ARGS +
-                [f'--out:{build_artifact}', f'{module_path}'] +
-                (['--accept'] if library else [])
+                    exe + cls.NIM_CLI_ARGS +
+                    [f'--out:{build_artifact}', f'{module_path}'] +
+                    (['--accept'] if library else [])
             )
 
         with cd(library_path if library else Path('.')) as tmp_cwd:
@@ -591,7 +603,7 @@ class Nimporter:
             The hash filename as a Path.
         """
         return (
-            NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
+                NimCompiler.pycache_dir(module_path) / (module_path.name + '.hash')
         )
 
     @classmethod
@@ -710,7 +722,7 @@ class Nimporter:
             file.write(cls.hash_file(module_path))
 
     @classmethod
-    def import_nim_module(cls, fullname, path:list=None, ignore_cache=None):
+    def import_nim_module(cls, fullname, path: list = None, ignore_cache=None):
         """
         Convenience function to manually import a given Nim module or library.
 
@@ -739,9 +751,9 @@ class Nimporter:
 
         try:
             spec = (
-                cls.import_nim_code(fullname, path, library=False)
-                or
-                cls.import_nim_code(fullname, path, library=True)
+                    cls.import_nim_code(fullname, path, library=False)
+                    or
+                    cls.import_nim_code(fullname, path, library=True)
             )
         finally:
             if ignore_cache != None:
@@ -842,7 +854,7 @@ class Nimporter:
                 nim_ver = (subprocess.check_output(['nim', '-v'])
                     .decode(errors='ignore')
                     .splitlines()[0]
-                )
+                    )
             except:
                 nim_ver = '<Error getting version>'
 
@@ -860,8 +872,8 @@ class Nimporter:
                         ]).decode(errors='ignore').strip()
                     else:
                         cc_ver = (subprocess.check_output([cc.stem])
-                            .decode(errors='ignore')
-                        )
+                                  .decode(errors='ignore')
+                                  )
                 except:
                     cc_ver = '<Error getting version>'
             else:
@@ -1054,7 +1066,7 @@ class Nimporter:
         """
         if danger: NimCompiler.NIM_CLI_ARGS.insert(3, '-d:danger')
 
-        #root = (root or Path()).expanduser().absolute()
+        # root = (root or Path()).expanduser().absolute()
         root = root or Path()
 
         # Check for bundled C source files
@@ -1088,6 +1100,7 @@ def register_importer(list_position):
     Args:
         list_position(int): the index in `sys.meta_path` to place the importer.
     """
+
     def decorator(importer):
         nonlocal list_position
 
@@ -1102,6 +1115,7 @@ def register_importer(list_position):
         importlib.invalidate_caches()
 
         return importer
+
     return decorator
 
 
