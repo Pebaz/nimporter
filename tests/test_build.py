@@ -177,40 +177,6 @@ def test_find_nim_std_lib():
         os.environ.update(environ)
 
 
-def test_custom_build_switches():
-    "Test to make sure custom build switches can be used"
-
-    switch_file = Path('tests/lib2/switches.py')
-    scope = dict(
-        MODULE_PATH=Path('foo/bar/baz.nim'),
-        BUILD_ARTIFACT=Path('foo/bar/__pycache__/baz.' + NimCompiler.EXT),
-        BUILD_DIR=None,
-        IS_LIBRARY=False
-    )
-    switches = NimCompiler.get_switches(switch_file, **scope)
-    old_import = switches['import'][:]
-    old_bundle = switches['bundle'][:]
-
-    assert switches
-    assert old_import
-    assert old_bundle
-
-    # Make sure different platforms are handled correctly
-    old_platform = sys.platform + ''
-    sys.platform = 'darwin' if sys.platform == 'win32' else 'win32'
-
-    try:
-        switches = NimCompiler.get_switches(switch_file, **scope)
-        
-        assert switches
-        assert old_import
-        assert old_bundle
-        assert old_import != switches['import']
-        assert old_bundle != switches['bundle']
-    finally:
-        sys.platform = old_platform
-
-
 def test_build_module():
     "Test that a given Nim module can produce a Python extension module."
     with nimporter.cd('tests'):

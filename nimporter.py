@@ -372,46 +372,6 @@ class NimCompiler:
         return result.resolve().absolute()
 
     @classmethod
-    def get_switches(cls, switch_file, **global_scope):
-        """
-        Convenience function to return the switches from a given switchfile.
-
-        Works by exposing a global scope to the switch file and then evaluating
-        it. The resulting variable: `__switches__` should have been defined
-        within the script which should contain the keys: "import" and "bundle".
-
-        The "import" key should be a list of CLI args that should be passed to
-        the Nim compiler when importing the given Nim library.
-
-        The "bundle" key should be a list of CLI args that should be passed to
-        the Nim compiler when creating an Extension object from the C sources.
-
-        When evaluated, the switchfile can make use of a few global variables
-        that allow it to make certain decisions regarding the outcome of the
-        compilation:
-
-         * **MODULE_PATH**: the path to the actual Nim source file to compile
-         * **BUILD_ARTIFACT**: can be used when building a module
-         * **BUILD_DIR**: can be used when building a library
-         * **IS_LIBRARY**: used to determine if a library/module is being built.
-
-        The reason for the switchfile being a Python script is that different
-        platforms will require different compilation switches. The switchfile
-        author can make use of `sys.platform` to query platform information.
-
-        Returns:
-            A dictionary containing the keys: "import" and "bundle", signifying
-            the CLI arguments used when importing and building an extension
-            module respectively.
-        """
-        global_scope = global_scope.copy()
-        assert switch_file.exists(), (
-            'Cannot open nonexistent switch file: ' + str(switch_file)
-        )
-        exec(switch_file.read_text(), global_scope)
-        return global_scope['__switches__']
-
-    @classmethod
     def has_nim_config(cls, library_path):
         """
 
@@ -479,8 +439,6 @@ class NimCompiler:
         build_dir.mkdir(exist_ok=True)
         build_dir_relative = extension_dir / import_path
 
-        # Switches file found
-        switch_file = library_path / 'switches.py'
         if cls.has_nim_config(library_path):
             exe = ['nimble' if library else 'nim', 'cc', '-c']
             nim_args = (
@@ -488,17 +446,6 @@ class NimCompiler:
                 [f'--nimcache:{build_dir}', f'{module_path}'] +
                 (['--accept'] if library else [])
             )
-        elif switch_file.exists():
-            switches = cls.get_switches(
-                switch_file,
-                MODULE_PATH=module_path,
-                BUILD_DIR=build_dir,
-                # Necessary for import/bundle compatibility
-                BUILD_ARTIFACT=None,
-                IS_LIBRARY=library
-            )
-            nim_args = switches['bundle']
-
         # Use standard switches
         else:
             exe = ['nimble' if library else 'nim', 'cc', '-c']
@@ -587,7 +534,6 @@ class NimCompiler:
         )
 
         cls.ensure_nimpy()
-        switch_file = library_path / 'switches.py'
 
         if cls.has_nim_config(library_path):
             exe = [('nimble' if library else 'nim'), 'c']
@@ -596,16 +542,6 @@ class NimCompiler:
                 [f'--out:{build_artifact}', f'{module_path}'] +
                 (['--accept'] if library else [])
             )
-        elif switch_file.exists(): # Switches file found
-            switches = cls.get_switches(
-                switch_file,
-                MODULE_PATH=module_path,
-                BUILD_ARTIFACT=build_artifact,
-                BUILD_DIR=None,  # Necessary for import/bundle compatibility
-                IS_LIBRARY=library
-            )
-            nim_args = switches['import']
-
         # Use standard switches
         else:
             exe = [('nimble' if library else 'nim'), 'c']
