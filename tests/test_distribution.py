@@ -3,6 +3,7 @@ Test to make sure that Nim code can be built and distributed.
 """
 
 from setuptools import Extension
+import pytest
 from pathlib import Path
 import nimporter
 from nimporter import (
@@ -127,17 +128,18 @@ def test_compile_switches():
         # assert src.parent in includes
 
 
-def test_compile_nim_config():
+@pytest.mark.parametrize("lib", ['lib9', 'lib10', 'lib11'])
+def test_compile_nim_configs(lib):
     """
     Make sure that an extension can still be compiled when nim configuration files are detected.
 
     """
     ext = NimCompiler.compile_nim_extension(
-        Path('tests/lib9'), Path('tests'), library=True
+        Path(f'tests/{lib}'), Path('tests'), library=True
     )
 
     assert isinstance(ext, Extension)
-    assert ext.name == 'lib9'
+    assert ext.name == f'{lib}'
 
     for source in ext.sources:
         src = Path(source).absolute()
