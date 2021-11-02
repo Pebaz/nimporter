@@ -90,7 +90,7 @@ treat an entire Nim project as a single module. The project must contain a
 and still be imported and compiled at runtime.
 
 Have a complex build requirement that would normally entail tweaking Nim
-compiler switches for each supported platform? Nimporter fully supports adding a
+compiler switches for each supported platform? Nimporter fully supports adding
 `*.nim.cfg` or `*.nims` files for libraries that need to customize the CLI flags for any
 platform seamlessly for both developing and bundling extensions.
 
@@ -213,6 +213,14 @@ Project/
 For several examples of how to structure a project, look in the `tests/` folder.
 
 ## Compiler Switches using `*.nim.cfg` or `*.nims`
+
+---
+**DEPRECATION NOTICE**
+
+The use of the file `switches.py` for specifying compiler flags has been deprecated in favour of
+`*.nim.cfg` or `*.nims` configuration files.
+
+---
 
 For Nim extension libraries only (a folder, nimble file, and Nim file of the
 same name), you can place a file called `*.nim.cfg` or `*.nims` to
