@@ -23,13 +23,11 @@ packages = [
 include = [
     { path = 'README.md', format = 'sdist' },
     { path = 'docs/*.*', format = 'sdist' },
-    { path = 'examples/*.*', format = 'sdist' },
     { path = 'LICENSE', format = 'sdist' },
     { path = 'requirements_dev.txt', format = 'sdist' },
     { path = 'conftest.py', format = 'sdist' },
     { path = '*.sh', format = 'sdist' },
     { path = '*.ps1', format = 'sdist' },
-    { path = 'setup.py', format = 'sdist' },
 ]
 exclude = [
     { path = '*.md', format = 'wheel' },
