@@ -1,3 +1,4 @@
+# type: ignore[assignment, operator]
 """
 Contains classes to compile Python-Nim Extension modules, import those modules,
 and generate exceptions where appropriate.
