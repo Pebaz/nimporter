@@ -36,7 +36,7 @@ exclude = [
 ]
 
 [tool.poetry.scripts]
-mlconjug3 = 'nimporter_cli:main'
+nimporter = 'nimporter_cli:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"
