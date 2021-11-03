@@ -61,4 +61,4 @@ jobs:
           poetry run pip install types-setuptools
           poetry run mypy
       - name: Run Pytest with coverage
-        run: poetry run pytest --cov=./nimporter/
+        run: poetry run pytest --cov=.
