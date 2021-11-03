@@ -48,6 +48,7 @@ pytest-cov = "^3.0.0"
 pytest-integration = "^0.2.2"
 pytest-timeout = "^2.0.1"
 pytest-xdist = "^2.4.0"
+mypy = "^0.910"
 
 [tool.mypy]
 warn_unused_configs = true
