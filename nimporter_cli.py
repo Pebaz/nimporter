@@ -1,3 +1,4 @@
+# type: ignore[attr-defined]
 """
 Iterates through all sub directories and removes any build artifacts and hashes.
 """
