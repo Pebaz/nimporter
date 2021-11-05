@@ -90,8 +90,8 @@ treat an entire Nim project as a single module. The project must contain a
 and still be imported and compiled at runtime.
 
 Have a complex build requirement that would normally entail tweaking Nim
-compiler switches for each supported platform? Nimporter fully supports adding a
-`switches.py` file for libraries that need to customize the CLI flags for any
+compiler switches for each supported platform? Nimporter fully supports adding
+`*.nim.cfg` or `*.nims` files for libraries that need to customize the CLI flags for any
 platform seamlessly for both developing and bundling extensions.
 
 Since Nimporter relies on [Nimpy](https://github.com/yglukhov/nimpy) for Nim <->
@@ -172,7 +172,7 @@ Project/
             something2.py
         # some_nim_library is used as a single Python module
         # Can be directly imported but supports dependencies and custom switches
-        some_nim_library/  # Allows the use of `switches.py` and .nimble
+        some_nim_library/  # Allows the use of .nim.cfg, .nims and .nimble
             some_nim_library.nimble  # Dependency info
             some_nim_file1.nim
             some_nim_file2.nim
@@ -204,7 +204,7 @@ Project/
             # Must be named the same as the folder
             nim_ext_requiring_dependencies.nim
             # Can be used to customize Nim compiler switches per platform
-            switches.py
+            nim_ext_requiring_dependencies.nim.cfg
             # You can have `nim_ext_requiring_dependencies.nim` import other
             # Nim code as well
             other_necessary_nim_files.nim
@@ -212,12 +212,22 @@ Project/
 
 For several examples of how to structure a project, look in the `tests/` folder.
 
-## Compiler Switches using `switches.py`
+## Compiler Switches using `*.nim.cfg` or `*.nims`
+
+---
+**DEPRECATION NOTICE**
+
+The use of the file `switches.py` for specifying compiler flags has been deprecated in favour of
+`*.nim.cfg` or `*.nims` configuration files.
+
+---
 
 For Nim extension libraries only (a folder, nimble file, and Nim file of the
-same name), you can place a file called `switches.py` that Nimporter will use to
+same name), you can place a file called `*.nim.cfg` or `*.nims` to
 customize what flags get passed to the Nim compiler when it compiles that
 extension. For examples on how to do this, please look in the `tests/` folder.
+For documentation on the Nim compiler configuration files,
+please look [here](https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files).
 
 ### Increasing Speed by using the `-d:danger` flag
 
@@ -296,10 +306,12 @@ setup(
     ...,                            # Keep your existing arguments
     package_data={'': ['*.nim*']},  # Distribute *.nim & *.nim.cfg source files
     # include_package_data=True,    # <- This line cannot work with package_data
+    setup_requires = [
+        "choosenim_install", # Optional. Auto-installs Nim compiler
+         ],
     install_requires=[
         'nimporter',  # Must depend on Nimporter
-        'choosenim_install'  # Optional. Auto-installs Nim compiler
-    ]
+        ]
 )
 ```
 
@@ -430,7 +442,7 @@ This example will assume you are cloning the GitHub reposotory.
 ```bash
 $ git clone https://github.com/Pebaz/Nimporter
 $ cd Nimporter
-$ pip install -r requirements.txt
+$ pip install -r requirements_dev.txt
 $ pip install .  # Nimporter is needed for the integration tests
 $ pytest --cov=. --cov-report=html tests
 ```

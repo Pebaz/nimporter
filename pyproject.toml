@@ -1,0 +1,56 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "nimporter"
+version = "1.1.0"
+description = "Compile Nim extensions for Python when imported!"
+authors = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
+license = "MIT"
+keywords = ["nim", "python", "compiler", "import", "performance", "cython", "transpiler", "nimpy", "cython-alternative", "nim-source", "nim-compiler", "nimporter-library"]
+classifiers = ["Development Status :: 5 - Production/Stable", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Utilities", "Intended Audience :: Developers", "Intended Audience :: End Users/Desktop", "Intended Audience :: Education", "Intended Audience :: Science/Research", "License :: OSI Approved :: MIT License", "Natural Language :: English", "Operating System :: OS Independent", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.6", "Programming Language :: Python :: 3.7", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10",]
+homepage = "https://github.com/Pebaz/nimporter"
+repository = "https://github.com/Pebaz/nimporter"
+documentation = "https://pebaz.github.io/nimporter/index.html"
+maintainers = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
+readme = "README.md"
+packages = [
+    { include = 'nimporter.py' },
+    { include = 'nimporter_cli.py' },
+    { include = 'tests', format = 'sdist' },
+]
+include = [
+    { path = 'README.md', format = 'sdist' },
+    { path = 'docs/*.*', format = 'sdist' },
+    { path = 'LICENSE', format = 'sdist' },
+    { path = 'requirements_dev.txt', format = 'sdist' },
+    { path = 'conftest.py', format = 'sdist' },
+    { path = '*.sh', format = 'sdist' },
+    { path = '*.ps1', format = 'sdist' },
+]
+exclude = [
+    { path = '*.md', format = 'wheel' },
+]
+
+[tool.poetry.scripts]
+nimporter = 'nimporter_cli:main'
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+wheel = "^0.37.0"
+pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
+pytest-integration = "^0.2.2"
+pytest-timeout = "^2.0.1"
+pytest-xdist = "^2.4.0"
+mypy = "^0.910"
+
+[tool.mypy]
+warn_unused_configs = true
+strict = true
+ignore_missing_imports = true
+show_error_codes = true
+files = ["nimporter.py", "nimporter_cli.py"]
