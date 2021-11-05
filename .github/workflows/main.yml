@@ -1,9 +1,5 @@
-# This is a basic workflow to help you get started with Actions
+name: Run All Tests
 
-name: CI
-
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches: [ master ]
@@ -11,11 +7,9 @@ on:
     branches: [ master ]
 
 jobs:
-
-  # ----------------------------------------------------------------------------
   test-all:
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
@@ -23,12 +17,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-        
+
       - uses: jiro4989/setup-nim-action@v1.3
         with:
           nim-version: 'stable'
