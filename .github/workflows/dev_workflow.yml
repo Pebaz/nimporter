@@ -1,4 +1,4 @@
-name: Dev Branch Unit Tests & Test Coverage
+name: Dev Branch Tests
 
 on:
   push:
