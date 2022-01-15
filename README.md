@@ -53,7 +53,7 @@ Nimporter provides an official way to develop applications and libraries that
 make use of Nim code for achieving higher performance.
 
 It does this by providing a way to directly import Nim code and have it be
-compiled at runtime. However, unlink Cython, this will not proliferate your
+compiled at runtime. However, unlike Cython, this will not proliferate your
 development environment and require adding bunches of exceptions to your
 `.gitignore` file.
 
