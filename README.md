@@ -212,6 +212,28 @@ Project/
 
 For several examples of how to structure a project, look in the `tests/` folder.
 
+## Compiler Switches In Pure Python
+
+For many projects, it is convenient to set default Nim compiler switches from
+the Python module importing the Nim extension. An example of this is below:
+
+```python
+import sys
+import nimporter
+
+if sys.platform == 'win32':
+    nimporter.NimCompiler.NIM_CLI_ARGS = [...]
+else:
+    nimporter.NimCompiler.NIM_CLI_ARGS = [...]
+
+import the_extension_module
+```
+
+By accessing `nimporter.NimCompiler.NIM_CLI_ARGS` directly, you can customize
+switches prior to importing the extension module. Please note that the switches
+will be used for all extension modules since Python will cache the import of
+Nimporter and `NimCompiler.NIM_CLI_ARGS` is a static class field.
+
 ## Compiler Switches using `*.nim.cfg` or `*.nims`
 
 ---
