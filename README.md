@@ -327,13 +327,13 @@ To do this, add these lines to your `setup.py` file:
 setup(
     ...,                            # Keep your existing arguments
     package_data={'': ['*.nim*']},  # Distribute *.nim & *.nim.cfg source files
-    # include_package_data=True,    # <- This line cannot work with package_data
+    # include_package_data=True,    # <- This line won't work with package_data
     setup_requires = [
-        "choosenim_install", # Optional. Auto-installs Nim compiler
-         ],
+        "choosenim_install",        # Optional. Auto-installs Nim compiler
+    ],
     install_requires=[
-        'nimporter',  # Must depend on Nimporter
-        ]
+        'nimporter',                # Must depend on Nimporter
+    ]
 )
 ```
 
