@@ -130,20 +130,45 @@ class NimCompiler:
         NIM_CLI_ARGS(List[str]): compiler switches common to all builds.
     """
     EXT = '.pyd' if sys.platform == 'win32' else '.so'
+
+    # https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files
+    # Nimporter only supports a nim.cfg in the extension root directory
+    # These options really boil down to only using the extension's nim.cfg
+    __NIM_CLI_ARGS = [
+        '--skipCfg',
+        '--skipUserCfg',
+        '--skipParentCfg',
+
+        # TODO(pbz): Probably need to use one or the other depending on if it
+        # TODO(pbz): is a single file module or a folder
+        '--skipProjCfg',  # `$projectDir/nim.cfg` and `$project.nim.cfg`
+    ]
+
+    # These will be written to a `$project.nim.cfg` file if that file hasn't
+    # been created by the user. The advantage to this is that users who only
+    # want to set CLI options easily can do so while advanced users can just
+    # use nim.cfg.
+    __GENERATE_THESE_CLI_ARGS = [
+        'c',
+        '-d:release',
+        '-d:danger',
+    ]
+
     NIM_CLI_ARGS = [
-                       '--opt:speed',
-                       '--parallelBuild:0',
-                       '--gc:refc',
-                       '--threads:on',
-                       '--app:lib',
-                       '-d:release',
-                       '-d:strip',
-                       '-d:ssl',
+        '--opt:speed',
+        '--parallelBuild:0',
+        '--gc:refc',
+        '--threads:on',
+        '--app:lib',
+        '-d:release',
+        '-d:strip',
+        '-d:ssl',
 
-                       # https://github.com/Pebaz/nimporter/issues/41
-                       '--warning[ProveInit]:off',
+        # https://github.com/Pebaz/nimporter/issues/41
+        '--warning[ProveInit]:off',
 
-                   ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
+    ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
+
     # The following check to include '-d:lto' into NIM_CLI_ARGS is to fix a bug on MacOS when
     # users of a nim library tried importing it in their python code.
     # See https://github.com/Pebaz/nimporter/issues/51 for details.
@@ -151,6 +176,7 @@ class NimCompiler:
     # See https://github.com/nim-lang/Nim/pull/15614 for more details.
     if sys.platform != "darwin":
         NIM_CLI_ARGS.append('-d:lto')
+
     EXT_DIR = 'nim-extensions'
 
     @classmethod
