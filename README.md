@@ -452,6 +452,9 @@ Lastly, it has been tested and fully supported on these platforms:
 > Just for fun, I got out my Windows laptop, Mac, and SSHed into a Linux box on
 AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
 
+Additionally @SekouDiaoNlp ran the test suite on OpenBSD ans FreeBSD without issue.
+He also ran the test suite on Apple Silicon M1 processors with great results.
+
 Nimporter likely works on a bunch of other platforms but I cannot justify the
 time required to test them at this point.
 
