@@ -141,6 +141,10 @@ class NimCompiler:
 
         # TODO(pbz): Probably need to use one or the other depending on if it
         # TODO(pbz): is a single file module or a folder
+
+        # Idea: Pass this flag only for single file modules because it doens't
+        # make sense to put that in the same Python package as other modules.
+        # For Nim extension folders, it makes sense to have this.
         '--skipProjCfg',  # `$projectDir/nim.cfg` and `$project.nim.cfg`
     ]
 
@@ -635,7 +639,13 @@ class NimCompiler:
         return nimbase_dest
 
     @classmethod
-    def compile_nim_extension(cls, module_path: Path, root: Optional[Path], *, library: bool) -> Extension:
+    def compile_nim_extension(
+        cls,
+        module_path: Path,
+        root: Optional[Path],
+        *,
+        library: bool
+    ) -> Extension:
         """
         Compiles/returns an Extension and installs `.nimble` dependencies.
 
@@ -1182,8 +1192,12 @@ class Nimporter:
         ]
 
     @classmethod
-    def build_nim_extensions(cls, root: Optional[Path] = None, exclude_dirs: List[Any] = [],
-                             danger: bool = False) -> List[Extension]:
+    def build_nim_extensions(
+        cls,
+        root: Optional[Path] = None,
+        exclude_dirs: List[Any] = [],
+        danger: bool = False
+    ) -> List[Extension]:
         """
         Gathers all Nim Extensions by recursing through a Python project.
 

@@ -14,7 +14,6 @@ Libraries distributed using Nimporter have no restriction.
 Make sure to star it on GitHub as well while you're up there. ;)
 """
 
-import sys, shutil
 from setuptools import setup
 
 setup(
