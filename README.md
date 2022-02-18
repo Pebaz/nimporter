@@ -18,6 +18,16 @@ Directly import [Nim](<https://nim-lang.org/>) extensions for Python and seamles
 > With Nimporter, you can import Nim source code files *as if they
 were Python modules by literally using `import` syntax*. For packaging and distribution, Nimporter auto-discovers, compiles, and packages all extensions for you with just a single line of code.
 
+
+
+
+
+
+# nimpy examples in depth. Perhaps Nimporter website?
+# nimporter init --lib --mod
+
+
+
 ## Possible Benefits
 
  * Performance: Nim compiles to C
