@@ -11,16 +11,18 @@
 
 # Nimporter
 
-Compile [Nim](<https://nim-lang.org/>) extensions for Python on import automatically!
+Directly import [Nim](<https://nim-lang.org/>) extensions for Python and seamlessly package them for distribution in 2 lines of code.
 
 ## What is Nimporter
 
-> With Nimporter, you can simply import Nim source code files *as if they
-were Python modules*, and use them seamlessly with Python code.
+> With Nimporter, you can import Nim source code files *as if they
+were Python modules by literally using `import` syntax*. For packaging and distribution, Nimporter auto-discovers, compiles, and packages all extensions for you with just a single line of code.
 
 ## Possible Benefits
 
  * Performance: Nim compiles to C
+ * Packaging and distribution is completely taken care of
+ # Library users can `pip install` projects using Nimporter which doesn't require the Nim compiler as a dependency
  * Reduce cloud computing costs without writing C
  * Leverage both language's ecosystems: [Python](https://pypi.org/) for breadth,
  [Nim](https://nimble.directory/) for performance.
