@@ -21,6 +21,7 @@ def test_coherent_value():
 
 def test_docstring():
     "Make sure a Nim library's docstring is maintained."
+    # TODO(pbz): This needs to be done. There's already a Nimpy example
 
 
 def test_register_importer():

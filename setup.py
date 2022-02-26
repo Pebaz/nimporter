@@ -10,6 +10,10 @@ setup(
     author='http://github.com/Pebaz',
     url='http://github.com/Pebaz/Nimporter',
     packages=['nimporter'],
+    install_requires=[
+        'py-cpuinfo>=8.0.0',  # Auto-detect user architecture
+        'icecream>=2.1.2'  # Instrumentation
+    ],
     entry_points={
         'console_scripts' : [
             'nimporter=nimporter.cli:main'

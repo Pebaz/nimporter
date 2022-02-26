@@ -1,1 +1,0 @@
-pytest -s --cov=. tests

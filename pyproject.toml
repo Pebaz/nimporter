@@ -22,7 +22,6 @@ packages = [
 ]
 include = [
     { path = 'README.md', format = 'sdist' },
-    { path = 'docs/*.*', format = 'sdist' },
     { path = 'LICENSE', format = 'sdist' },
     { path = 'requirements_dev.txt', format = 'sdist' },
     { path = 'conftest.py', format = 'sdist' },
@@ -38,6 +37,8 @@ nimporter = 'nimporter_cli:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"
+py-cpuinfo = "^8.0.0"  # Auto-detect user architecture
+icecream = "^2.1.2"  # Instrumentation
 
 [tool.poetry.dev-dependencies]
 wheel = "^0.37.0"
@@ -53,4 +54,9 @@ warn_unused_configs = true
 strict = true
 ignore_missing_imports = true
 show_error_codes = true
-files = ["nimporter.py", "nimporter_cli.py"]
+files = [
+    "nimporter/lib.py",
+    "nimporter/nimporter.py",
+    "nimporter/nexporter.py",
+    "nimporter/cli.py"
+]
