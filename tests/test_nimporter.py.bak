@@ -79,7 +79,7 @@ def test_should_compile():
 def test_correct_data_types_from_nim():
     "Make sure that Nim marshals Python objects correctly."
     import pkg5.mod5 as mod5
-    
+
     assert isinstance(mod5.return_bool(), bool)
     assert isinstance(mod5.return_int(), int)
     assert isinstance(mod5.return_float(), float)

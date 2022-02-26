@@ -1,6 +1,6 @@
 """
 These are Pytest hooks that are necessary to ensure that no build artifacts are
-leftover from previous runs.
+leftover from previous runs. See the tests/README.md file for more info.
 """
 
 import pathlib, nimporter_cli
