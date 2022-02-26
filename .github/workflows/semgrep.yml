@@ -40,15 +40,15 @@ jobs:
 
         # Upload findings to GitHub Advanced Security Dashboard [step 1/2]
         # See also the next step.
-        #   generateSarif: "1"
+          generateSarif: "1"
 
         # Change job timeout (default is 1800 seconds; set to 0 to disable)
         # env:
         #   SEMGREP_TIMEOUT: 300
 
       # Upload findings to GitHub Advanced Security Dashboard [step 2/2]
-      # - name: Upload SARIF file for GitHub Advanced Security Dashboard
-      #   uses: github/codeql-action/upload-sarif@v1
-      #   with:
-      #     sarif_file: semgrep.sarif
-      #   if: always()
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
