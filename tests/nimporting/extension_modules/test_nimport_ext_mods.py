@@ -1,12 +1,14 @@
 import sys
-import nimporter
 
 def test_ext_mod():
-    sys.path.append('tests/data/ext_mod_basic')
+    try:
+        sys.path.append('tests/data/ext_mod_basic')
+        import ext_mod_basic
+        assert ext_mod_basic.add(1, 2) == 3
+    finally:
+        sys.path.remove('tests/data/ext_mod_basic')
 
-
-    # ! This needs to only find `ext_mod_basic`, even if it's a folder
-
-    import ext_mod_basic
-
-    assert ext_mod_basic.add(1, 2) == 3
+# sys.path.append('C:/code/me/nimporter')
+# import nimporter
+# sys.path.append('tests/data/ext_mod_basic')
+# import ext_mod_basic

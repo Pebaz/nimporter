@@ -31,48 +31,54 @@ PYTHON_LIB_EXT = '.pyd' if sys.platform == 'win32' else '.so'
 
 def compile_extensions_to_lib(root: Path) -> None:
     "Compile all extensions starting at a given path."
-    ensure_nimpy()
 
-    for extension_path in ic(find_extensions(root)):
+    for extension_path in ic(find_extensions(ic(root))):
         if not should_compile(extension_path):
             ic('Skipping', extension_path)
             continue
 
-        pycache = extension_path.parent / '__pycache__'
-        pycache.mkdir(parents=True, exist_ok=True)
+        compile_extension_to_lib(extension_path)
 
-        ic('Compiling', extension_path)
 
-        with convert_to_lib_if_needed(extension_path) as compilation_dir:
-            nim_module = compilation_dir / (extension_path.stem + '.nim')
 
-            ic(nim_module)
+def compile_extension_to_lib(extension_path: Path) -> None:
+    ensure_nimpy()
 
-            with cd(compilation_dir) as tmp_cwd:
-                cli_args = ic(ALWAYS_ARGS + [nim_module.name])
+    pycache = extension_path.parent / '__pycache__'
+    pycache.mkdir(parents=True, exist_ok=True)
 
-                ic(cli_args)
+    ic('Compiling', extension_path)
 
-                code, _, stderr = run_process(
-                    cli_args,
-                    'NIMPORTER_INSTRUMENT' in os.environ
-                )
+    with convert_to_lib_if_needed(extension_path) as compilation_dir:
+        nim_module = compilation_dir / (extension_path.stem + '.nim')
 
-                if code:
-                    raise CompilationFailedException(stderr)
+        ic(nim_module)
 
-            find_ext = '.dll' if sys.platform == 'win32' else '.so'
+        with cd(compilation_dir) as tmp_cwd:
+            cli_args = ic(ALWAYS_ARGS + [nim_module.name])
 
-            # The only way the artifact wouldn't exist is if Nim failed to
-            # compile the library but didn't write to the standard error stream
-            # which is currently not how the Nim compiler behaves.
-            # This shouldn't fail.
-            build_artifact, = tmp_cwd.glob(f'*{find_ext}')
+            ic(cli_args)
 
-            final_artifact = pycache / (nim_module.stem + PYTHON_LIB_EXT)
-            shutil.move(build_artifact, final_artifact)
+            code, _, stderr = run_process(
+                cli_args,
+                'NIMPORTER_INSTRUMENT' in os.environ
+            )
 
-            update_hash(extension_path)
+            if code:
+                raise CompilationFailedException(stderr)
+
+        find_ext = '.dll' if sys.platform == 'win32' else '.so'
+
+        # The only way the artifact wouldn't exist is if Nim failed to
+        # compile the library but didn't write to the standard error stream
+        # which is currently not how the Nim compiler behaves.
+        # This shouldn't fail.
+        build_artifact, = tmp_cwd.glob(f'*{find_ext}')
+
+        final_artifact = pycache / (nim_module.stem + PYTHON_LIB_EXT)
+        shutil.move(build_artifact, final_artifact)
+
+        update_hash(extension_path)
 
 
 def build_artifact(module_path: Path) -> Path:
@@ -384,6 +390,8 @@ def nimport(
         if not module_path.exists():
             continue
 
+        ic(module_path)
+
         if library:
             dir_containing_lib_or_mod = module_path.parent.parent
         else:
@@ -391,12 +399,27 @@ def nimport(
 
         ic(dir_containing_lib_or_mod)
 
-        compile_extensions_to_lib(
+        # compile_extensions_to_lib(
+        #     # * Had to prove the file existed using absolute paths. Now,
+        #     # * convert it back to a relative path to not have the MANIFEST
+        #     # * of the distribution contain the user's file system details.
+        #     # * In addition, library hashing won't work with absolute
+        #     # * paths.
+        #     dir_containing_lib_or_mod.relative_to(the_search_path)
+        # )
+
+        # TODO(pbz): Caching isn't working with this
+
+        # TODO(pbz): MAKE FORMAL SCRIPT TO TEST THIS WITHOUT PYTEST HARNESS
+
+        compile_extension_to_lib(
             # * Had to prove the file existed using absolute paths. Now,
-            # * convert it back to a relative path to not have the MANIFEST of
-            # * the distribution contain the user's file system details. In
-            # * addition, library hashing won't work with absolute paths.
-            dir_containing_lib_or_mod.relative_to(the_search_path)
+            # * convert it back to a relative path to not have the MANIFEST
+            # * of the distribution contain the user's file system details.
+            # * In addition, library hashing won't work with absolute
+            # * paths.
+            # dir_containing_lib_or_mod.relative_to(the_search_path)
+            module_path
         )
 
         # Artifact has either already been built or was just built
