@@ -45,6 +45,7 @@ ARCH_TABLE = {  # Keys are known to Python and values are Nim-understood
 ALWAYS_ARGS = [
     'nimble',  # Installs dependencies :)
     'c',
+    '--accept',  # Allow installing dependencies
     '--skipParentCfg',  # Included because it won't be portable otherwise
     '--skipUserCfg',
     '--app:lib',
@@ -52,23 +53,23 @@ ALWAYS_ARGS = [
     '--warning[ProveInit]:off',  # https://github.com/Pebaz/nimporter/issues/41
 ]
 
-DEFAULT_CLI_ARGS = [
-    '--opt:speed',
-    '--parallelBuild:0',
-    '--gc:refc',
-    '--threads:on',
-    '-d:release',
-    '-d:strip',
-    '-d:ssl',
-# ? Can I take this out and it will use VCC by default?
-] + (['--cc:vcc'] if 'MSC' in sys.version else [])
+# DEFAULT_CLI_ARGS = [
+#     '--opt:speed',
+#     '--parallelBuild:0',
+#     '--gc:refc',
+#     '--threads:on',
+#     '-d:release',
+#     '-d:strip',
+#     '-d:ssl',
+# # ? Can I take this out and it will use VCC by default?
+# ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
 
 
-def invoke_nim_compiler(switches: List[str]):
-    pass
+# def invoke_nim_compiler(switches: List[str]):
+#     pass
 
-def compile_ext_lib(root: Path, compile_only: bool) -> None:
-    pass
+# def compile_ext_lib(root: Path, compile_only: bool) -> None:
+#     pass
 
 def find_extensions(path: Path) -> List[Path]:
     nim_exts = []
