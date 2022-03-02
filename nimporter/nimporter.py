@@ -204,12 +204,12 @@ def nimport(
 
         ic(module_path)
 
-        if library:
-            dir_containing_lib_or_mod = module_path.parent.parent
-        else:
-            dir_containing_lib_or_mod = module_path.parent
+        # if library:
+        #     dir_containing_lib_or_mod = module_path.parent.parent
+        # else:
+        #     dir_containing_lib_or_mod = module_path.parent
 
-        ic(dir_containing_lib_or_mod)
+        # ic(dir_containing_lib_or_mod)
 
         # ? Perhaps: if mod.is_absolute(): mod.relative_to(the_search_path)
         # compile_extensions_to_lib(
@@ -246,6 +246,7 @@ def nimport(
         )
 
         ic(spec)
+        ic(ext.__dict__)
 
         validate_spec(spec)
 

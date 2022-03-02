@@ -307,21 +307,34 @@ class ExtLib:
     libraries as needed.
     """
     def __init__(self, path: Path, root: Path):
-        self.library = path.is_dir()  # TODO(pbz): Change to local variable?
+        """
+        Args:
+            path(str): the relative path to the Nim file (for both lib & mod).
+        """
+        self.library = all((
+            any(path.parent.glob(f'{path.stem}.nim')),
+            any(path.parent.glob(f'{path.stem}.nimble')),
+            any(path.parent.glob(f'{path.stem}.nim.cfg'))
+        ))
+
         self.symbol = path.stem
-        self.relative_path = path
-        self.full_path = path.resolve().absolute()
+        self.module_path = path
+
+        if self.library:
+            self.relative_path = path.parent
+            self.full_path = path.parent.resolve().absolute()
+
+        else:
+            self.relative_path = path
+            self.full_path = path.resolve().absolute()
+
         self.pycache = self.full_path.parent / '__pycache__'
-        self.import_namespace = get_import_path(path, root)
+
+        self.import_namespace = get_import_path(self.relative_path, root)
         self.hash_filename = self.pycache / f'{self.symbol}.hash'
         self.build_artifact = (
             self.pycache / f'{self.symbol}{PYTHON_LIB_EXT}'
         )
-
-        if self.library:
-            ...
-        else:
-            ...
 
         # assert (path / f'{symbol}.nim').exists(), (
         #     f'ExtLib must define {symbol}/{symbol}.nim'
