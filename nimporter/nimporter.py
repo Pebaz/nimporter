@@ -11,7 +11,6 @@ root `__init__.py` of a library.
 import sys
 import os
 import shutil
-import hashlib
 from pathlib import Path
 from setuptools.extension import Extension
 from typing import *
@@ -26,9 +25,6 @@ from _frozen_importlib import ModuleSpec
 from _frozen_importlib_external import _NamespacePath
 
 
-PYTHON_LIB_EXT = '.pyd' if sys.platform == 'win32' else '.so'
-
-
 def compile_extensions_to_lib(root: Path) -> None:
     "Compile all extensions starting at a given path."
 
@@ -41,22 +37,45 @@ def compile_extensions_to_lib(root: Path) -> None:
 
 
 
-def compile_extension_to_lib(extension_path: Path) -> None:
+# def rehash(ext: ExtLib):
+#     # * It is important to preserve relative paths to keep hash same even
+#     # * if the entire folder is copied elsewhere
+#     return hash_extension(ext.relative_path)
+
+def write_hash(ext: ExtLib):
+    ext.hash_filename.parent.mkdir(parents=True, exist_ok=True)
+    ext.hash_filename.write_bytes(hash_extension(ext.relative_path))
+
+# def cached_hash(ext: ExtLib):
+#     assert ext.hash_filename.exists()
+#     return ext.hash_filename.read_bytes()
+
+def hash_changed(ext: ExtLib) -> bool:
+    if not ext.hash_filename.exists():
+        return True
+
+    return hash_extension(ext.relative_path) != ext.hash_filename.read_bytes()
+
+def should_compile(ext: ExtLib) -> bool:
+    return hash_changed(ext) or not ext.build_artifact.exists()
+
+def compile_extension_to_lib(ext: ExtLib) -> None:
+    if not should_compile(ext):
+        ic('Skipping', ext.full_path)
+        return
+
+    ic('Compiling', ext.full_path)
+
     ensure_nimpy()
 
-    pycache = extension_path.parent / '__pycache__'
-    pycache.mkdir(parents=True, exist_ok=True)
+    ext.pycache.mkdir(parents=True, exist_ok=True)
 
-    ic('Compiling', extension_path)
-
-    with convert_to_lib_if_needed(extension_path) as compilation_dir:
-        nim_module = compilation_dir / (extension_path.stem + '.nim')
-
+    with convert_to_lib_if_needed(ext.full_path) as compilation_dir:
+        nim_module = compilation_dir / (ext.symbol + '.nim')
         ic(nim_module)
 
         with cd(compilation_dir) as tmp_cwd:
-            cli_args = ic(ALWAYS_ARGS + [nim_module.name])
-
+            cli_args = ALWAYS_ARGS + [nim_module.name]
             ic(cli_args)
 
             code, _, stderr = run_process(
@@ -73,218 +92,11 @@ def compile_extension_to_lib(extension_path: Path) -> None:
         # compile the library but didn't write to the standard error stream
         # which is currently not how the Nim compiler behaves.
         # This shouldn't fail.
-        build_artifact, = tmp_cwd.glob(f'*{find_ext}')
+        tmp_build_artifact, = tmp_cwd.glob(f'*{find_ext}')
 
-        final_artifact = pycache / (nim_module.stem + PYTHON_LIB_EXT)
-        shutil.move(build_artifact, final_artifact)
+        shutil.move(tmp_build_artifact, ext.build_artifact)
 
-        update_hash(extension_path)
-
-
-def build_artifact(module_path: Path) -> Path:
-    """
-    Returns the Path to the built .PYD or .SO.
-
-    Does not imply that it has already been built.
-
-    Args:
-        module_path(Path): the path to the module or library.
-
-    Returns:
-        The path to a build artifact if compilation were to succeed. If the
-        module_path is a directory, an appropriate build artifact path
-        within that directory is returned.
-    """
-    filename = module_path.stem + PYTHON_LIB_EXT
-    return (pycache_dir(module_path) / filename)
-
-
-def pycache_dir(module_path: Path) -> Path:
-    """
-    Return the `__pycache__` directory as a Path.
-
-    Works the same as Python's `__pycache__` directory except now it works
-    with Nim extensions also. It works literally exactly like Python.
-
-    Args:
-        module_path(Path): the path to a given Nim module or library.
-
-    Returns:
-        The Path to the `__pycache__` directory that the build artifact
-        should be stored.
-    """
-    return (module_path.parent / '__pycache__')
-
-
-def hash_filename(module_path: Path) -> Path:
-    """
-    Gets the filename that should contain a given module's hash.
-
-    Args:
-        module_path(Path): the Nim module the hash file pertains to.
-
-    Returns:
-        The hash filename as a Path.
-    """
-    return pycache_dir(module_path) / (module_path.stem + '.hash')
-
-
-def is_cache(module_path: Path) -> bool:
-    """
-    Determines if the `__pycache__` dir for a given Nim module exists.
-
-    Args:
-        module_path(Path): the Nim module the `__pycache__` dir pertains to.
-
-    Returns:
-        A bool indicating whether or not a __pycache__ directory exists to
-        store hashes and build artifacts.
-    """
-    return pycache_dir(module_path).exists()
-
-
-def is_hashed(module_path: Path) -> bool:
-    """
-    Determines if a given Nim module has already been hashed.
-
-    Args:
-        module_path(Path): the Nim module for which to query hash existence.
-
-    Returns:
-        A bool indicating whether or not a given Nim file has already been
-        hashed.
-    """
-    return hash_filename(module_path).exists()
-
-
-def is_built(module_path: Path) -> bool:
-    """
-    Determines if a given Nim module has already been built.
-
-    Args:
-        module_path(Path): the Nim module for which to query for artifacts.
-
-    Returns:
-        A bool indicating whether or not a given Nim file has already been
-        built.
-    """
-    return build_artifact(module_path).exists()
-
-
-def get_hash(module_path: Path) -> bytes:
-    """
-    Gathers the hash for a given Nim module.
-
-    Args:
-        module_path(Path): the Nim module for which to return its hash.
-
-    Raises:
-        NimporterException: if the module has not yet been hashed.
-
-    Returns:
-        The bytes of the hash for a given Nim module.
-    """
-    if not is_hashed(module_path):
-        path = module_path.absolute()
-        raise NimporterException(f'Module {path} has not yet been hashed.')
-
-    return hash_filename(module_path).read_bytes()
-
-
-def hash_changed(module_path: Path) -> bool:
-    """
-    Determines if a module has been modified.
-
-    Args:
-        module_path(Path): the Nim module to check for modification.
-
-    Returns:
-        A bool indicating whether or not a given Nim file has changed since
-        last hash. If the module has not yet been hashed, returns True.
-    """
-    if not is_hashed(module_path):
-        return True
-
-    return get_hash(module_path) != hash_extension(module_path)
-
-
-def hash_extension(module_path: Path) -> bytes:
-    """
-    Convenience function to hash an extension module or extension library.
-
-    Args:
-        module_path(Path): the file to hash.
-
-    Returns:
-        The hash bytes of the Nim file.
-    """
-    digest = hashlib.sha256()
-
-    if module_path.is_file():
-        block_size = 65536
-
-        with module_path.open('rb') as file:
-            buf = file.read(block_size)
-
-            while len(buf) > 0:
-                digest.update(buf)
-                buf = file.read(block_size)
-
-    else:
-        def walk_folder(path):
-            for item in path.iterdir():
-                if item.is_dir():
-                    for i in walk_folder(item):
-                        yield i
-                else:
-                    yield item
-
-        for item in walk_folder(module_path):
-            digest.update(str(item).encode())
-            digest.update(item.read_bytes())
-
-    ic(digest.hexdigest())
-
-    return digest.digest()
-
-
-def update_hash(module_path: Path) -> None:
-    """
-    Updates the hash file associated with a given Nim module.
-
-    This is commonly done after compilation to determine if recompilation is
-    required upon subsequent imports. If the module's hash file has not yet
-    been created, this method will create it and store it in the
-    `__pycache__` dir for the module.
-
-    Args:
-        module_path(Path): the module which should have its hash updated.
-    """
-    hash_file = hash_filename(module_path)
-    hash_file.parent.mkdir(parents=True, exist_ok=True)
-
-    with hash_file.open('wb') as file:
-        file.write(hash_extension(module_path))
-
-
-def should_compile(module_path: Path) -> bool:
-    """
-    Determines if a module should be rebuilt using only the path to it.
-    Factors included in the decision to compile a module include:
-        * If `IGNORE_CACHE` is set
-        * If the module has been modified since the last build
-        * If the `__pycache__` directory does not exist
-        * If there is no cached build artifact available in `__pycache__`
-    Args:
-        module_path(Path): the Nim module to potentially (re)compile.
-    Returns:
-        A bool indicating whether or not the module should be (re)built.
-    """
-    return any([
-        hash_changed(module_path),
-        not is_cache(module_path),
-        not is_built(module_path)
-    ])
+        write_hash(ext)
 
 
 def validate_spec(spec: ModuleSpec) -> None:
@@ -399,6 +211,7 @@ def nimport(
 
         ic(dir_containing_lib_or_mod)
 
+        # ? Perhaps: if mod.is_absolute(): mod.relative_to(the_search_path)
         # compile_extensions_to_lib(
         #     # * Had to prove the file existed using absolute paths. Now,
         #     # * convert it back to a relative path to not have the MANIFEST
@@ -412,22 +225,24 @@ def nimport(
 
         # TODO(pbz): MAKE FORMAL SCRIPT TO TEST THIS WITHOUT PYTEST HARNESS
 
-        compile_extension_to_lib(
-            # * Had to prove the file existed using absolute paths. Now,
-            # * convert it back to a relative path to not have the MANIFEST
-            # * of the distribution contain the user's file system details.
-            # * In addition, library hashing won't work with absolute
-            # * paths.
-            # dir_containing_lib_or_mod.relative_to(the_search_path)
-            module_path
-        )
+        # compile_extension_to_lib(
+        #     # * Had to prove the file existed using absolute paths. Now,
+        #     # * convert it back to a relative path to not have the MANIFEST
+        #     # * of the distribution contain the user's file system details.
+        #     # * In addition, library hashing won't work with absolute
+        #     # * paths.
+        #     # dir_containing_lib_or_mod.relative_to(the_search_path)
+        #     module_path
+        # )
 
-        # Artifact has either already been built or was just built
-        canonical_module_path = module_path.parent if library else module_path
+        ext = ExtLib(module_path, Path())
+        ic(ext)
+
+        compile_extension_to_lib(ext)
 
         spec = util.spec_from_file_location(
             fullname,
-            location=str(build_artifact(canonical_module_path).absolute())
+            location=str(ext.build_artifact.resolve().absolute())
         )
 
         ic(spec)

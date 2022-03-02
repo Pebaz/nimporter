@@ -10,7 +10,11 @@ import shutil
 import pathlib
 import argparse
 import subprocess
-from nimporter import NimCompiler, Nimporter
+from pathlib import Path
+from nimporter.lib import find_extensions
+
+
+# from nimporter import NimCompiler, Nimporter
 
 
 SETUPPY_TEMPLATE = f"""
@@ -77,7 +81,20 @@ def clean(dir=pathlib.Path()):
             clean(folder)
 
 
+def nimporter_list():
+    for extension in find_extensions(Path()):
+        print(extension)
+
+
 def main(cli_args=None):
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if 'list' in cli_args:
+        nimporter_list()
+
+    return
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     parser = argparse.ArgumentParser(description='Nimporter CLI')
     subs = parser.add_subparsers(dest='cmd', required=True)
 

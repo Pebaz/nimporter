@@ -2,6 +2,7 @@ import os
 import sys
 import shlex
 import shutil
+import hashlib
 import tempfile
 import platform
 import subprocess
@@ -12,6 +13,8 @@ from contextlib import contextmanager
 from icecream import ic
 
 PathParts = Union[Tuple[str, str, str], Tuple[str], Tuple[str, str]]
+
+PYTHON_LIB_EXT = '.pyd' if sys.platform == 'win32' else '.so'
 
 WINDOWS = 'windows'
 MACOS = 'macos'
@@ -97,30 +100,6 @@ def find_extensions(path: Path) -> List[Path]:
     return nim_exts
 
 
-def get_import_prefix(module_path: Path, root: Path) -> PathParts:
-    """
-    Computes the proper name of a Nim module amid a given Python project.
-
-    This method is needed because Nim Extensions do not automatically know
-    where they are within a given Python namespace. This method is vital for
-    recursing through an entire Python project to find every Nim Extension
-    module and library while preserving the namespace containing each one.
-
-    Args:
-        module_path(Path): the module for which to determine its namespace.
-        root(Path): the path to the Python project containing the Extension.
-
-    Returns:
-        A tuple of packages containing the given module.
-    """
-    root_path = root.resolve()
-    full_path = module_path.resolve()
-
-    assert full_path >= root_path, 'Extension path is not within root dir.'
-
-    return ic(full_path.parts[len(root_path.parts):])
-
-
 def get_import_path(path: Path, root: Path):
     """
     Coerce proper import path using root path
@@ -134,6 +113,15 @@ def get_import_path(path: Path, root: Path):
     Returns:
         str: Returns the path of the nim module.
     """
+
+    def get_import_prefix(module_path: Path, root: Path) -> PathParts:
+        root_path = root.resolve()
+        full_path = module_path.resolve()
+
+        assert full_path >= root_path, 'Extension path is not within root dir.'
+
+        return ic(full_path.parts[len(root_path.parts):])
+
     library = path.is_dir()
     module_name = path.stem
     module_path = path if path.is_file() else path / path.stem
@@ -258,3 +246,101 @@ class CompilationFailedException(NimporterException):
 
 class ImportFailedException(NimporterException):
     "Custom exception for when compilation succeeds but importing fails."
+
+
+def hash_extension(module_path: Path) -> bytes:
+    """
+    Convenience function to hash an extension module or extension library.
+
+    Args:
+        module_path(Path): the file to hash.
+
+    Returns:
+        The hash bytes of the Nim file.
+    """
+    digest = hashlib.sha256()
+
+    if module_path.is_file():
+        block_size = 65536
+
+        with module_path.open('rb') as file:
+            buf = file.read(block_size)
+
+            while len(buf) > 0:
+                digest.update(buf)
+                buf = file.read(block_size)
+
+    else:
+        def walk_folder(path):
+            for item in path.iterdir():
+                if item.is_dir():
+                    if item.stem == '__pycache__':
+                        continue
+                    for i in walk_folder(item):
+                        yield i
+                else:
+                    yield item
+
+        for item in walk_folder(module_path):
+            digest.update(str(item).encode())
+            digest.update(item.read_bytes())
+
+    ic(digest.hexdigest())
+
+    return digest.digest()
+
+
+
+
+
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
+
+
+class ExtLib:
+    """
+    All extensions are assumed to be libraries only. Modules are convert to
+    libraries as needed.
+    """
+    def __init__(self, path: Path, root: Path):
+        self.library = path.is_dir()  # TODO(pbz): Change to local variable?
+        self.symbol = path.stem
+        self.relative_path = path
+        self.full_path = path.resolve().absolute()
+        self.pycache = self.full_path.parent / '__pycache__'
+        self.import_namespace = get_import_path(path, root)
+        self.hash_filename = self.pycache / f'{self.symbol}.hash'
+        self.build_artifact = (
+            self.pycache / f'{self.symbol}{PYTHON_LIB_EXT}'
+        )
+
+        if self.library:
+            ...
+        else:
+            ...
+
+        # assert (path / f'{symbol}.nim').exists(), (
+        #     f'ExtLib must define {symbol}/{symbol}.nim'
+        # )
+
+        # assert (path / f'{symbol}.nimble').exists(), (
+        #     f'ExtLib must define {symbol}/{symbol}.nimble and '
+        #     f'include `require "nimpy"`'
+        # )
+
+        # assert (path / f'{symbol}.nim.cfg').exists(), (
+        #     f'ExtLib must define {symbol}/{symbol}.nim.cfg'
+        # )
+
+    def __str__(self):
+        return f'<ExtLib {self.import_namespace}>'
+
+    def __repr__(self):
+        return str(self)
+
+    def __format__(self, *args, **kwargs):
+        return str(self)
