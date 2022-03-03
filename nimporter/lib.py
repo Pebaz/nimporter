@@ -290,17 +290,6 @@ def hash_extension(module_path: Path) -> bytes:
     return digest.digest()
 
 
-
-
-
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-# TODO(pbz): Create an ExtLib using an ext mod single Nim file with right paths
-
-
 class ExtLib:
     """
     All extensions are assumed to be libraries only. Modules are convert to

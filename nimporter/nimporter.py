@@ -204,37 +204,6 @@ def nimport(
 
         ic(module_path)
 
-        # if library:
-        #     dir_containing_lib_or_mod = module_path.parent.parent
-        # else:
-        #     dir_containing_lib_or_mod = module_path.parent
-
-        # ic(dir_containing_lib_or_mod)
-
-        # ? Perhaps: if mod.is_absolute(): mod.relative_to(the_search_path)
-        # compile_extensions_to_lib(
-        #     # * Had to prove the file existed using absolute paths. Now,
-        #     # * convert it back to a relative path to not have the MANIFEST
-        #     # * of the distribution contain the user's file system details.
-        #     # * In addition, library hashing won't work with absolute
-        #     # * paths.
-        #     dir_containing_lib_or_mod.relative_to(the_search_path)
-        # )
-
-        # TODO(pbz): Caching isn't working with this
-
-        # TODO(pbz): MAKE FORMAL SCRIPT TO TEST THIS WITHOUT PYTEST HARNESS
-
-        # compile_extension_to_lib(
-        #     # * Had to prove the file existed using absolute paths. Now,
-        #     # * convert it back to a relative path to not have the MANIFEST
-        #     # * of the distribution contain the user's file system details.
-        #     # * In addition, library hashing won't work with absolute
-        #     # * paths.
-        #     # dir_containing_lib_or_mod.relative_to(the_search_path)
-        #     module_path
-        # )
-
         ext = ExtLib(module_path, Path())
         ic(ext)
 
