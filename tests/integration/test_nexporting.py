@@ -1,10 +1,25 @@
 import sys
 import shutil
+import pkg_resources
 import pytest
 from nimporter.lib import *
 
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
+
+def test_ensure_nimporter_installed():
+    "Make sure that Nimporter is installed before running integration tests."
+
+    # TODO(pbz): How to make sure this works during normal development?
+    # TODO(pbz): This only takes a couple seconds surprisingly
+    assert os.system('python setup.py install --force') == 0
+
+    # libs = {lib.key.lower() for lib in pkg_resources.working_set}
+
+    # if 'nimporter' not in libs:
+    #     assert Path('setup.py').exists() and Path('nimporter').exists()
+    #     assert os.system('python setup.py install --force') == 0
+
 
 def test_sdist_all_targets():
     "Assert all targets are listed"
