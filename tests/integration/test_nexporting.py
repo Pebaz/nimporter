@@ -6,7 +6,6 @@ from nimporter.lib import *
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
 
-@pytest.mark.integration_test
 def test_sdist_all_targets():
     "Assert all targets are listed"
 
@@ -45,38 +44,31 @@ def test_sdist_all_targets():
     #         shutil.rmtree(str(egg.absolute()))
 
 
-@pytest.mark.integration_test
 def test_sdist_specified_targets():
     "Assert only specified targets are listed"
 
 
-@pytest.mark.integration_test
 def test_bdist_all_targets():
     "Assert all targets are listed"
 
 
-@pytest.mark.integration_test
 def test_bdist_specified_targets():
     "Assert only specified targets are listed"
 
 
 
 
-@pytest.mark.integration_test
 def test_sdist_all_targets_installs_correctly():
     "Assert all targets are listed"
 
 
-@pytest.mark.integration_test
 def test_sdist_specified_targets_installs_correctly():
     "Assert only specified targets are listed"
 
 
-@pytest.mark.integration_test
 def test_bdist_all_targets_installs_correctly():
     "Assert all targets are listed"
 
 
-@pytest.mark.integration_test
 def test_bdist_specified_targets_installs_correctly():
     "Assert only specified targets are listed"
