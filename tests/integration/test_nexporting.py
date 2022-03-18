@@ -7,34 +7,9 @@ from tests import run_nimporter_clean
 from nimporter.lib import *
 from nimporter.nexporter import *
 
+
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
-
-
-# TODO(pbz): Get this working, that will help with the rest of the tests
-# def run_nimporter_clean_before_executing(fn):
-#     def wrapper(*args, **kwargs):
-#         clean()
-#         return fn(*args, **kwargs)
-#     return wrapper
-
-
-def test_ensure_nimporter_installed(run_nimporter_clean):
-    "Make sure that Nimporter is installed before running integration tests."
-
-    # TODO(pbz): How to make sure this works during normal development?
-    # TODO(pbz): This only takes a couple seconds surprisingly
-    # assert os.system('python setup.py install --force') == 0
-
-    # libs = {lib.key.lower() for lib in pkg_resources.working_set}
-
-    # if 'nimporter' not in libs:
-    #     assert Path('setup.py').exists() and Path('nimporter').exists()
-    #     assert os.system('python setup.py install --force') == 0
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # ! assert Path('setup.py').exists() and Path('nimporter').exists()
-    # ! assert os.system('pip install . --force') == 0
 
 
 def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
@@ -119,7 +94,7 @@ def test_bdist_specified_targets_installs_correctly():
 
 
 def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
-
+    "After installing, ensure lib can be imported and can import itself."
     try:
         with cd(Path('tests/data')):
             # Generate a zip file instead of tar.gz
