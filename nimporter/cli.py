@@ -11,7 +11,7 @@ import pathlib
 import argparse
 import subprocess
 from pathlib import Path
-from nimporter.lib import find_extensions
+from nimporter.lib import EXT_DIR, find_extensions
 
 
 # from nimporter import NimCompiler, Nimporter
@@ -87,20 +87,24 @@ def nimporter_list():
 
 
 def nimporter_clean(path: Path):
-
     for item in path.iterdir():
+        item_full_path = item.resolve().absolute()
+
         if item.is_dir():
-            DELETE_THESE_DIRS = {
-                NIM_EXT,
-                '__pycache__'
-                f'{item.stem}.egg-info',
-                '.pytest_cache',
-            }
+            DELETE_THESE_DIRS = {EXT_DIR, '__pycache__', '.pytest_cache'}
 
             if item.stem in DELETE_THESE_DIRS:
+                print('Deleting', item_full_path)
                 shutil.rmtree(item)
+
+            elif item.name.endswith('.egg-info'):
+                print('Deleting', item_full_path)
+                shutil.rmtree(item)
+
             elif item.stem == 'dist' and (item.parent / 'setup.py').exists():
+                print('Deleting', item_full_path)
                 shutil.rmtree(item)
+
             else:
                 nimporter_clean(item)
         else:

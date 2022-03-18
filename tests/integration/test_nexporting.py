@@ -37,7 +37,7 @@ def test_ensure_nimporter_installed(run_nimporter_clean):
     # ! assert os.system('pip install . --force') == 0
 
 
-def test_sdist_all_targets(run_nimporter_clean):
+def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
     "Assert all targets are listed"
 
     with cd(Path('tests/data')):
@@ -55,20 +55,17 @@ def test_sdist_all_targets(run_nimporter_clean):
         assert dist.exists(), f'{dist} does not exist'
         assert egg.exists(), f'{egg} does not exist'
 
-        targets = [*dist.glob('test_nimporter*')]
-
-        assert len(targets) == 1, 'Exactly only 1 target was built'
-        assert targets[0].exists(), 'Target is listed but does not exist'
+        targets = [*dist.glob('*.zip')]
 
         # Make sure the source distribution contains one for each platform
         with ZipFile(targets[0]) as archive:
             PLATFORMS = [WINDOWS, LINUX, MACOS]
             PREFIX = 'test_nimporter-0.0.0/nim-extensions'
             IMPORTANT_NAMES = {
-                'deep1.deep2.deep3.deep',
-                'shallow.ext_mod_basic',
-                'shallow.ext_lib_in_shallow_heirarchy',
+                'ext_mod_basic',
+                'ext_lib_basic',
                 'pkg1.pkg2.ext_mod_in_pack',
+                'pkg1.pkg2.ext_lib_in_pack',
             }
 
             important_names = set()
@@ -110,7 +107,7 @@ def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
         with cd(Path('tests/data')):
             # Generate a zip file instead of tar.gz
             code, stdout, stderr = run_process(
-                shlex.split(f'{PYTHON} setup.py setup.py install'),
+                shlex.split(f'{PYTHON} setup.py install'),
                 'NIMPORTER_INSTRUMENT' in os.environ
             )
 
@@ -134,7 +131,7 @@ def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
     finally:
         # On error this won't be installed so no worries about the exit code
         code, stdout, stderr = run_process(
-            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter'),
+            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
 

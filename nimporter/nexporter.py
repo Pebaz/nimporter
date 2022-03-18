@@ -42,6 +42,11 @@ def get_host_extension_bundle(root: Path):
 
 
 def get_sdist_extension_bundle(root: Path):
+    """
+    The goal of this function is to get every combination of platform,
+    architecture, and compiler as it's own extension. The reason why is to make
+    packaging into source distributions easier.
+    """
 
     # ! In this case, the extension's name does not matter (which is why the)
     # ! platform/architecture info is added) because the extensions are added

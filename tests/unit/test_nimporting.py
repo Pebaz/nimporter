@@ -18,7 +18,7 @@ def test_ext_lib():
 import sys
 
 def test_ext_mod():
-    ext_path = 'tests/data/shallow'
+    ext_path = 'tests/data'
     try:
         sys.path.append(ext_path)
         import pkg1.pkg2.ext_mod_in_pack
