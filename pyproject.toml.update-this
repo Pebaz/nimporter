@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "nimporter"
-version = "1.1.0"
+version = "2.0.0"
 description = "Compile Nim extensions for Python when imported!"
 authors = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
 license = "MIT"
@@ -16,8 +16,7 @@ documentation = "https://pebaz.github.io/nimporter/index.html"
 maintainers = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
 readme = "README.md"
 packages = [
-    { include = 'nimporter.py' },
-    { include = 'nimporter_cli.py' },
+    { include = 'nimporter' },
     { include = 'tests', format = 'sdist' },
 ]
 include = [
@@ -33,7 +32,7 @@ exclude = [
 ]
 
 [tool.poetry.scripts]
-nimporter = 'nimporter_cli:main'
+nimporter = 'nimporter.cli:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"
