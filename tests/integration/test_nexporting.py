@@ -60,26 +60,7 @@ def test_sdist_all_targets(run_nimporter_clean):
         assert len(targets) == 1, 'Exactly only 1 target was built'
         assert targets[0].exists(), 'Target is listed but does not exist'
 
-        # # Make sure the appropriate compiler is being used
-        # for extension in Path('nim-extensions').iterdir():
-        #     (nim_build_data_file,) = extension.glob('*json')
-        #     nim_build_data = json.loads(nim_build_data_file.read_text())
-        #     expected = nimporter.NimCompiler.get_compatible_compiler()
-        #     installed_ccs = nimporter.NimCompiler.get_installed_compilers()
-        #     if not expected:
-        #         warnings.warn(
-        #             f'No compatible C compiler installed: {installed_ccs}'
-        #         )
-        #     else:
-        #         cc_path = installed_ccs[expected]
-        #         actual = nim_build_data['linkcmd'].split()[0].strip()
-        #         if not actual.startswith(cc_path.stem):
-        #             warnings.warn(
-        #                 f'Nim used a different C compiler than what Python '
-        #                 f'expects. Python uses {cc_path.stem} and Nim used '
-        #                 f'{actual}'
-        #             )
-
+        # Make sure the source distribution contains one for each platform
         with ZipFile(targets[0]) as archive:
             PLATFORMS = [WINDOWS, LINUX, MACOS]
             PREFIX = 'test_nimporter-0.0.0/nim-extensions'
@@ -122,8 +103,41 @@ def test_bdist_specified_targets():
 
 
 
-def test_sdist_all_targets_installs_correctly():
-    "Assert all targets are listed"
+def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
+    "Assert all items are correctly imported"
+
+    try:
+        with cd(Path('tests/data')):
+            # Generate a zip file instead of tar.gz
+            code, stdout, stderr = run_process(
+                shlex.split(f'{PYTHON} setup.py setup.py install'),
+                'NIMPORTER_INSTRUMENT' in os.environ
+            )
+
+            assert code == 0
+
+        import py_module
+        assert py_module.py_function() == 3.14
+
+        import shallow.ext_mod_basic
+        assert shallow.ext_mod_basic.add(1, 2) == 3
+
+        import shallow.ext_lib_in_shallow_heirarchy
+        assert shallow.ext_lib_in_shallow_heirarchy.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_mod_in_pack
+        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_lib_in_pack
+        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
+
+    finally:
+        # On error this won't be installed so no worries about the exit code
+        code, stdout, stderr = run_process(
+            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter'),
+            'NIMPORTER_INSTRUMENT' in os.environ
+        )
+
 
 
 def test_sdist_specified_targets_installs_correctly():

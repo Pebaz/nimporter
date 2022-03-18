@@ -42,7 +42,7 @@ setuptools.setup(
 
 
 def clean(dir=pathlib.Path()):
-    "Recursively clear hash files and extensions stored in __pycache__ folders."
+    "Recursively clear hash files and extensions in __pycache__ folders."
 
     # .exp and .lib are generated on Windows
     remove_these = NimCompiler.EXT, '.hash', '.exp', '.lib'
@@ -86,11 +86,35 @@ def nimporter_list():
         print(extension)
 
 
+def nimporter_clean(path: Path):
+
+    for item in path.iterdir():
+        if item.is_dir():
+            DELETE_THESE_DIRS = {
+                NIM_EXT,
+                '__pycache__'
+                f'{item.stem}.egg-info',
+                '.pytest_cache',
+            }
+
+            if item.stem in DELETE_THESE_DIRS:
+                shutil.rmtree(item)
+            elif item.stem == 'dist' and (item.parent / 'setup.py').exists():
+                shutil.rmtree(item)
+            else:
+                nimporter_clean(item)
+        else:
+            pass
+
+
 def main(cli_args=None):
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     if 'list' in cli_args:
         nimporter_list()
+
+    elif 'clean' in cli_args:
+        nimporter_clean(Path())
 
     return
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

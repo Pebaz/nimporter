@@ -4,8 +4,8 @@ def test_ext_lib():
     ext_path = 'tests/data'
     try:
         sys.path.append(ext_path)
-        import deep1.deep2.deep3.deep as deep
-        assert deep.add(1, 2) == 3
+        import pkg1.pkg2.ext_lib_in_pack
+        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
     finally:
         sys.path.remove(ext_path)
 
@@ -21,8 +21,8 @@ def test_ext_mod():
     ext_path = 'tests/data/shallow'
     try:
         sys.path.append(ext_path)
-        import ext_mod_basic
-        assert ext_mod_basic.add(1, 2) == 3
+        import pkg1.pkg2.ext_mod_in_pack
+        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
     finally:
         sys.path.remove(ext_path)
 
