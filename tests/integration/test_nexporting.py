@@ -103,40 +103,6 @@ def test_bdist_specified_targets():
 def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
     "Assert all items are correctly imported"
 
-    try:
-        with cd(Path('tests/data')):
-            # Generate a zip file instead of tar.gz
-            code, stdout, stderr = run_process(
-                shlex.split(f'{PYTHON} setup.py install'),
-                'NIMPORTER_INSTRUMENT' in os.environ
-            )
-
-            assert code == 0
-
-        import py_module
-        assert py_module.py_function() == 3.14
-
-        import shallow.ext_mod_basic
-        assert shallow.ext_mod_basic.add(1, 2) == 3
-
-        import shallow.ext_lib_in_shallow_heirarchy
-        assert shallow.ext_lib_in_shallow_heirarchy.add(1, 2) == 3
-
-        import pkg1.pkg2.ext_mod_in_pack
-        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
-
-        import pkg1.pkg2.ext_lib_in_pack
-        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
-
-    finally:
-        # On error this won't be installed so no worries about the exit code
-        code, stdout, stderr = run_process(
-            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
-            'NIMPORTER_INSTRUMENT' in os.environ
-        )
-
-
-
 def test_sdist_specified_targets_installs_correctly():
     "Assert only specified targets are listed"
 
@@ -147,3 +113,53 @@ def test_bdist_all_targets_installs_correctly():
 
 def test_bdist_specified_targets_installs_correctly():
     "Assert only specified targets are listed"
+
+
+
+
+
+def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
+
+    try:
+        with cd(Path('tests/data')):
+            # Generate a zip file instead of tar.gz
+            code, stdout, stderr = run_process(
+                shlex.split(f'{PYTHON} setup.py install'),
+                'NIMPORTER_INSTRUMENT' in os.environ
+            )
+
+            assert code == 0
+
+        # This is really hacky but according to this post:
+        # https://stackoverflow.com/a/32478979/6509967
+        # It is possible to allow Python to import a package that was installed
+        # at runtime using this method:
+        import site
+        for site_dir in site.getsitepackages():
+            test_nimporter = [*Path(site_dir).glob('*est_nimporter*')]
+            if len(test_nimporter) > 0:
+                sys.path.insert(0, str(test_nimporter[0].resolve().absolute()))
+                break
+
+        import ext_mod_basic
+        assert ext_mod_basic.add(1, 2) == 3
+
+        import ext_lib_basic
+        assert ext_lib_basic.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_mod_in_pack
+        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_lib_in_pack
+        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
+
+        import py_module
+        assert py_module.py_function() == 3.14
+
+    finally:
+        # On error this won't be installed so no worries about the exit code
+        code, stdout, stderr = run_process(
+            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
+            'NIMPORTER_INSTRUMENT' in os.environ
+        )
+
