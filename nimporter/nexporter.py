@@ -235,6 +235,8 @@ def iterate_target_triples(platforms: List[str]):
             continue
         for arch in ARCH_TABLE:
             for compiler in 'vcc', 'gcc':
+                if platform != WINDOWS and compiler == 'vcc':
+                    continue  # 😂
                 yield platform, arch, compiler
 
 

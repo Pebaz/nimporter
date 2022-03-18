@@ -2,13 +2,24 @@ import sys
 import shlex
 import shutil
 import pkg_resources
-import pytest
+from zipfile import ZipFile
+from tests import run_nimporter_clean
 from nimporter.lib import *
+from nimporter.nexporter import *
 
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
 
-def test_ensure_nimporter_installed():
+
+# TODO(pbz): Get this working, that will help with the rest of the tests
+# def run_nimporter_clean_before_executing(fn):
+#     def wrapper(*args, **kwargs):
+#         clean()
+#         return fn(*args, **kwargs)
+#     return wrapper
+
+
+def test_ensure_nimporter_installed(run_nimporter_clean):
     "Make sure that Nimporter is installed before running integration tests."
 
     # TODO(pbz): How to make sure this works during normal development?
@@ -21,54 +32,80 @@ def test_ensure_nimporter_installed():
     #     assert Path('setup.py').exists() and Path('nimporter').exists()
     #     assert os.system('python setup.py install --force') == 0
 
-    assert Path('setup.py').exists() and Path('nimporter').exists()
-    assert os.system('pip install . --force') == 0
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # ! assert Path('setup.py').exists() and Path('nimporter').exists()
+    # ! assert os.system('pip install . --force') == 0
 
 
-def test_sdist_all_targets():
+def test_sdist_all_targets(run_nimporter_clean):
     "Assert all targets are listed"
 
     with cd(Path('tests/data')):
+        # Generate a zip file instead of tar.gz
         code, stdout, stderr = run_process(
-            shlex.split(f'{PYTHON} setup.py sdist'),
+            shlex.split(f'{PYTHON} setup.py sdist --formats=zip'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
-        assert stderr == 'asdf'
-        assert code == 3
 
-        # subprocess.Popen(f'{PYTHON} setup.py sdist'.split()).wait()
+        assert code == 0
 
-        # dist = Path('dist')
-        # egg = Path('project1.egg-info')
-        # try:
-        #     assert dist.exists()
-        #     assert egg.exists()
-        #     targets = list(dist.glob('project1*'))
-        #     assert len(targets) == 1
-        #     assert targets[0].exists()
+        dist = Path('dist')
+        egg = Path('test_nimporter.egg-info')
 
-        #     # Make sure the appropriate compiler is being used
-        #     for extension in Path('nim-extensions').iterdir():
-        #         (nim_build_data_file,) = extension.glob('*json')
-        #         nim_build_data = json.loads(nim_build_data_file.read_text())
-        #         expected = nimporter.NimCompiler.get_compatible_compiler()
-        #         installed_ccs = nimporter.NimCompiler.get_installed_compilers()
-        #         if not expected:
+        assert dist.exists(), f'{dist} does not exist'
+        assert egg.exists(), f'{egg} does not exist'
+
+        targets = [*dist.glob('test_nimporter*')]
+
+        assert len(targets) == 1, 'Exactly only 1 target was built'
+        assert targets[0].exists(), 'Target is listed but does not exist'
+
+        # # Make sure the appropriate compiler is being used
+        # for extension in Path('nim-extensions').iterdir():
+        #     (nim_build_data_file,) = extension.glob('*json')
+        #     nim_build_data = json.loads(nim_build_data_file.read_text())
+        #     expected = nimporter.NimCompiler.get_compatible_compiler()
+        #     installed_ccs = nimporter.NimCompiler.get_installed_compilers()
+        #     if not expected:
+        #         warnings.warn(
+        #             f'No compatible C compiler installed: {installed_ccs}'
+        #         )
+        #     else:
+        #         cc_path = installed_ccs[expected]
+        #         actual = nim_build_data['linkcmd'].split()[0].strip()
+        #         if not actual.startswith(cc_path.stem):
         #             warnings.warn(
-        #                 f'No compatible C compiler installed: {installed_ccs}'
+        #                 f'Nim used a different C compiler than what Python '
+        #                 f'expects. Python uses {cc_path.stem} and Nim used '
+        #                 f'{actual}'
         #             )
-        #         else:
-        #             cc_path = installed_ccs[expected]
-        #             actual = nim_build_data['linkcmd'].split()[0].strip()
-        #             if not actual.startswith(cc_path.stem):
-        #                 warnings.warn(
-        #                     f'Nim used a different C compiler than what Python '
-        #                     f'expects. Python uses {cc_path.stem} and Nim used '
-        #                     f'{actual}'
-        #                 )
-        # finally:
-        #     shutil.rmtree(str(dist.absolute()))
-        #     shutil.rmtree(str(egg.absolute()))
+
+        with ZipFile(targets[0]) as archive:
+            PLATFORMS = [WINDOWS, LINUX, MACOS]
+            PREFIX = 'test_nimporter-0.0.0/nim-extensions'
+            IMPORTANT_NAMES = {
+                'deep1.deep2.deep3.deep',
+                'shallow.ext_mod_basic',
+                'shallow.ext_lib_in_shallow_heirarchy',
+                'pkg1.pkg2.ext_mod_in_pack',
+            }
+
+            important_names = set()
+
+            for platform, arch, compiler in iterate_target_triples(PLATFORMS):
+                triple = f'{platform}-{arch}-{compiler}'
+
+                for important_name in IMPORTANT_NAMES:
+                    important_names.add(
+                        f'{PREFIX}/{important_name}/{triple}/nimbase.h'
+                    )
+
+            ALL_NAMES = set(archive.namelist())
+
+            for important_name in important_names:
+                assert important_name in ALL_NAMES, (
+                    f'{important_name} was not included in the zip archive'
+                )
 
 
 def test_sdist_specified_targets():
