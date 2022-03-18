@@ -154,7 +154,7 @@ def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
         assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
 
         import py_module
-        assert py_module.py_function() == 3.14
+        assert py_module.py_function() == 12
 
     finally:
         # On error this won't be installed so no worries about the exit code
