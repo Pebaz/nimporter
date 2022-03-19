@@ -61,35 +61,82 @@ def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
                 )
 
 
-def test_sdist_specified_targets():
-    "Assert only specified targets are listed"
-
-
 def test_bdist_all_targets():
     "Assert all targets are listed"
-
-
-def test_bdist_specified_targets():
-    "Assert only specified targets are listed"
-
 
 
 
 def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
     "Assert all items are correctly imported"
+    try:
+        with cd(Path('tests/data')):
+            code, stdout, stderr = run_process(
+                shlex.split(f'{PYTHON} setup.py sdist'),
+                'NIMPORTER_INSTRUMENT' in os.environ
+            )
 
-def test_sdist_specified_targets_installs_correctly():
-    "Assert only specified targets are listed"
+            assert code == 0
+
+            (target,) = Path('dist').glob('test_nimporter*.tar.gz')
 
 
-def test_bdist_all_targets_installs_correctly():
-    "Assert all targets are listed"
+            # ! So this is where it gets weird.
 
+            code, stdout, stderr = run_process(
+                process_args=shlex.split(
+                    f'{PYTHON} -m pip install dist/{target.name}'
+                ),
+                show_output='NIMPORTER_INSTRUMENT' in os.environ,
+                environment={
+                    **os.environ,
 
-def test_bdist_specified_targets_installs_correctly():
-    "Assert only specified targets are listed"
+                    # This is hacky but allows Nimporter library maintainers to
+                    # run the integration tests without repeatedly installing
+                    # and uninstalling Nimporter to ensure any updates are
+                    # taken into account.
+                    'NIMPORTER_DIR': str(
+                        # Path().parent.parent.resolve().absolute()
+                        'C:/code/me/Nimporter'
+                    )
+                }
+            )
 
+            # assert code == 0
+            if code:
+                raise Exception(stdout + '\n\n\n' + stderr)
 
+        # # This is really hacky but according to this post:
+        # # https://stackoverflow.com/a/32478979/6509967
+        # # It is possible to allow Python to import a package that was installed
+        # # at runtime using this method:
+        # import site
+        # for site_dir in site.getsitepackages():
+        #     test_nimporter = [*Path(site_dir).glob('*est_nimporter*')]
+        #     if len(test_nimporter) > 0:
+        #         sys.path.insert(0, str(test_nimporter[0].resolve().absolute()))
+        #         break
+
+        import ext_mod_basic
+        assert ext_mod_basic.add(1, 2) == 3
+
+        import ext_lib_basic
+        assert ext_lib_basic.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_mod_in_pack
+        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
+
+        import pkg1.pkg2.ext_lib_in_pack
+        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
+
+        import py_module
+        assert py_module.py_function() == 12
+
+    finally:
+        # On error this won't be installed so no worries about the exit code
+        code, stdout, stderr = run_process(
+            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
+            'NIMPORTER_INSTRUMENT' in os.environ
+        )
 
 
 
@@ -97,7 +144,6 @@ def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
     "After installing, ensure lib can be imported and can import itself."
     try:
         with cd(Path('tests/data')):
-            # Generate a zip file instead of tar.gz
             code, stdout, stderr = run_process(
                 shlex.split(f'{PYTHON} setup.py install'),
                 'NIMPORTER_INSTRUMENT' in os.environ

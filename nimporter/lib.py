@@ -153,7 +153,8 @@ def convert_to_lib_if_needed(path: Union[Path, str]) -> Iterator[Path]:
 
 def run_process(
     process_args: List[str],
-    show_output: bool = False
+    show_output: bool = False,
+    environment: Optional[dict] = None,
 ) -> Tuple[int, str, str]:
     """
     Invokes the compiler (or any executable) and returns the output.
@@ -172,7 +173,8 @@ def run_process(
     process = subprocess.run(
         process_args,
         stdout=None if show_output else subprocess.PIPE,
-        stderr=None if show_output else subprocess.PIPE
+        stderr=None if show_output else subprocess.PIPE,
+        env=environment
     )
 
     code, out, err = process.returncode, process.stdout, process.stderr
