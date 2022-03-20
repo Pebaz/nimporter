@@ -36,19 +36,10 @@ def compile_extensions_to_lib(root: Path) -> None:
         compile_extension_to_lib(extension_path)
 
 
-
-# def rehash(ext: ExtLib):
-#     # * It is important to preserve relative paths to keep hash same even
-#     # * if the entire folder is copied elsewhere
-#     return hash_extension(ext.relative_path)
-
 def write_hash(ext: ExtLib):
     ext.hash_filename.parent.mkdir(parents=True, exist_ok=True)
     ext.hash_filename.write_bytes(hash_extension(ext.relative_path))
 
-# def cached_hash(ext: ExtLib):
-#     assert ext.hash_filename.exists()
-#     return ext.hash_filename.read_bytes()
 
 def hash_changed(ext: ExtLib) -> bool:
     if not ext.hash_filename.exists():
@@ -56,8 +47,10 @@ def hash_changed(ext: ExtLib) -> bool:
 
     return hash_extension(ext.relative_path) != ext.hash_filename.read_bytes()
 
+
 def should_compile(ext: ExtLib) -> bool:
     return hash_changed(ext) or not ext.build_artifact.exists()
+
 
 def compile_extension_to_lib(ext: ExtLib) -> None:
     if not should_compile(ext):
@@ -204,7 +197,7 @@ def nimport(
 
         ic(module_path)
 
-        ext = ExtLib(module_path, Path())
+        ext = ExtLib(module_path, Path(), library)
         ic(ext)
 
         compile_extension_to_lib(ext)

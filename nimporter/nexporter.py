@@ -59,33 +59,10 @@ def get_sdist_extension_bundle(root: Path):
 
     for extension_root in (root / EXT_DIR).iterdir():
         for extension_per_target in extension_root.iterdir():
-            # TODO(pbz): Have to do MANIFEST like here: https://stackoverflow.com/questions/6633624/how-to-specify-header-files-in-setup-py-script-for-python-extension-module
-            # sources = [str(c) for c in extension_per_target.glob('*.c')]
-
-            # ! 2 OPTIONS:
-            # ! 1. Don't want to miss anything but the JSON file breaks the build
             all_files = [
                 str(c) for c in extension_per_target.iterdir()
                 if not c.suffix == '.json'
             ]
-            # ! 2. append_distribution_manifest
-            # def append_distribution_manifest(cls, nimbase_dest: Path, root: Path) -> None:
-            #     """
-
-            #     Args:
-            #         nimbase_dest(Path): path to nimbase.
-            #         root(Path): path to project root.
-
-            #     Returns:
-            #         None: Writes the nimbase manifest to the project root.
-            #     """
-            #     # Properly handle bundling headers into the source distribution
-            #     manifest = root / 'MANIFEST.in'
-            #     if not manifest.exists():
-            #         manifest.write_text('# NIMPORTER BUNDLE\n')
-            #     with manifest.open('a') as file:
-            #         file.write(f'include {nimbase_dest}\n')
-            #     return
 
             extensions.append(
                 Extension(
@@ -312,7 +289,7 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
 
     def is_valid_identifier(string):
         import re
-        match = re.search('^[A-Za-z_][A-Z-a-z0-9_\-]*', string)
+        match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
         return match and len(match.string) == len(string)
 
     def is_semver(string):

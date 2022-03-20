@@ -16,13 +16,10 @@ PathParts = Union[Tuple[str, str, str], Tuple[str], Tuple[str, str]]
 
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
-
 PYTHON_LIB_EXT = '.pyd' if sys.platform == 'win32' else '.so'
-
 WINDOWS = 'windows'
 MACOS = 'macos'
 LINUX = 'linux'
-
 EXT_DIR = 'nim-extensions'
 
 PLATFORM_TABLE = {  # Keys are known to Python and values are Nim-understood
@@ -59,23 +56,6 @@ ALWAYS_ARGS = [
     '--warning[ProveInit]:off',  # https://github.com/Pebaz/nimporter/issues/41
 ]
 
-# DEFAULT_CLI_ARGS = [
-#     '--opt:speed',
-#     '--parallelBuild:0',
-#     '--gc:refc',
-#     '--threads:on',
-#     '-d:release',
-#     '-d:strip',
-#     '-d:ssl',
-# # ? Can I take this out and it will use VCC by default?
-# ] + (['--cc:vcc'] if 'MSC' in sys.version else [])
-
-
-# def invoke_nim_compiler(switches: List[str]):
-#     pass
-
-# def compile_ext_lib(root: Path, compile_only: bool) -> None:
-#     pass
 
 def find_extensions(path: Path) -> List[Path]:
     nim_exts = []
@@ -300,7 +280,7 @@ class ExtLib:
     All extensions are assumed to be libraries only. Modules are convert to
     libraries as needed.
     """
-    def __init__(self, path: Path, root: Path):
+    def __init__(self, path: Path, root: Path, library_hint: bool):
         """
         Args:
             path(str): the relative path to the Nim file (for both lib & mod).
@@ -310,6 +290,11 @@ class ExtLib:
             any(path.parent.glob(f'{path.stem}.nimble')),
             any(path.parent.glob(f'{path.stem}.nim.cfg'))
         ))
+
+        assert library_hint and self.library if library_hint else True, (
+            f'ExtLib must define: {path.stem}.nim, {path.stem}.nimble, and '
+            f'{path.stem}.nim.cfg'
+        )
 
         self.symbol = path.stem
         self.module_path = path
@@ -329,19 +314,6 @@ class ExtLib:
         self.build_artifact = (
             self.pycache / f'{self.symbol}{PYTHON_LIB_EXT}'
         )
-
-        # assert (path / f'{symbol}.nim').exists(), (
-        #     f'ExtLib must define {symbol}/{symbol}.nim'
-        # )
-
-        # assert (path / f'{symbol}.nimble').exists(), (
-        #     f'ExtLib must define {symbol}/{symbol}.nimble and '
-        #     f'include `require "nimpy"`'
-        # )
-
-        # assert (path / f'{symbol}.nim.cfg').exists(), (
-        #     f'ExtLib must define {symbol}/{symbol}.nim.cfg'
-        # )
 
     def __str__(self):
         return f'<ExtLib {self.import_namespace}>'
