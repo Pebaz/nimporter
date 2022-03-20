@@ -14,9 +14,6 @@ from pathlib import Path
 from nimporter.lib import EXT_DIR, find_extensions
 
 
-# from nimporter import NimCompiler, Nimporter
-
-
 SETUPPY_TEMPLATE = f"""
 # Setup.py tutorial:
 # https://github.com/navdeep-G/setup.py
@@ -26,11 +23,23 @@ import setuptools, pathlib, sysconfig
 from setuptools.command.build_ext import build_ext
 import nimporter
 
+
 class NoSuffixBuilder(build_ext):
-    # NO Suffix: module.linux-x86_64.cpython.3.8.5.so --> module.so
+    \"\"\"
+    Optional.
+
+    Removes the target platform, architecture, and Python version from the
+    final artifact.
+
+    Example:
+        The artifact: `module.linux-x86_64.cpython.3.8.5.so`
+        Becomes: `module.so`
+    \"\"\"
     def get_ext_filename(self, ext_name):
         filename = super().get_ext_filename(ext_name)
-        return filename.replace(sysconfig.get_config_var('EXT_SUFFIX'), "") + pathlib.Path(filename).suffix
+        ext_suffix = sysconfig.get_config_var('EXT_SUFFIX')
+        return filename.replace(ext_suffix, "") + pathlib.Path(filename).suffix
+
 
 setuptools.setup(
     name="{ pathlib.Path().absolute().name }",
@@ -133,11 +142,14 @@ def build_parser() -> argparse.ArgumentParser:
         'init',
         help='Initializes the folder structure of a new extension'
     )
-    # build.add_argument(
-    #     'source',
-    #     type=pathlib.Path,
-    #     help='the Nim module/library to compile'
-    # )
+    build.add_argument(
+        'extension-type',
+        type=str,
+        help=(
+            'Either `mod` or `lib`. Extension modules are single files, '
+            'extension libraries are are fully configurable mini Nim projects'
+        )
+    )
     # build.add_argument(
     #     '--dest',
     #     type=pathlib.Path,

@@ -5,6 +5,7 @@ import shutil
 import hashlib
 import tempfile
 import platform
+import sysconfig
 import subprocess
 import cpuinfo
 from typing import *
@@ -16,7 +17,7 @@ PathParts = Union[Tuple[str, str, str], Tuple[str], Tuple[str, str]]
 
 PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
-PYTHON_LIB_EXT = '.pyd' if sys.platform == 'win32' else '.so'
+PYTHON_LIB_EXT = sysconfig.get_config_var('EXT_SUFFIX')
 WINDOWS = 'windows'
 MACOS = 'macos'
 LINUX = 'linux'
