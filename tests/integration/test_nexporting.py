@@ -3,19 +3,15 @@ import shlex
 import shutil
 import pkg_resources
 from zipfile import ZipFile
-from tests import run_nimporter_clean
+from tests import run_nimporter_clean, temporarily_install_nimporter
 from nimporter.lib import *
 from nimporter.nexporter import *
-
-
-PYTHON = 'python' if sys.platform == 'win32' else 'python3'
-PIP = 'pip' if shutil.which('pip') else 'pip3'
 
 
 def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
     "Assert all targets are listed"
 
-    with cd(Path('tests/data')):
+    with temporarily_install_nimporter(), cd(Path('tests/data')):
         # Generate a zip file instead of tar.gz
         code, stdout, stderr = run_process(
             shlex.split(f'{PYTHON} setup.py sdist --formats=zip'),
@@ -34,7 +30,7 @@ def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
 
         # Make sure the source distribution contains one for each platform
         with ZipFile(targets[0]) as archive:
-            PLATFORMS = [WINDOWS, LINUX, MACOS]
+            PLATFORMS = WINDOWS, MACOS, LINUX
             PREFIX = 'test_nimporter-0.0.0/nim-extensions'
             IMPORTANT_NAMES = {
                 'ext_mod_basic',
@@ -53,7 +49,7 @@ def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
                         f'{PREFIX}/{important_name}/{triple}/nimbase.h'
                     )
 
-            ALL_NAMES = set(archive.namelist())
+            ALL_NAMES = {*archive.namelist()}
 
             for important_name in important_names:
                 assert important_name in ALL_NAMES, (
@@ -61,15 +57,61 @@ def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
                 )
 
 
-def test_bdist_all_targets():
-    "Assert all targets are listed"
+def test_bdist_wheel_all_targets_installs_correctly(run_nimporter_clean):
+    "Assert all items are correctly imported"
+    try:
+        with temporarily_install_nimporter(), cd(Path('tests/data')):
+            code, stdout, stderr = run_process(
+                shlex.split(f'{PYTHON} setup.py bdist_wheel'),
+                'NIMPORTER_INSTRUMENT' in os.environ
+            )
 
+            assert code == 0
+
+            (target,) = Path('dist').glob('test_nimporter*.whl')
+
+            code, stdout, stderr = run_process(
+                process_args=shlex.split(
+                    f'{PYTHON} -m pip install dist/{target.name}'
+                ),
+                show_output='NIMPORTER_INSTRUMENT' in os.environ,
+            )
+
+            if code:
+                raise Exception(stdout + '\n\n\n' + stderr)
+
+        sys.modules.pop('ext_mod_basic', None)
+        import ext_mod_basic
+        assert ext_mod_basic.add(1, 2) == 3
+
+        sys.modules.pop('ext_lib_basic', None)
+        import ext_lib_basic
+        assert ext_lib_basic.add(1, 2) == 3
+
+        sys.modules.pop('pkg1.pkg2.ext_mod_in_pack', None)
+        import pkg1.pkg2.ext_mod_in_pack
+        assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
+
+        sys.modules.pop('pkg1.pkg2.ext_lib_in_pack', None)
+        import pkg1.pkg2.ext_lib_in_pack
+        assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
+
+        sys.modules.pop('py_module', None)
+        import py_module
+        assert py_module.py_function() == 12
+
+    finally:
+        # On error this won't be installed so no worries about the exit code
+        code, stdout, stderr = run_process(
+            shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
+            'NIMPORTER_INSTRUMENT' in os.environ
+        )
 
 
 def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
     "Assert all items are correctly imported"
     try:
-        with cd(Path('tests/data')):
+        with temporarily_install_nimporter(), cd(Path('tests/data')):
             code, stdout, stderr = run_process(
                 shlex.split(f'{PYTHON} setup.py sdist'),
                 'NIMPORTER_INSTRUMENT' in os.environ
@@ -79,55 +121,33 @@ def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
 
             (target,) = Path('dist').glob('test_nimporter*.tar.gz')
 
-
-            # ! So this is where it gets weird.
-
             code, stdout, stderr = run_process(
                 process_args=shlex.split(
                     f'{PYTHON} -m pip install dist/{target.name}'
                 ),
                 show_output='NIMPORTER_INSTRUMENT' in os.environ,
-                environment={
-                    **os.environ,
-
-                    # This is hacky but allows Nimporter library maintainers to
-                    # run the integration tests without repeatedly installing
-                    # and uninstalling Nimporter to ensure any updates are
-                    # taken into account.
-                    'NIMPORTER_DIR': str(
-                        # Path().parent.parent.resolve().absolute()
-                        'C:/code/me/Nimporter'
-                    )
-                }
             )
 
-            # assert code == 0
             if code:
                 raise Exception(stdout + '\n\n\n' + stderr)
 
-        # # This is really hacky but according to this post:
-        # # https://stackoverflow.com/a/32478979/6509967
-        # # It is possible to allow Python to import a package that was installed
-        # # at runtime using this method:
-        # import site
-        # for site_dir in site.getsitepackages():
-        #     test_nimporter = [*Path(site_dir).glob('*est_nimporter*')]
-        #     if len(test_nimporter) > 0:
-        #         sys.path.insert(0, str(test_nimporter[0].resolve().absolute()))
-        #         break
-
+        sys.modules.pop('ext_mod_basic', None)
         import ext_mod_basic
         assert ext_mod_basic.add(1, 2) == 3
 
+        sys.modules.pop('ext_lib_basic', None)
         import ext_lib_basic
         assert ext_lib_basic.add(1, 2) == 3
 
+        sys.modules.pop('pkg1.pkg2.ext_mod_in_pack', None)
         import pkg1.pkg2.ext_mod_in_pack
         assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
 
+        sys.modules.pop('pkg1.pkg2.ext_lib_in_pack', None)
         import pkg1.pkg2.ext_lib_in_pack
         assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
 
+        sys.modules.pop('py_module', None)
         import py_module
         assert py_module.py_function() == 12
 
@@ -151,29 +171,23 @@ def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
 
             assert code == 0
 
-        # This is really hacky but according to this post:
-        # https://stackoverflow.com/a/32478979/6509967
-        # It is possible to allow Python to import a package that was installed
-        # at runtime using this method:
-        import site
-        for site_dir in site.getsitepackages():
-            test_nimporter = [*Path(site_dir).glob('*est_nimporter*')]
-            if len(test_nimporter) > 0:
-                sys.path.insert(0, str(test_nimporter[0].resolve().absolute()))
-                break
-
+        sys.modules.pop('ext_mod_basic', None)
         import ext_mod_basic
         assert ext_mod_basic.add(1, 2) == 3
 
+        sys.modules.pop('ext_lib_basic', None)
         import ext_lib_basic
         assert ext_lib_basic.add(1, 2) == 3
 
+        sys.modules.pop('pkg1.pkg2.ext_mod_in_pack', None)
         import pkg1.pkg2.ext_mod_in_pack
         assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
 
+        sys.modules.pop('pkg1.pkg2.ext_lib_in_pack', None)
         import pkg1.pkg2.ext_lib_in_pack
         assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
 
+        sys.modules.pop('py_module', None)
         import py_module
         assert py_module.py_function() == 12
 
