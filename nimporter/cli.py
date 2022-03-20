@@ -105,6 +105,10 @@ def nimporter_clean(path: Path):
                 print('Deleting', item_full_path)
                 shutil.rmtree(item)
 
+            elif item.stem == 'build' and (item.parent / 'setup.py').exists():
+                print('Deleting', item_full_path)
+                shutil.rmtree(item)
+
             else:
                 nimporter_clean(item)
         else:

@@ -27,7 +27,8 @@ def get_host_extension_bundle(root: Path):
         ic(host_extension)
 
         assert host_extension.exists(), (
-            f'No extension found for host platform/arch: {host_info}'
+            f'No extension found for host platform/arch: {host_info}.\n'
+            f'Perhaps run "nimporter clean"?'
         )
 
         extensions.append(
@@ -215,22 +216,18 @@ def get_nim_extensions(
             Find exactly 1 that matches the platform-arch combo
             Return that one extension
     """
-
-    # ! This function returns a list of extensions with each one corresponding
-    # ! to a single Nim extension module or library. However, when running from
-    # ! `python setup.py sdist`, this doesn't make sense because then only one
-    # ! platform would be shipped into the source distribution (the platform of
-    # ! the host which would be running `python setup.py sdist`). To rectify
-    # ! this, get_nim_extensions() checks to see if `sdist` is in sys.argv and
-    # ! returns all Nim extensions for every platform/architecture combo.
     root = root or Path()
 
-    if not (root / EXT_DIR).exists():
-        compile_extensions_to_c(platforms, root)
-
     if is_run_from_python_setup_py_sdist():
+        if not (root / EXT_DIR).exists():
+            ic(f'Compiling for platforms: {platforms}')
+            compile_extensions_to_c(platforms, root)
         return ic(get_sdist_extension_bundle(root))
+
     else:
+        if not (root / EXT_DIR).exists():
+            ic('Compiling for host platform only')
+            compile_extensions_to_c([get_host_info()[0]], root)
         return ic(get_host_extension_bundle(root))
 
 
@@ -291,3 +288,64 @@ def compile_extensions_to_c(platforms: List[str], root: Path) -> None:
 
                     if code:
                         raise CompilationFailedException(stderr)
+
+                    prevent_win32_max_path_length_error(out_dir)
+
+
+def prevent_win32_max_path_length_error(path: Path) -> None:
+    """
+    Nim generates C files that contain `@` symbols to encode the original path
+    to the Nim module. However, there are 2 problems with this:
+        1. They contain the user's private directory structure
+        2. They cause compilation to fail on Win32 MSVC (max path length 260)
+
+    This function just removes the encoded path and adds a prefix so that users
+    of Nimporter can tell who made that change.
+
+    Turns this:
+        @m..@s..@s..@s..@s..@s..@sUsers@s<USERNAME>@s.nimble@spkgs@snimpy-0.2.0@snimpy@spy_utils.nim.c
+    Into:
+        NIMPORTER@nimpy-0.2.0@nimpy@py_utils.nim.c
+
+    That's a lot less characters!
+    """
+
+    def is_valid_identifier(string):
+        import re
+        match = re.search('^[A-Za-z_][A-Z-a-z0-9_\-]*', string)
+        return match and len(match.string) == len(string)
+
+    def is_semver(string):
+        try:
+            lib_name, lib_version = string.rsplit('-', maxsplit=1)
+            assert is_valid_identifier(lib_name)
+
+            major, minor, patch = lib_version.split('.')
+            assert major.isdigit()
+            assert minor.isdigit()
+            assert patch.isdigit()
+
+            return True
+        except:
+            return False
+
+    for item in path.iterdir():
+        if item.is_file() and item.name.startswith('@m'):
+
+            # Bare module. Module not from library dependency
+            if '@s' not in item.name:
+                mod_name = item.name.replace('@m', '')
+
+            # Module from a library dependency. Find the package the module
+            # belongs to (if any)
+            else:
+                segments = item.name.replace('@m', '').split('@s')
+
+                for segment in reversed(segments):
+                    if is_semver(segment):
+                        index = segments.index(segment)
+                        mod_name = '@'.join(segments[index:])
+                        break
+
+            new_name = ic(f'NIMPORTER@{mod_name}')
+            item.replace(item.with_name(new_name))
