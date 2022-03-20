@@ -41,46 +41,6 @@ setuptools.setup(
 """
 
 
-def clean(dir=pathlib.Path()):
-    "Recursively clear hash files and extensions in __pycache__ folders."
-
-    # .exp and .lib are generated on Windows
-    remove_these = NimCompiler.EXT, '.hash', '.exp', '.lib'
-
-    # Check for MANIFEST.in in CWD
-    if list(dir.glob('MANIFEST.in')):
-        item = dir / 'MANIFEST.in'
-        header = 'NIMPORTER BUNDLE'
-        for line in item.read_text().splitlines():
-            if header in line:
-                os.remove(str(item.resolve()))
-                print('Deleted:'.ljust(19), item.resolve())
-
-    for folder in filter(lambda p: p.is_dir(), dir.iterdir()):
-        if folder.name == '__pycache__':
-            for item in folder.iterdir():
-                if not item.exists():
-                    continue
-
-                if item.suffix in remove_these:
-                    os.remove(str(item.resolve()))
-                    print('Deleted:'.ljust(19), item.resolve())
-
-        elif folder.name == 'nim-extensions':
-            shutil.rmtree(str(folder.absolute()))
-            print('Deleted Folder:'.ljust(19), folder.absolute())
-
-        else:
-            if list(folder.glob('MANIFEST.in')):
-                item = folder / 'MANIFEST.in'
-                header = 'NIMPORTER BUNDLE'
-                for line in item.read_text().splitlines():
-                    if header in line:
-                        os.remove(str(item.resolve()))
-                        print('Deleted:'.ljust(19), item.resolve())
-            clean(folder)
-
-
 def nimporter_list():
     for extension in find_extensions(Path()):
         print(extension)
@@ -111,31 +71,21 @@ def nimporter_clean(path: Path):
 
             else:
                 nimporter_clean(item)
-        else:
-            pass
 
 
-def main(cli_args=None):
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if 'list' in cli_args:
-        nimporter_list()
-
-    elif 'clean' in cli_args:
-        nimporter_clean(Path())
-
-    return
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Nimporter CLI')
     subs = parser.add_subparsers(dest='cmd', required=True)
+
+    # List command
+    subs.add_parser('list', help='List Nim extensions starting in current dir')
 
     # Clean command
     subs.add_parser(
         'clean',
         help=(
-            'Run in project root to recursively remove all Nimporter-specific '
-            'build artifacts and hash files'
+            'Run in project root to recursively remove __pycache__, '
+            '.egg-info, build, and dist folders used by Nimporter'
         )
     )
 
@@ -178,12 +128,50 @@ def main(cli_args=None):
         )
     )
 
-    args = parser.parse_args(cli_args or sys.argv[1:])
+    # Init command
+    build = subs.add_parser(
+        'init',
+        help='Initializes the folder structure of a new extension'
+    )
+    # build.add_argument(
+    #     'source',
+    #     type=pathlib.Path,
+    #     help='the Nim module/library to compile'
+    # )
+    # build.add_argument(
+    #     '--dest',
+    #     type=pathlib.Path,
+    #     help='the folder to store the build artifact'
+    # )
 
-    if args.cmd == 'clean':
-        cwd = pathlib.Path()
-        print('Cleaning Directory:', cwd.resolve())
-        clean(cwd)
+    return parser
+
+
+def main(cli_args=None):
+
+    # # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # if 'list' in cli_args:
+    #     nimporter_list()
+
+    # elif 'clean' in cli_args:
+    #     nimporter_clean(Path())
+
+    # elif 'build' in cli_args:
+    #     nimporter_build()
+
+    # return
+    # # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    args = build_parser().parse_args(cli_args or sys.argv[1:])
+
+    if args.cmd == 'list':
+        nimporter_list()
+
+    elif args.cmd == 'clean':
+        # cwd = pathlib.Path()
+        # print('Cleaning Directory:', cwd.resolve())
+        # clean(cwd)
+        nimporter_clean(Path().resolve().absolute())
 
     elif args.cmd == 'build':
         args.source = args.source.absolute()
@@ -287,6 +275,9 @@ def main(cli_args=None):
             f'Built {len(extensions)} Extensions In '
             f'{(CTM() - start) / 1000.0} secs'
         )
+
+    elif args.cmd == 'init':
+        print('Initializing new extension')
 
     return 0
 
