@@ -11,6 +11,7 @@ import pathlib
 import argparse
 import subprocess
 from pathlib import Path
+from cookiecutter.main import cookiecutter
 from nimporter.lib import EXT_DIR, find_extensions
 
 
@@ -82,7 +83,33 @@ def nimporter_clean(path: Path):
                 nimporter_clean(item)
 
 
+
+def nimporter_init(extension_type: str, extension_name: str) -> None:
+    if extension_type == 'mod':
+        Path(f'{extension_name}.nim').write_text(
+            'import nimpy\n\nproc add(a: int, b: int): int {.exportpy.} =\n'
+            '    return a + b\n'
+        )
+
+    elif extension_type == 'lib':
+        cookiecutter(
+            template='https://github.com/Pebaz/template-nimporter-ext-lib',
+            extra_context=dict(ext_name=extension_name),
+            no_input=True
+        )
+
+    else:
+        raise ValueError(
+            f'Extension is not one of [`mod`, `lib`], got: {extension_type}'
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
+    # !!!!!!!!!!!!!!!!
+    # TODO(pbz): Declaritive YAML/JSON/TOML style CLI declaration?
+    # cli_from_toml()
+    # !!!!!!!!!!!!!!!!
+
     parser = argparse.ArgumentParser(description='Nimporter CLI')
     subs = parser.add_subparsers(dest='cmd', required=True)
 
@@ -143,18 +170,18 @@ def build_parser() -> argparse.ArgumentParser:
         help='Initializes the folder structure of a new extension'
     )
     build.add_argument(
-        'extension-type',
+        'extension_type',
         type=str,
         help=(
             'Either `mod` or `lib`. Extension modules are single files, '
             'extension libraries are are fully configurable mini Nim projects'
         )
     )
-    # build.add_argument(
-    #     '--dest',
-    #     type=pathlib.Path,
-    #     help='the folder to store the build artifact'
-    # )
+    build.add_argument(
+        'extension_name',
+        type=str,
+        help='The importable name of the extension module or library'
+    )
 
     return parser
 
@@ -289,7 +316,11 @@ def main(cli_args=None):
         )
 
     elif args.cmd == 'init':
-        print('Initializing new extension')
+        print(
+            f'Initializing new extension {args.extension_type} '
+            f'"{args.extension_name}"'
+        )
+        nimporter_init(args.extension_type, args.extension_name)
 
     return 0
 

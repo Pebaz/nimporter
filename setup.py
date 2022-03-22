@@ -12,7 +12,8 @@ setup(
     packages=['nimporter'],
     install_requires=[
         'py-cpuinfo>=8.0.0',  # Auto-detect user architecture
-        'icecream>=2.1.2'  # Instrumentation
+        'icecream>=2.1.2',  # Instrumentation
+        'cookiecutter>=1.7.3'  # Project template
     ],
     entry_points={
         'console_scripts' : [
