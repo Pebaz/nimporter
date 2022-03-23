@@ -1,14 +1,12 @@
 import sys
 import shlex
-import shutil
-import pkg_resources
 from zipfile import ZipFile
-from tests import run_nimporter_clean, temporarily_install_nimporter
+from tests import temporarily_install_nimporter
 from nimporter.lib import *
 from nimporter.nexporter import *
 
 
-def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
+def test_sdist_all_targets_builds_correctly():
     "Assert all targets are listed"
 
     with temporarily_install_nimporter(), cd(Path('tests/data')):
@@ -57,7 +55,7 @@ def test_sdist_all_targets_builds_correctly(run_nimporter_clean):
                 )
 
 
-def test_bdist_wheel_all_targets_installs_correctly(run_nimporter_clean):
+def test_bdist_wheel_all_targets_installs_correctly():
     "Assert all items are correctly imported"
     try:
         with temporarily_install_nimporter(), cd(Path('tests/data')):
@@ -108,7 +106,7 @@ def test_bdist_wheel_all_targets_installs_correctly(run_nimporter_clean):
         )
 
 
-def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
+def test_sdist_all_targets_installs_correctly():
     "Assert all items are correctly imported"
     try:
         with temporarily_install_nimporter(), cd(Path('tests/data')):
@@ -159,7 +157,7 @@ def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
         )
 
 
-def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
+def test_setup_py_all_targets_installs_correctly():
     "After installing, ensure lib can be imported and can import itself."
     try:
         with temporarily_install_nimporter(), cd(Path('tests/data')):
