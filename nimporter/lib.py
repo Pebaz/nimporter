@@ -84,7 +84,7 @@ def find_extensions(path: Path) -> List[Path]:
     return nim_exts
 
 
-def get_import_path(path: Path, root: Path):
+def get_import_path(path: Path, root: Path) -> str:
     """
     Coerce proper import path using root path
 
@@ -179,7 +179,7 @@ def cd(path: Union[Path, str]) -> Iterator[Union[Path, str]]:
         os.chdir(cwd)
 
 
-def get_c_compiler_used_to_build_python():
+def get_c_compiler_used_to_build_python() -> str:
     "This func is included just to be a bit clearer as to its significance."
     return 'vcc' if 'MSC' in sys.version else 'gcc'
 
@@ -225,8 +225,8 @@ class NimporterException(Exception):
 class CompilationFailedException(NimporterException):
     def __init__(self, stderr):
         super().__init__(
-            f"Nim Compilation Failed. Rerun with NIMPORTER_INSTRUMENT for"
-            f" full Nim output: {stderr}"
+            f'Nim Compilation Failed. Rerun with NIMPORTER_INSTRUMENT for'
+            f' full Nim output: {stderr}'
         )
 
 

@@ -9,7 +9,7 @@ from nimporter.lib import *
 from distutils.extension import Extension
 
 
-def get_host_extension_bundle(root: Path):
+def get_host_extension_bundle(root: Path) -> List[Extension]:
     # NOTE(pbz): To be clear, it doesn't matter what C
     # compiler the user wishes to use because if the
     # C compiler used to compile Python and the C
@@ -42,7 +42,7 @@ def get_host_extension_bundle(root: Path):
     return ic(extensions)
 
 
-def get_sdist_extension_bundle(root: Path):
+def get_sdist_extension_bundle(root: Path) -> List[Extension]:
     """
     The goal of this function is to get every combination of platform,
     architecture, and compiler as it's own extension. The reason why is to make
@@ -89,9 +89,8 @@ def find_nim_std_lib() -> Optional[Path]:
         otherwise.
     """
     # If Nim is not installed there's nothing to be done
-    nimexe = shutil.which('nim')
-    if not nimexe:
-        return None
+    if not shutil.which('nim'):
+        return
 
     # Installed via choosenim_install Pypi package
     choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
@@ -155,7 +154,7 @@ def copy_headers(build_dir_relative: Path) -> Path:
     return nimbase_dest
 
 
-def is_run_from_python_setup_py_sdist():
+def is_run_from_python_setup_py_sdist() -> bool:
     """
     This is used to either bundle all possible Nim extensions compiled to C for
     every supported platform/architecture combo, or return just the Nim
@@ -208,7 +207,9 @@ def get_nim_extensions(
         return ic(get_host_extension_bundle(root))
 
 
-def iterate_target_triples(platforms: List[str]):
+def iterate_target_triples(
+    platforms: List[str]
+) -> Iterator[Tuple[str, str, str]]:
     for platform in PLATFORM_TABLE:
         if platform not in platforms:
             continue
@@ -287,12 +288,12 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
     That's a lot less characters!
     """
 
-    def is_valid_identifier(string):
+    def is_valid_identifier(string: str) -> bool:
         import re
         match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
         return match and len(match.string) == len(string)
 
-    def is_semver(string):
+    def is_semver(string: str) -> bool:
         try:
             lib_name, lib_version = string.rsplit('-', maxsplit=1)
             assert is_valid_identifier(lib_name)

@@ -159,17 +159,16 @@ def test_sdist_all_targets_installs_correctly(run_nimporter_clean):
         )
 
 
-
 def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
     "After installing, ensure lib can be imported and can import itself."
     try:
-        with cd(Path('tests/data')):
+        with temporarily_install_nimporter(), cd(Path('tests/data')):
             code, stdout, stderr = run_process(
                 shlex.split(f'{PYTHON} setup.py install'),
                 'NIMPORTER_INSTRUMENT' in os.environ
             )
 
-            assert code == 0
+            assert code == 0, f'{stdout}\n\n\n{stderr}'
 
         sys.modules.pop('ext_mod_basic', None)
         import ext_mod_basic
@@ -197,4 +196,3 @@ def test_setup_py_all_targets_installs_correctly(run_nimporter_clean):
             shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
-

@@ -12,49 +12,49 @@ def test_ext_mod_basic(run_nimporter_clean):
     assert ext_mod_basic.add(1, 2) == 3
 
 
-def test_ext_lib_basic():
+def test_ext_lib_basic(run_nimporter_clean):
     "Test building and importing a basic extension library works"
     sys.modules.pop('ext_lib_basic', None)
     import ext_lib_basic
     assert ext_lib_basic.add(1, 2) == 3
 
 
-def test_ext_mod_in_pack():
+def test_ext_mod_in_pack(run_nimporter_clean):
     "Test building and importing a nested extension module works"
     sys.modules.pop('pkg1.pkg2.ext_mod_in_pack', None)
     import pkg1.pkg2.ext_mod_in_pack
     assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
 
 
-def test_ext_lib_in_pack():
+def test_ext_lib_in_pack(run_nimporter_clean):
     "Test building and importing a nested extension library works"
     sys.modules.pop('pkg1.pkg2.ext_lib_in_pack', None)
     import pkg1.pkg2.ext_lib_in_pack
     assert pkg1.pkg2.ext_lib_in_pack.add(1, 2) == 3
 
 
-def test_cached_ext_mod_basic():
+def test_cached_ext_mod_basic(run_nimporter_clean):
     "Test importing a basic extension module uses cached artifact"
     sys.modules.pop('ext_mod_basic', None)
     import ext_mod_basic
     assert ext_mod_basic.add(1, 2) == 3
 
 
-def test_cached_ext_lib_basic():
+def test_cached_ext_lib_basic(run_nimporter_clean):
     "Test importing a basic extension library uses cached artifact"
     sys.modules.pop('ext_lib_basic', None)
     import ext_lib_basic
     assert ext_lib_basic.add(1, 2) == 3
 
 
-def test_excached_ext_mod_in_pack():
+def test_excached_ext_mod_in_pack(run_nimporter_clean):
     "Test importing a nested extension module uses cached artifact"
     sys.modules.pop('pkg1.pkg2.ext_mod_in_pack', None)
     import pkg1.pkg2.ext_mod_in_pack
     assert pkg1.pkg2.ext_mod_in_pack.add(1, 2) == 3
 
 
-def test_excached_ext_lib_in_pack():
+def test_excached_ext_lib_in_pack(run_nimporter_clean):
     "Test importing a nested extension library uses cached artifact"
     sys.modules.pop('pkg1.pkg2.ext_lib_in_pack', None)
     import pkg1.pkg2.ext_lib_in_pack

@@ -36,7 +36,7 @@ def compile_extensions_to_lib(root: Path) -> None:
         compile_extension_to_lib(extension_path)
 
 
-def write_hash(ext: ExtLib):
+def write_hash(ext: ExtLib) -> None:
     ext.hash_filename.parent.mkdir(parents=True, exist_ok=True)
     ext.hash_filename.write_bytes(hash_extension(ext.relative_path))
 
@@ -120,12 +120,12 @@ def validate_spec(spec: ModuleSpec) -> None:
         extension according to how Nimpy is designed to be used:
             https://github.com/yglukhov/nimpy
 
-        Second, make sure that the compiler used to compile the extension is the
-        same one used to compile Python. For instance, using Clang to compile a
-        Nim extension and importing it with an MSVC version of Python is not
-        supported. The reason is because of binary incompatibilities. Since
-        Nimporter was designed to bridge the Nim and Python communities, some
-        concessions had to be made and this comes along with limitations.
+        Second, make sure that the compiler used to compile the extension is
+        the same one used to compile Python. For instance, using Clang to
+        compile a Nim extension and importing it with an MSVC version of Python
+        is not supported. The reason is because of binary incompatibilities.
+        Since Nimporter was designed to bridge the Nim and Python communities,
+        some concessions had to be made and this comes along with limitations.
         Although it might be technically possible to use Clang + MSVC binaries
         together, it is unreliable and therefore not supported by Nimporter.
 
