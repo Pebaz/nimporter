@@ -12,7 +12,8 @@ import argparse
 import subprocess
 from pathlib import Path
 from cookiecutter.main import cookiecutter
-from nimporter.lib import EXT_DIR, find_extensions
+from nimporter.lib import *
+from nimporter.nimporter import *
 
 
 SETUPPY_TEMPLATE = f"""
@@ -102,6 +103,32 @@ def nimporter_init(extension_type: str, extension_name: str) -> None:
         raise ValueError(
             f'Extension is not one of [`mod`, `lib`], got: {extension_type}'
         )
+
+
+def nimporter_compile():
+    def current_time_ms():
+        return round(time.time() * 1000)
+
+    overall_start = current_time_ms()
+
+    nimporter_clean(Path())
+
+    for ext in find_extensions(Path()):
+        print(
+            f'Building Extension {"Lib" if ext.is_dir() else "Mod"}: '
+            f'{ext.name}'
+        )
+
+        start = current_time_ms()
+        module_path = ext if ext.is_file() else ext / f'{ext.name}.nim'
+        compile_extension_to_lib(ExtLib(module_path, Path(), ext.is_dir()))
+        print('  Completed in', current_time_ms() - start, 'ms')
+
+    print(
+        'Completed all in',
+        (current_time_ms() - overall_start) / 1000.0,
+        'seconds'
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -284,36 +311,37 @@ def main(cli_args=None):
                 subprocess.Popen(f'{pyexe} setup.py sdist'.split()).wait()
 
     elif args.cmd == 'compile':
-        clean()
+        nimporter_compile()
 
-        CTM = lambda: round(time.time() * 1000)
-        start = CTM()
-        extensions = Nimporter._find_extensions(pathlib.Path())
 
-        for extension in extensions:
-            is_lib = extension.is_dir()
+        # CTM = lambda: round(time.time() * 1000)
+        # start = CTM()
+        # extensions = Nimporter._find_extensions(pathlib.Path())
 
-            print(
-                f'Building Extension {"Lib" if is_lib else "Mod"}: '
-                f'{extension.name}'
-            )
+        # for extension in extensions:
+        #     is_lib = extension.is_dir()
 
-            NimCompiler.compile_nim_code(
-                extension.absolute(),
-                NimCompiler.build_artifact(extension.absolute()),
-                library=is_lib
-            )
+        #     print(
+        #         f'Building Extension {"Lib" if is_lib else "Mod"}: '
+        #         f'{extension.name}'
+        #     )
 
-            if is_lib:
-                Nimporter.update_hash(extension / (extension.name + '.nim'))
-            else:
-                Nimporter.update_hash(extension)
+        #     NimCompiler.compile_nim_code(
+        #         extension.absolute(),
+        #         NimCompiler.build_artifact(extension.absolute()),
+        #         library=is_lib
+        #     )
 
-        print('Done.')
-        print(
-            f'Built {len(extensions)} Extensions In '
-            f'{(CTM() - start) / 1000.0} secs'
-        )
+        #     if is_lib:
+        #         Nimporter.update_hash(extension / (extension.name + '.nim'))
+        #     else:
+        #         Nimporter.update_hash(extension)
+
+        # print('Done.')
+        # print(
+        #     f'Built {len(extensions)} Extensions In '
+        #     f'{(CTM() - start) / 1000.0} secs'
+        # )
 
     elif args.cmd == 'init':
         print(
