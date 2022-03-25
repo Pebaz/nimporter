@@ -13,10 +13,14 @@
 # Nimporter
 
 > *Directly import [Nim](<https://nim-lang.org/>) extensions for Python and
-seamlessly package them for distribution in 2 lines of code.*
+seamlessly package them for distribution in **1 line of code.***
 
 <p align="center">
     <img src=misc/Nimporter-Functionality.png>
+</p>
+
+<p align="center">
+    <img src=misc/Nimporter-Setup.py.png>
 </p>
 
 ## Possible Benefits
@@ -58,6 +62,174 @@ Nimporter can find the Nim standard library and install
 **End User Dependencies:**
 
 Users of Nimporter libraries only need Nimporter! 🎉
+
+## Getting Started
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+asdf
+
+## Features
+
+* Caching is supported for both Extension Modules & Extension Libraries.
+* Removes the `@s` thing that the Nim compiler does to get around the 260
+    character path length limit on Windows.
+
+## Usage
+
+Nimporter is a library that allows the seamless import & packaging of Nim
+extensions for Python built with [Nimpy](https://github.com/yglukhov/nimpy).
+Nimpy is a library that is used on the Nim side for iteroperability with
+Python. All Nimporter libraries rely on Nimpy in order to expose Nim functions
+to Python. Nimporter's role in this is to formalize a method of distributing
+Nimpy libraries to ease the burden on library maintainers and end users so that
+they do not have to even have knowledge of Nim in order to use the library.
+
+Nimpy is a complete library by itself. For information on how to integrate Nim
+and Python, look at the [Nimpy documentation](https://github.com/yglukhov/nimpy)
+as it will be the Nim day-to-day development experience. Nimporter's role comes
+into play when a library is ready to be distributed. **Nimporter handles the
+entire packaging for source and binary distributions in 1 line of code.**
+
+### Extension Modules & Extension Libraries
+
+Extension Modules are distinct from Extension Libraries. Nimporter (not Nimpy)
+makes a distinction here. However, it is of special note that distribution of
+either extension type is the same (`nimporter.get_nim_extensions()`).
+
+**Extension Libraries**
+
+Extension Libraries are entire Nim projects exposed as a single module from the
+perspective of Python. They are comprised of a single folder containing all
+code and configuration for the extension. *It is important to note that they
+are a concept formalized by the Nimporter project and must accept some
+limitations.*
+
+These limitations (and capabilities) are listed below:
+
+* ✔️ Can have external Nim dependencies: inside the Extension Library folder,
+    use a `<library name>.nimble` in order to depend upon other Nim libraries.
+
+* ✔️ Can be split up into any number of Nim modules: the Extension Library
+    folder can contain any desired inner folder structure.
+
+* ✔️ CLI switches used by Nim & the C compiler can be customized: this can be
+    useful but be cognizant about cross-platform compatibility. Remember, if
+    the C compiler used by Python is different than the one used by Nim, there
+    *will definitely without a doubt* be strange issues arising from this. Note
+    that choosing a different C compiler may result in the `setup.py` not being
+    able to compile the extension. Use a `<library name>.nim.cfg` for this use
+    case.
+
+* ❌ Must use folder structure known to Nimporter: the below folder structure
+    is generated when `nimporter init lib` is used:
+
+    ```
+    the_library_name/
+        the_library_name.nim  # Must be present
+        the_library_name.nim.cfg  # Must be present even if empty
+        the_library_name.nimble  # Must contain `requires "nimpy"`
+    ```
+**Extension Modules**
+
+Extension Modules are the simplest form of using Nimpy libraries with existing
+Python code. Once Nimporter is imported, Nimpy libraries can be directly
+imported like normal Python modules. However, there are a few restrictions on
+what is supported when importing a Nim module in this way. It is important to
+remember that Nim compiles to C and therefore could theoretically integrate
+with a build system that is extremely brittle. To completely solve this,
+Nimporter disallows certain use cases that are technically possible but would
+otherwise prevent widespread use of the resulting technology.
+
+Below are the restrictions present when importing a Nim Extension Module:
+
+* ❌ Cannot have any dependencies other than `Nimpy`: this is due to the fact
+    that Nimporter disallows multiple `*.nimble` files strewn about in a Python
+    project. Use an Extension Library for this use case.
+
+* ❌ Cannot import other Nim modules in same directory: this is because there
+    is no way to tell which files pertain to each extension and knowing this is
+    a prerequisite to packaging the extension up for distribution.
+    Additionally, Nimporter moves extensions to temporary directories during
+    compilation in order to control where the Nim compiler places the resultant
+    C sources.
+
+* ❌ Cannot customize Nim or C compiler switches: proliferating a Python
+    package with these extra files would be unsightly and it is possible to
+    have two different Nim modules with custom configurations collide in
+    awkward ways. If CLI configuration is required, use an Extension Library.
+
+* ❌ Cannot override the C compiler used to build the extension: Although this
+    practice is certainly and technically possible, it is unequivocally a bad
+    decision when integrating software originating from a different compilers.
+    If an expert user is in need of this capability, use an Extension Library.
+
+Although these restrictions limit the number of possible use cases for the
+integration of Nim & Python, portability, compatibility, and stability were
+chosen as the guiding principles for Nimporter.
+
+## Distribution
+
+There are a few ways to use Nimporter to integrate Nim & Python code:
+
+1. Library uses Nim code internally but exposes a Python API: this is the
+    reason why Nimporter was built. It was built to allow Python library
+    authors to use Nim to speed up their library.
+
+2. Application uses Nim code: this is very possible but it is recommended to
+    pull out the Nim code into a Python library that imports that Nim code in
+    order to take advantage of the amazing distribution features of Nimporter.
+    Having a separately-updatable library that the application imports greatly
+    streamlines development and reduces packaging difficulty (the Python
+    library dependency that imports Nim code behaves exactly like a pure-Python
+    dependency).
+
+3. Docker: this is a possible application of Nimporter, but it requires the use
+    of `nimporter compile` in order to let the Docker container not have to
+    contain a Nim & C compiler and to ensure that the builds are cached.
+
+## Computers Actually Exist
+
+Naturally, when integrating with native code, there are limitations to what is
+possible to accomplish in certain situations. On Windows, a DLL that has been
+loaded into a process cannot be deleted while it is in use. Additionally,
+Windows has a path length limit of 260 characters by default (and therefore
+relying on the user having disabled this limit in the system registry is not
+possible). This severely limits how deep a Nim extension can be placed into a
+Python package hierarchy. Furthermore, generously-named Nim extensions may fail
+to compile with a message that resembles:
+
+```
+failed to open compiler generated file: ''
+```
+
+> If this message occurs, it is due to the path length limit of 260 characters.
+Shorten the name of the Nim extension and make the package hierarchy shallower.
+More information about the 260 character path limit can be found
+[here](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd).
+
+
+
+
+
+
+
 
 ## About
 

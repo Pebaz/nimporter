@@ -168,6 +168,12 @@ def build_parser() -> argparse.ArgumentParser:
         help='The importable name of the extension module or library'
     )
 
+    # Compile command
+    subs.add_parser(
+        'compile',
+        help='Precompile all extensions exactly as if they were imported'
+    )
+
     return parser
 
 
