@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master, nimporter-v2.0.0rc ]  # Temporary change
+    branches: [ master ]
 
 jobs:
   test-all:
