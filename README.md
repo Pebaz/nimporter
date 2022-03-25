@@ -67,6 +67,7 @@ Users of Nimporter libraries only need Nimporter! 🎉
 
 * 🦔 [Nim For Python Programmers](https://github.com/nim-lang/Nim/wiki/Nim-for-Python-Programmers#table-of-contents)
 * 🦊 [Nimpy](https://github.com/yglukhov/nimpy)
+* 🔅 [Reference Project](https://github.com/Pebaz/nimporter/tree/master/tests/data)
 
 ## 🚶 Getting Started
 
@@ -330,10 +331,7 @@ NIMPORTER@nimpy-0.2.0@nimpy@py_utils.nim.c
 
 Much shorter! 🚀
 
-
-
-
-## Nimporter Command Line Interface
+## 🧑‍💻 Nimporter Command Line Interface
 
 Nimporter provides a CLI that you can use to easily clean all cached build and
 hash files from your project recursively. This can be very useful for debugging
@@ -342,27 +340,8 @@ situations arising from stale builds.
 Usage example:
 
 ```bash
-# Recursively removes all hashes and cached builds
+# Removes all __pycache__ directories with .hash, .pyd/.so, and .pyc files
 $ nimporter clean
-```
-
-Additionally, the CLI can also be used like a compiler to produce a binary
-extension (`.pyd` and `.so`) from a given Nim file.
-
-```bash
-# Stores build in __pycache__
-# Can be imported by first importing nimporter
-$ nimporter build file.nim
-
-# Stores build in current dir
-$ nimporter build file.nim --dest .
-
-# Same 2 examples but for Nim libraries
-$ nimporter build mylib
-$ nimporter build mylib --dest .
-
-# Although you can specify a Nim library's source file, please don't
-$ nimporter build mylib/mylib.nim
 ```
 
 The Nimporter CLI can also precompile all extensions within a project without
@@ -375,48 +354,44 @@ within Docker containers.
 $ nimporter compile
 ```
 
-Finally, the CLI has provisions for quickly bundling your project into a source
-or binary distribution:
+Finally, the CLI has provisions for listing out the extensions that it can
+auto-detect. This is useful to identify if an extension folder structure is
+properly setup.
 
 ```bash
-# Bundles your code into a wheel (look in dist/)
-$ nimporter bundle bin
-
-# Bundles your code into a source archive (look in dist/)
-$ nimporter bundle src
+# List all extensions that Nimporter will find when handling imports
+$ nimporter list
 ```
 
-If you do not have a `setup.py` in your current directory, the CLI will generate
-one for you but you will have to edit it to make sure that all of your code is
-included in the resulting package. You can look
-[here](https://github.com/navdeep-G/setup.py) for an excellent tutorial on how
-to use `setup.py`.
+## Usage with Docker
 
-## Code Quality
+Nimporter can easily be used within a Docker container. To prevent the need for
+a Nim compiler toolchain to be installed into the container to run Nim code,
+the extensions can be precompiled and copied into the container. This process
+is roughly as follows:
 
-There are ***44 unit tests*** and ***5 integration tests*** to make sure that
-Nimporter performs as advertised.
+1. Create a project that uses Python and Nim
+2. Run `nimporter compile` to recursively-compile all extensions in the project
+3. Ensure that in your Dockerfile that the `__pycache__` directories are
+   included as they will contain the Nim shared objects as well as the
+   Nimporter hash files to prevent a recompilation (which would fail without a
+   Nim & C compiler installed in the container).
 
-In addition, Nimporter has ***94% code coverage*** so a host of bugs have already been
-caught and dealt with in a manner befitting their wretched existence.
 
-Lastly, it has been tested and fully supported on these platforms:
 
-* **Windows 10**
-* **MacOS Mojave**
-* **Linux**
 
-> Just for fun, I got out my Windows laptop, Mac, and SSHed into a Linux box on
-AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
 
-Nimporter likely works on a bunch of other platforms but I cannot justify the
-time required to test them at this point.
 
-### Running The Tests
 
-To run these on your local machine, you will need to install a Nim compiler.
 
-This example will assume you are cloning the GitHub reposotory.
+
+
+
+
+## Running The Tests
+
+To run Nimporter's test suite on your local machine, you will need to install a
+Nim compiler. This example will assume you are cloning the GitHub repository.
 
 ```bash
 $ git clone https://github.com/Pebaz/Nimporter
@@ -538,29 +513,6 @@ files within the `tests/` directory.
 
 
 
-### Usage with Docker
-
-Nimporter can easily be used within a Docker container. To prevent the need for
-a Nim compiler toolchain to be installed into the container to run Nim code, you
-can pre-compile all of your extensions and copy the resulting artifacts into the
-container. This process is roughly as follows:
-
-1. Create a project that uses Python and Nim
-2. Run `nimporter compile` to recursively-compile all extensions in the project
-3. Ensure that in your Dockerfile that the `__pycache__` directories are
-   included as they will contain the Nim shared objects as well as the Nimporter
-   hash files to prevent a recompilation.
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -626,11 +578,14 @@ tests. This project should be considered "done" and will receive no further
 enhancements except for bug fixes and patches. You can submit a bug report on
 Nimporter's [GitHub Issues](https://github.com/Pebaz/nimporter/issues) page.
 
-## Contributing
+## 👷 Contributing
 
-Although I would not seek to add any new features to Nimporter, there may exist
-certain modifications that would enhance the effectiveness of Nimporter's core
-features. Pull requests are welcome, especially for fixing bugs.
+[Pull requests](https://github.com/Pebaz/nimporter/pulls) are welcome,
+especially for fixing bugs! 😁
+
+Feel free to [open an issue](https://github.com/Pebaz/nimporter/issues) if
+something seems to be broken but please look through the README first if time
+allows.
 
 ## Special Thanks
 
@@ -638,7 +593,7 @@ Nimporter would not be possible without
 [Nimpy](https://github.com/yglukhov/nimpy). Thank you
 [Yuriy Glukhov](https://github.com/yglukhov) for making this project possible!
 
-## Stargazers Over Time
+## 🌠 Stargazers Over Time
 
 [![Stargazers Over Time](https://starchart.cc/Pebaz/nimporter.svg)](https://starchart.cc/Pebaz/nimporter)
 
