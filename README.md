@@ -86,6 +86,19 @@ that was designed to use each of Nimporter's features.
 * 🦊 [Nimpy](https://github.com/yglukhov/nimpy)
 * 🔅 [Reference Project](https://github.com/Pebaz/nimporter/tree/master/tests/data)
 
+Additionally, the
+[Nimpy tests folder](https://github.com/yglukhov/nimpy/tree/master/tests)
+contains code examples on these topics:
+
+* Passing/Returning None, booleans, integers, floats, strings, lists, tuples, dictionaries, JSON, and objects.
+* Defining/Raising Python exceptions from Nim.
+* Yielding values back to Python using iterators in Nim.
+* Exposing Nim functions with custom names.
+* Exposing Nim extension modules with customized names and docstrings.
+* Using Python builtin functions in Nim.
+* Using passed Python objects and accessing methods and fields.
+* Passing keyword arguments to a Python function.
+
 ## 📋 Features
 
 * Directly import Nim Extension Modules & Extension Libraries using Nimpy
