@@ -8,12 +8,12 @@ on:
 
 jobs:
 
-  # ----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
   test-all:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: false  # <- Core value-add. See what platforms fail and why
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         python-version: ['3.10', 3.9, 3.8, 3.7]
@@ -37,6 +37,5 @@ jobs:
           python -m pip install setuptools wheel
           python -m pip install .
           python -m pip install -r requirements_dev.txt
-
       - name: Test
         run: pytest --cov=. tests

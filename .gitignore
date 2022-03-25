@@ -1,3 +1,9 @@
+# Nimporter
+nim-extensions/
+
+# VS Code
+.vscode/
+
 # MacOS
 *.DS_STORE
 
