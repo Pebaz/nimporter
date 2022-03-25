@@ -3,41 +3,51 @@
     <img src=misc/nimporter-logo.svg>
 </p>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-![License](https://img.shields.io/github/license/Pebaz/Nimporter)
-![Version](https://img.shields.io/pypi/v/nimporter)
-![Downloads each Month](https://img.shields.io/pypi/dm/Nimporter)
-![Wheel Supported](https://img.shields.io/pypi/wheel/Nimporter)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![License](https://img.shields.io/github/license/Pebaz/nimporter?color=F6B5A4)
+![Latest Release](https://img.shields.io/github/v/release/Pebaz/nimporter?sort=semver&color=EB7590)
+![Lines of Code](https://img.shields.io/tokei/lines/github/Pebaz/Nimporter?label=lines%20of%20code&color=C8488A)
+![Downloads each Month](https://img.shields.io/pypi/dm/Nimporter?label=pypi%20downloads&color=872E93)
+![GitHub Repository Star Count](https://img.shields.io/github/stars/Pebaz/Nimporter?label=github%20stars&color=3A1353)
+![GitHub Sponsor Count](https://img.shields.io/github/sponsors/Pebaz?label=github%20sponsors&color=581D7F)
 
 # Nimporter
 
-Directly import [Nim](<https://nim-lang.org/>) extensions for Python and seamlessly package them for distribution in 2 lines of code.
+*Directly import [Nim](<https://nim-lang.org/>) extensions for Python and
+seamlessly package them for distribution in 2 lines of code.*
 
 ## What is Nimporter
 
 > With Nimporter, you can import Nim source code files *as if they
-were Python modules by literally using `import` syntax*. For packaging and distribution, Nimporter auto-discovers, compiles, and packages all extensions for you with just a single line of code.
+were Python modules by literally using `import` syntax*. For packaging and
+distribution, Nimporter auto-discovers, compiles, and packages all extensions
+for you with just a single line of code.
+
+<p align="center">
+    <img src=misc/Nimporter-Functionality.png>
+</p>
 
 ## Possible Benefits
 
- * Performance: Nim compiles to C
- * Packaging and distribution is completely taken care of
- # Library users can `pip install` projects using Nimporter which doesn't require the Nim compiler as a dependency
- * Reduce cloud computing costs without writing C
- * Leverage both language's ecosystems: [Python](https://pypi.org/) for breadth,
- [Nim](https://nimble.directory/) for performance.
- * Seamless integration with existing Nim code by using the
-   [Nimpy](https://github.com/yglukhov/nimpy) library.
- * Very low effort to create high-performance Python extensions using Nim.
- * 100% transparent to end users (doesn't require Nim compiler).
+* **Performance**: Nim compiles to C
+* **Distribution**: Packaging Nimporter libraries is the primary use case
+* **Invisible**: End users do not need to install Nim for source or binary
+distributions
+* **Ecosystem**: Leverage [Python](https://pypi.org/) libraries for breadth and
+    [Nim](https://nimble.directory/) libraries for performance.
+* **Seamless**: Integration with existing Nim code uses the
+    [Nimpy](https://github.com/yglukhov/nimpy) library.
 
 ## Installation
 
 ```bash
+# 🐍 From Pypi:
 $ pip install nimporter
+
+# ⚙️ From GitHub:
+$ pip install git+https://github.com/Pebaz/Nimporter
 ```
 
-Dependencies:
+Library Author Dependencies:
 
  1. [Nim Compiler](<https://nim-lang.org/install.html>) (for compiling Nim
  source files)
@@ -50,6 +60,10 @@ Nimporter can work seamlessly when Nim is installed via
 or manually. No additional configuration is necessary once installed since
 Nimporter can find the Nim standard library and install
 [Nimpy library](https://github.com/yglukhov/nimpy) if Nimble is on your path.
+
+End User Dependencies:
+
+Users of Nimporter libraries only need Nimporter! 🎉
 
 ## About
 
