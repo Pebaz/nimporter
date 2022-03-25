@@ -12,8 +12,6 @@
 
 # Nimporter
 
-## What is Nimporter
-
 > *Directly import [Nim](<https://nim-lang.org/>) extensions for Python and
 seamlessly package them for distribution in 2 lines of code.*
 
