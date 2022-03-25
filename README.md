@@ -377,17 +377,6 @@ is roughly as follows:
    Nimporter hash files to prevent a recompilation (which would fail without a
    Nim & C compiler installed in the container).
 
-
-
-
-
-
-
-
-
-
-
-
 ## Running The Tests
 
 To run Nimporter's test suite on your local machine, you will need to install a
@@ -401,122 +390,6 @@ $ pip install .  # Nimporter is needed for the integration tests
 $ pytest --cov=. --cov-report=html tests
 ```
 
-
-
-## About
-
-Nimporter provides an official way to develop applications and libraries that
-make use of Nim code for achieving higher performance.
-
-It does this by providing a way to directly import Nim code and have it be
-compiled at runtime. However, unlike Cython, this will not proliferate your
-development environment and require adding bunches of exceptions to your
-`.gitignore` file.
-
-All artifacts are stored in their respective `__pycache__` directories. Builds
-are cached so that subsequent imports do not trigger a rebuild.
-
-Nimporter allows you to treat Nim files exactly like Python modules. This means
-that namespacing is maintained for package heirarchies.
-
-Here is a quick example of how to directly import Nim code:
-
-**nim_math.nim**
-
-```nim
-import nimpy
-
-proc add(a: int, b: int): int {.exportpy.} =
-    return a + b
-```
-
-**Python file in same directory**
-
-```python
-# Nimporter is needed prior to importing any Nim code
-import nimporter, nim_math
-
-print(nim_math.add(2, 4))  # 6
-```
-
-Does Nimporter support single-file Nim modules only? No, Nimporter allows you to
-treat an entire Nim project as a single module. The project must contain a
-`.nimble` file that is used to build the project into a single library. Since
-`.nimble` files are supported, this means that they can rely on Nim dependencies
-and still be imported and compiled at runtime.
-
-Have a complex build requirement that would normally entail tweaking Nim
-compiler switches for each supported platform? Nimporter fully supports adding
-`*.nim.cfg` or `*.nims` files for libraries that need to customize the CLI flags for any
-platform seamlessly for both developing and bundling extensions.
-
-Since Nimporter relies on [Nimpy](https://github.com/yglukhov/nimpy) for Nim <->
-Python interaction, it is a required dependency during development for every
-module and library. Nimporter ensures that this is installed prior to every
-compilation so that users do not have a separate `nimble install nimpy` step.
-
-Additionally, for users who do not have access or are not interested in
-installing a Nim compiler, Nimporter makes distribution effortless.
-
-After creating an entire project with many Python and Nim modules/libraries in a
-deeply-nested package heirarchy, Nimporter allows you to bundle all of this into
-a single wheel just as you would with Python.
-
-To do this, you need to add a single line to your `setup.py`:
-
-```python
-from setuptools import setup
-import nimporter
-
-setup(
-    ...,
-
-    # This is all the effort required to bundle all Nim modules/libraries
-    ext_modules=nimporter.build_nim_extensions()
-)
-```
-
-> Please note that the official distribution mechanism only requires a single
-line of code.
-
-Additionally, all namespaces are preserved in the built extensions and end-users
-can merely install the resulting wheel containing the binary artifacts without
-compiling on the target machine.
-
-In summary, Nimporter is a library that allows you to use Nim along with Python
-effortlessly by exposing two very simple APIs:
-
-```python
-import nimporter  # Required prior to any Nim module import
-
-# 1. Import Nim code directly
-import my_nim_module
-
-# 2. Find, build, and bundle all Nim extensions automatically
-nimporter.build_nim_extensions()
-```
-
-*How much simpler could it possibly get?*
-
-## Documentation
-
-For tutorials, advanced usage, and more, head over to the
-[Wiki](<https://github.com/Pebaz/nimporter/wiki>).
-
-Generated documentation can be found
-[here](https://pebaz.github.io/nimporter/index.html).
-
-For a bunch of little examples, look in the `examples/` directory. For more
-rigorous examples testing every feature of Nimporter, you can take a look at the
-files within the `tests/` directory.
-
-
-
-
-
-
-
-
 ## How Does Nimporter Work?
 
 Nimporter provides essentially two capabilities:
@@ -526,57 +399,50 @@ Nimporter provides essentially two capabilities:
 
 The way it accomplishes the ability to import Nim code is by adding two custom
 importers to the Python import machinery. This is why it is required to import
-Nimporter before importing any Nim code because the Python import machinery must
-be amended with the custom importers.
+Nimporter before importing any Nim code because the Python import machinery
+must be amended with the custom importers.
 
 The first one is for the ability to search and import Nim modules. When a Nim
 module is found, Nimporter first looks in the `__pycache__` directory to see if
-there is already a built version of the module. If there is not, it builds a new
-one and stores it in the `__pycache__` directory.
+there is already a built version of the module. If there is not, it builds a
+new one and stores it in the `__pycache__` directory.
 
-If one is found, it could be stale meaning the Nim file could have been modified
-since it was built. To keep track of this, a hash of the source file is also
-kept in the `__pycache__` directory and is consulted whenever there is a
-possibility that a stale build could be imported.
+If one is found, it could be stale, meaning the Nim file could have been
+modified since it was built. To keep track of this, a hash of the source file
+is also kept in the `__pycache__` directory and is consulted whenever there is
+a possibility that a stale build could be imported.
 
 When a Nim module and a Python module have the same name and reside in the same
 folder, the Python module is given precedence. *Please don't do this.*
 
-The second custom importer has the exact same purpose of the first one except it
-is used to import Nim extension libraries. A library is any folder within a
-Python project that contains a `<lib name>.nim` and a `<lib name>.nimble` file.
+The second custom importer has the exact same purpose of the first one except
+it is used to import Nim extension libraries. A library is any folder within a
+Python project that contains a `<lib name>.nim`, a `<lib name>.nimble`, and a
+`<lib name>.nim.cfg`.
 
-These files mark that the folder should be treated as one unit. It also makes it
-so that Nimble dependencies can be installed.
+These files mark that the folder should be treated as one unit. It also makes
+it so that Nimble dependencies can be installed.
 
-As for the second capability, Nimporter helps you bundle and distribute Nim code
-as part of a binary distribution extremely easily.
+As for the second capability, Nimporter helps you bundle and distribute Nim
+code as part of a source or binary distribution extremely easily.
 
-The way it works is by iterating through your entire project and identifying any
-Nim module and Nim library that it finds and compiling them to C using a feature
-of Nim that specifically supports this.
+The way it works is by iterating through your entire project and identifying
+any Nim module and Nim library that it finds and compiling them to C using a
+feature of Nim that specifically supports this.
 
-Why compile to C? Because Python already has extensive infrastructure to support
-the compilation and distribution of C extensions.
+Why compile to C? Because Python already has extensive infrastructure to
+support the compilation and distribution of C extensions.
 
 Once each Nim module and library is compiled to C, Python deals with them the
 exact same way as a typical C extension. These extensions are then bundled into
 the resulting binary distribution and can be uploaded to PyPi or similar.
 
-Are source distributions supported? Yes and no. They are officially supported
-for bundling the Nim source files themselves into the archive, but not the C
-source files. Although the C source files would be a better alternative, the C
-files generated by Nim are platform specific, so they would only be of use to
-users on the same exact platform and architecture. This is why the official way
-of distributing Nimporter libraries is by creating binary wheels.
-
-## State Of The Project
-
-I have implemented all of the features that I wanted to add at this time. I made
-sure to validate the effectiveness of each feature with the unit and integration
-tests. This project should be considered "done" and will receive no further
-enhancements except for bug fixes and patches. You can submit a bug report on
-Nimporter's [GitHub Issues](https://github.com/Pebaz/nimporter/issues) page.
+For source distributions, Nimporter instructs the Nim compiler to output a copy
+of the generated C code for each platform, architecture, and C compiler that is
+supported by the library author (some libraries only make sense to work on
+Windows for example like DirectX). It then bundles all of these as individual C
+extensions into the source distribution. At installation time, Nimporter then
+selects the C extension that matches the end-user's host machine target triple.
 
 ## 👷 Contributing
 
