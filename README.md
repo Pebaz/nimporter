@@ -12,15 +12,10 @@
 
 # Nimporter
 
-*Directly import [Nim](<https://nim-lang.org/>) extensions for Python and
-seamlessly package them for distribution in 2 lines of code.*
-
 ## What is Nimporter
 
-> With Nimporter, you can import Nim source code files *as if they
-were Python modules by literally using `import` syntax*. For packaging and
-distribution, Nimporter auto-discovers, compiles, and packages all extensions
-for you with just a single line of code.
+> *Directly import [Nim](<https://nim-lang.org/>) extensions for Python and
+seamlessly package them for distribution in 2 lines of code.*
 
 <p align="center">
     <img src=misc/Nimporter-Functionality.png>
@@ -28,13 +23,13 @@ for you with just a single line of code.
 
 ## Possible Benefits
 
-* **Performance**: Nim compiles to C
-* **Distribution**: Packaging Nimporter libraries is the primary use case
-* **Invisible**: End users do not need to install Nim for source or binary
+* **🐆 Performance**: Nim compiles to C
+* **🚚 Distribution**: Packaging Nimporter libraries is the primary use case
+* **📦 Invisible**: End users do not need to install Nim for source or binary
 distributions
-* **Ecosystem**: Leverage [Python](https://pypi.org/) libraries for breadth and
+* **♻️ Ecosystem**: Leverage [Python](https://pypi.org/) libraries for breadth and
     [Nim](https://nimble.directory/) libraries for performance.
-* **Seamless**: Integration with existing Nim code uses the
+* **🧣 Seamless**: Integration with existing Nim code uses the
     [Nimpy](https://github.com/yglukhov/nimpy) library.
 
 ## Installation
@@ -47,13 +42,14 @@ $ pip install nimporter
 $ pip install git+https://github.com/Pebaz/Nimporter
 ```
 
-Library Author Dependencies:
+**Library Author Dependencies:**
 
  1. [Nim Compiler](<https://nim-lang.org/install.html>) (for compiling Nim
- source files)
- 2. [Nimpy library](https://github.com/yglukhov/nimpy) (Installed automatically)
+    source files)
+ 2. [Nimpy library](https://github.com/yglukhov/nimpy) (installed automatically
+    if `nimporter init lib` is used)
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (distributed
- libraries will need access to Nimporter).
+    libraries will need access to Nimporter).
 
 Nimporter can work seamlessly when Nim is installed via
 [Choosenim](https://nim-lang.org/install_unix.html#installation-using-choosenim)
@@ -61,7 +57,7 @@ or manually. No additional configuration is necessary once installed since
 Nimporter can find the Nim standard library and install
 [Nimpy library](https://github.com/yglukhov/nimpy) if Nimble is on your path.
 
-End User Dependencies:
+**End User Dependencies:**
 
 Users of Nimporter libraries only need Nimporter! 🎉
 
