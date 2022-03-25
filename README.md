@@ -23,7 +23,7 @@ seamlessly package them for distribution in **1 line of code.***
     <img src=misc/Nimporter-Setup.py.png>
 </p>
 
-## Possible Benefits
+## 🍱 Possible Benefits
 
 * **🐆 Performance**: Nim compiles to C
 * **🚚 Distribution**: Packaging Nimporter libraries is the primary use case
@@ -34,7 +34,7 @@ distributions
 * **🧣 Seamless**: Integration with existing Nim code uses the
     [Nimpy](https://github.com/yglukhov/nimpy) library.
 
-## Installation
+## 🐣 Installation
 
 ```bash
 # 🐍 From Pypi:
@@ -63,7 +63,12 @@ Nimporter can find the Nim standard library and install
 
 Users of Nimporter libraries only need Nimporter! 🎉
 
-## Getting Started
+## 📚 Documentation
+
+* 🦔 [Nim For Python Programmers](https://github.com/nim-lang/Nim/wiki/Nim-for-Python-Programmers#table-of-contents)
+* 🦊 [Nimpy](https://github.com/yglukhov/nimpy)
+
+## 🚶 Getting Started
 
 asdf
 
@@ -85,13 +90,13 @@ asdf
 
 asdf
 
-## Features
+## 📋 Features
 
 * Caching is supported for both Extension Modules & Extension Libraries.
 * Removes the `@s` thing that the Nim compiler does to get around the 260
     character path length limit on Windows.
 
-## Usage
+## 🛠️ Usage
 
 Nimporter is a library that allows the seamless import & packaging of Nim
 extensions for Python built with [Nimpy](https://github.com/yglukhov/nimpy).
@@ -107,13 +112,17 @@ as it will be the Nim day-to-day development experience. Nimporter's role comes
 into play when a library is ready to be distributed. **Nimporter handles the
 entire packaging for source and binary distributions in 1 line of code.**
 
-### Extension Modules & Extension Libraries
+### 🎻 Instrumentation
+
+It is
+
+### 🦓 Extension Modules & Extension Libraries
 
 Extension Modules are distinct from Extension Libraries. Nimporter (not Nimpy)
 makes a distinction here. However, it is of special note that distribution of
 either extension type is the same (`nimporter.get_nim_extensions()`).
 
-**Extension Libraries**
+**🦄 Extension Libraries**
 
 Extension Libraries are entire Nim projects exposed as a single module from the
 perspective of Python. They are comprised of a single folder containing all
@@ -146,7 +155,7 @@ These limitations (and capabilities) are listed below:
         the_library_name.nim.cfg  # Must be present even if empty
         the_library_name.nimble  # Must contain `requires "nimpy"`
     ```
-**Extension Modules**
+**🐴 Extension Modules**
 
 Extension Modules are the simplest form of using Nimpy libraries with existing
 Python code. Once Nimporter is imported, Nimpy libraries can be directly
@@ -222,7 +231,69 @@ This might sound complicated but Nimporter accomplishes this by requesting that
 the `setup.py` contain 1 line of code to find, compile, and bundle all of the C
 files necessary to be portable across platform, architecture, and C compilers.
 
-## Computers Actually Exist
+### 📧 Source Distributions
+
+To create a source distribution, it is assumed that the `setup.py` contains a
+dependency on Nimporter as well as a call to `get_nim_extensions()`.
+
+```python
+# Example setup.py
+
+import setuptools
+from nimporter import get_nim_extensions, WINDOWS, MACOS, LINUX
+
+setuptools.setup(
+    name='calculatorlib',
+  	install_requires=['nimporter']
+    py_modules=['calculatorlib.py'],
+    ext_modules=get_nim_extensions(platforms=[WINDOWS, LINUX, MACOS])
+)
+```
+
+The below command will create a source distribution in the `dist/` directory
+and can be easily uploaded to PyPI.
+
+```bash
+$ python setup.py sdist  # Contains entire matrix of supported platforms, etc.
+```
+
+> Note: when an end-user tries to install a Nimporter library from GitHub
+    directly, it is required that the Nim compiler and a compatible C compiler
+    is installed because `setup.py install` is invoked which is equivalent to a
+    binary distribution but does require the Nim & C compilers to be installed.
+
+### 💿 Binary Distributions
+
+Binary distributions use the same `setup.py` structure mentioned above.
+
+The below command will create a Python Wheel in the `dist/` directory that can
+be easily uploaded to PyPI.
+
+```bash
+$ python setup.py bdist_wheel  # Contains a single supported platform, etc.
+```
+
+> Note: A Nim compiler and C compiler is required when creating a binary
+    distribution.
+
+> Special note for Linux users: Unfortunately, PyPi will not allow you to
+    upload just any Linux wheel. There is a special compilation process that
+    can be explained [here](https://github.com/pypa/manylinux). Interestingly
+    enough, I got around this by simply renaming the resulting Linux build
+    according to the **manylinux1** naming convention. You can see my solution
+    in the `examples/github_actions_template.yml` file for the `build-linux`
+    job. I expect that there could be many downsides of using this hack but it
+    worked for me on 2 different Linux platforms.
+
+### ⭕ Publish Build Artifacts to PyPi Automatically
+
+For a dead-simple way to publish Windows, MacOS, and Linux packages to PyPi
+automatically, use the `github_actions_template.yml` template found in the
+`examples/` directory. This template integrates with your repository's GitHub
+Actions runner to build, package, and deploy your library on Windows, MacOS, and
+Linux automatically when you create a new "Release" is created.
+
+## 💽 Computer Hardware Actually Exists
 
 Naturally, when integrating with native code, there are limitations to what is
 possible to accomplish in certain situations. On Windows, a DLL that has been
@@ -238,14 +309,122 @@ failed to open compiler generated file: ''
 ```
 
 > If this message occurs, it is due to the path length limit of 260 characters.
-Shorten the name of the Nim extension and make the package hierarchy shallower.
-More information about the 260 character path limit can be found
-[here](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd).
+    Shorten the name of the Nim extension and make the package hierarchy
+    shallower. More information about the 260 character path limit can be found
+    [here](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=cmd).
+
+Nimporter comes with a defense against this behavior by automatically renaming
+the generated C sources to not contain the `@m` and `@s` symbols that
+proliferate the filename and soak up most of the 260 character budget. For
+instance, the filename:
+
+```
+@m..@s..@s..@s..@s..@s..@sUsers@s<USERNAME>@s.nimble@spkgs@snimpy-0.2.0@snimpy@spy_utils.nim.c
+```
+
+Gets turned into:
+
+```
+NIMPORTER@nimpy-0.2.0@nimpy@py_utils.nim.c
+```
+
+Much shorter! 🚀
 
 
 
 
+## Nimporter Command Line Interface
 
+Nimporter provides a CLI that you can use to easily clean all cached build and
+hash files from your project recursively. This can be very useful for debugging
+situations arising from stale builds.
+
+Usage example:
+
+```bash
+# Recursively removes all hashes and cached builds
+$ nimporter clean
+```
+
+Additionally, the CLI can also be used like a compiler to produce a binary
+extension (`.pyd` and `.so`) from a given Nim file.
+
+```bash
+# Stores build in __pycache__
+# Can be imported by first importing nimporter
+$ nimporter build file.nim
+
+# Stores build in current dir
+$ nimporter build file.nim --dest .
+
+# Same 2 examples but for Nim libraries
+$ nimporter build mylib
+$ nimporter build mylib --dest .
+
+# Although you can specify a Nim library's source file, please don't
+$ nimporter build mylib/mylib.nim
+```
+
+The Nimporter CLI can also precompile all extensions within a project without
+needing to run the project. This is useful in situations where you do not want
+to package your application using a `setup.py` (such as a zip file) or for use
+within Docker containers.
+
+```bash
+# Recursively compile all Nim extension modules and libraries:
+$ nimporter compile
+```
+
+Finally, the CLI has provisions for quickly bundling your project into a source
+or binary distribution:
+
+```bash
+# Bundles your code into a wheel (look in dist/)
+$ nimporter bundle bin
+
+# Bundles your code into a source archive (look in dist/)
+$ nimporter bundle src
+```
+
+If you do not have a `setup.py` in your current directory, the CLI will generate
+one for you but you will have to edit it to make sure that all of your code is
+included in the resulting package. You can look
+[here](https://github.com/navdeep-G/setup.py) for an excellent tutorial on how
+to use `setup.py`.
+
+## Code Quality
+
+There are ***44 unit tests*** and ***5 integration tests*** to make sure that
+Nimporter performs as advertised.
+
+In addition, Nimporter has ***94% code coverage*** so a host of bugs have already been
+caught and dealt with in a manner befitting their wretched existence.
+
+Lastly, it has been tested and fully supported on these platforms:
+
+* **Windows 10**
+* **MacOS Mojave**
+* **Linux**
+
+> Just for fun, I got out my Windows laptop, Mac, and SSHed into a Linux box on
+AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
+
+Nimporter likely works on a bunch of other platforms but I cannot justify the
+time required to test them at this point.
+
+### Running The Tests
+
+To run these on your local machine, you will need to install a Nim compiler.
+
+This example will assume you are cloning the GitHub reposotory.
+
+```bash
+$ git clone https://github.com/Pebaz/Nimporter
+$ cd Nimporter
+$ pip install -r requirements_dev.txt
+$ pip install .  # Nimporter is needed for the integration tests
+$ pytest --cov=. --cov-report=html tests
+```
 
 
 
@@ -356,214 +535,8 @@ For a bunch of little examples, look in the `examples/` directory. For more
 rigorous examples testing every feature of Nimporter, you can take a look at the
 files within the `tests/` directory.
 
-## Suggested Project Structure
 
-Although there are lots of ways that Nimporter can integrate into new and
-existing applications, here is how to reduce issues arising from unstructured
-usage:
 
-```bash
-Project/
-    # Not required if you use `nimporter compile` but highly recommended
-    setup.py
-    main_package_name/
-        some_file.py
-        calculator.nim  # Directly imported as if it was written in Python
-        some_python_package/
-            something1.py
-            something2.py
-        # some_nim_library is used as a single Python module
-        # Can be directly imported but supports dependencies and custom switches
-        some_nim_library/  # Allows the use of .nim.cfg, .nims and .nimble
-            some_nim_library.nimble  # Dependency info
-            some_nim_file1.nim
-            some_nim_file2.nim
-        other_python_files.py
-        other_nim_files.nim
-        # Python and Nim code can coexist right next to each other
-```
-
-It is not recommended to split your Nim code and your Python code. The entire
-point of Nimporter was to allow close cooperation between these two languages.
-
-> The suggested (not imposed) project structure is to place a lone Nim file
-within a Python package. If your Nim file requires any other dependencies other
-than `nimpy`, you *must* place your Nim file into a folder of the same name with
-a Nimble file of the same name with the dependencies listed out.
-
-**To recap**
-
-```bash
-Project/
-    (setup.py)
-    main_package_name/
-        some_file.py
-        nim_ext_with_no_dependencies.nim
-        some_other_file.py
-        nim_ext_requiring_dependencies/
-            # List your dependencies here
-            nim_ext_requiring_dependencies.nimble
-            # Must be named the same as the folder
-            nim_ext_requiring_dependencies.nim
-            # Can be used to customize Nim compiler switches per platform
-            nim_ext_requiring_dependencies.nim.cfg
-            # You can have `nim_ext_requiring_dependencies.nim` import other
-            # Nim code as well
-            other_necessary_nim_files.nim
-```
-
-For several examples of how to structure a project, look in the `tests/` folder.
-
-## Compiler Switches In Pure Python
-
-For many projects, it is convenient to set default Nim compiler switches from
-the Python module importing the Nim extension. An example of this is below:
-
-```python
-import sys
-import nimporter
-
-if sys.platform == 'win32':
-    nimporter.NimCompiler.NIM_CLI_ARGS = [...]
-else:
-    nimporter.NimCompiler.NIM_CLI_ARGS = [...]
-
-import the_extension_module
-```
-
-By accessing `nimporter.NimCompiler.NIM_CLI_ARGS` directly, you can customize
-switches prior to importing the extension module. Please note that the switches
-will be used for all extension modules since Python will cache the import of
-Nimporter and `NimCompiler.NIM_CLI_ARGS` is a static class field.
-
-## Compiler Switches using `*.nim.cfg` or `*.nims`
-
----
-**DEPRECATION NOTICE**
-
-The use of the file `switches.py` for specifying compiler flags has been deprecated in favour of
-`*.nim.cfg` or `*.nims` configuration files.
-
----
-
-For Nim extension libraries only (a folder, nimble file, and Nim file of the
-same name), you can place a file called `*.nim.cfg` or `*.nims` to
-customize what flags get passed to the Nim compiler when it compiles that
-extension. For examples on how to do this, please look in the `tests/` folder.
-For documentation on the Nim compiler configuration files,
-please look [here](https://nim-lang.org/docs/nimc.html#compiler-usage-configuration-files).
-
-### Increasing Speed by using the `-d:danger` flag
-
-Since this flag is one that is desirable for Nim extension modules/libraries
-alike, you can request that it be used during compilation by adding
-`danger=True` to `build_nim_extensions()`. For example:
-
-```python
-from setuptools import setup
-import nimporter
-
-setup(
-    ...
-    ext_modules=nimporter.build_nim_extensions(danger=True)
-)
-```
-
-## Distributing Libraries Using Nimporter
-
-Nimporter supports two methods of distribution:
-
-* Source
-* Binary (Wheel)
-
-If your library makes use of Nimporter for integrating Nim code, you will need
-to include it with your dependency list. Even for binary distributions which
-compile each extension to prevent compilation on the end-users machine.
-
-### Binary Distributions
-
-Binary (wheel) distributions allow you to forego compilation of Nim source files
-on the end user's machine. This has enormous benefit and can be accomplished
-very easily by adding the following line to your `setup.py` file:
-
-```python
-...
-import nimporter
-
-setup(
-    ...,                                          # Keep your existing arguments
-    ext_modules=nimporter.build_nim_extensions()  # Recurse+build Nim extensions
-)
-```
-
-To create the binary distribution:
-
-```bash
-$ python setup.py bdist_wheel
-```
-
-When installing via Pip, the appropriate wheel version will be selected,
-downloaded, and installed, all without requiring users to install a Nim
-compiler.
-
-> Special note for Linux users: Unfortunately, PyPi will not allow you to upload
-just any Linux wheel. There is a special compilation process that can be
-explained [here](https://github.com/pypa/manylinux). Interestingly enough, I got
-around this by simply renaming the resulting Linux build according to the
-**manylinux1** naming convention. You can see my solution in the
-`examples/github_actions_template.yml` file for the `build-linux` job. I expect
-that there could be many downsides of using this hack but it worked for me on 2
-different Linux platforms.
-
-### Source Distributions
-
-Source distributions allow users to bundle Nim files so that end-users can
-compile them upon import just how they would during normal development.
-
-The only supported way of providing a source distribution is to bundle the Nim
-files along with the Python source files.
-
-To do this, add these lines to your `setup.py` file:
-
-```python
-setup(
-    ...,                            # Keep your existing arguments
-    package_data={'': ['*.nim*']},  # Distribute *.nim & *.nim.cfg source files
-    # include_package_data=True,    # <- This line won't work with package_data
-    setup_requires = [
-        "choosenim_install",        # Optional. Auto-installs Nim compiler
-    ],
-    install_requires=[
-        'nimporter',                # Must depend on Nimporter
-    ]
-)
-```
-
-To create the source distribution:
-
-```bash
-$ python setup.py sdist
-```
-
-When installing via Pip and a binary distribution (wheel) cannot be found for a
-given platform, the source distribution will be installed which will include the
-bundled Nim source files. When the library is imported on the end-users's
-machine, Nimporter compiles all of the Nim files as they are imported
-internally which will cause a small delay to account for compilation. When the
-library is subsequently imported, no compilation is necessary so imports are
-extremely fast.
-
-### Publish Build Artifacts to PyPi Automatically
-
-Since binary distributions allow Nimporter libraries to be distributed without
-requiring a Nim compiler, they are the recommended packaging type. However,
-building for each platform can be tedious.
-
-For a dead-simple way to publish Windows, MacOS, and Linux wheels to PyPi
-automatically, use the `github_actions_template.yml` template found in the
-`examples/` directory. This template integrates with your repository's GitHub
-Actions runner to build, package, and deploy your library on Windows, MacOS, and
-Linux automatically when you create a new "Release" is created.
 
 ### Usage with Docker
 
@@ -578,98 +551,19 @@ container. This process is roughly as follows:
    included as they will contain the Nim shared objects as well as the Nimporter
    hash files to prevent a recompilation.
 
-## Nimporter Command Line Interface
 
-Nimporter provides a CLI that you can use to easily clean all cached build and
-hash files from your project recursively. This can be very useful for debugging
-situations arising from stale builds.
 
-Usage example:
 
-```bash
-# Recursively removes all hashes and cached builds
-$ nimporter clean
-```
 
-Additionally, the CLI can also be used like a compiler to produce a binary
-extension (`.pyd` and `.so`) from a given Nim file.
 
-```bash
-# Stores build in __pycache__
-# Can be imported by first importing nimporter
-$ nimporter build file.nim
 
-# Stores build in current dir
-$ nimporter build file.nim --dest .
 
-# Same 2 examples but for Nim libraries
-$ nimporter build mylib
-$ nimporter build mylib --dest .
 
-# Although you can specify a Nim library's source file, please don't
-$ nimporter build mylib/mylib.nim
-```
 
-The Nimporter CLI can also precompile all extensions within a project without
-needing to run the project. This is useful in situations where you do not want
-to package your application using a `setup.py` (such as a zip file) or for use
-within Docker containers.
 
-```bash
-# Recursively compile all Nim extension modules and libraries:
-$ nimporter compile
-```
 
-Finally, the CLI has provisions for quickly bundling your project into a source
-or binary distribution:
 
-```bash
-# Bundles your code into a wheel (look in dist/)
-$ nimporter bundle bin
 
-# Bundles your code into a source archive (look in dist/)
-$ nimporter bundle src
-```
-
-If you do not have a `setup.py` in your current directory, the CLI will generate
-one for you but you will have to edit it to make sure that all of your code is
-included in the resulting package. You can look
-[here](https://github.com/navdeep-G/setup.py) for an excellent tutorial on how
-to use `setup.py`.
-
-## Code Quality
-
-There are ***44 unit tests*** and ***5 integration tests*** to make sure that
-Nimporter performs as advertised.
-
-In addition, Nimporter has ***94% code coverage*** so a host of bugs have already been
-caught and dealt with in a manner befitting their wretched existence.
-
-Lastly, it has been tested and fully supported on these platforms:
-
-* **Windows 10**
-* **MacOS Mojave**
-* **Linux**
-
-> Just for fun, I got out my Windows laptop, Mac, and SSHed into a Linux box on
-AWS. I then ran the test suite on all 3 platforms simultaneously. ;)
-
-Nimporter likely works on a bunch of other platforms but I cannot justify the
-time required to test them at this point.
-
-### Running The Tests
-
-To run these on your local machine, you will need to install a Nim compiler.
-
-This example will assume you are cloning the GitHub reposotory.
-
-```bash
-$ git clone https://github.com/Pebaz/Nimporter
-$ cd Nimporter
-$ pip install -r requirements_dev.txt
-$ pip install .  # Nimporter is needed for the integration tests
-$ pytest --cov=. --cov-report=html tests
-```
 
 ## How Does Nimporter Work?
 
