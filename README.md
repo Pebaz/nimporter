@@ -188,11 +188,11 @@ chosen as the guiding principles for Nimporter.
 
 There are a few ways to use Nimporter to integrate Nim & Python code:
 
-1. Library uses Nim code internally but exposes a Python API: this is the
+1. 🥇 Library uses Nim code internally but exposes a Python API: this is the
     reason why Nimporter was built. It was built to allow Python library
     authors to use Nim to speed up their library.
 
-2. Application uses Nim code: this is very possible but it is recommended to
+2. 🥈 Application uses Nim code: this is very possible but it is recommended to
     pull out the Nim code into a Python library that imports that Nim code in
     order to take advantage of the amazing distribution features of Nimporter.
     Having a separately-updatable library that the application imports greatly
@@ -200,9 +200,27 @@ There are a few ways to use Nimporter to integrate Nim & Python code:
     library dependency that imports Nim code behaves exactly like a pure-Python
     dependency).
 
-3. Docker: this is a possible application of Nimporter, but it requires the use
-    of `nimporter compile` in order to let the Docker container not have to
+3. 🥉 Docker: this is a possible application of Nimporter, but it requires the
+    use of `nimporter compile` in order to let the Docker container not have to
     contain a Nim & C compiler and to ensure that the builds are cached.
+
+Amazingly, Nimporter allows the end user installing a library built with
+Nimporter to not have to install Nim! 🥳 This is incredible and is accomplished
+by recompiling the same Nim extension to every desired platform, architecture,
+and C compiler that the library is supported on. Specifically, Nimporter tells
+the Nim compiler to compile the extension to C once for Windows, MacOS, and
+Linux and and then bundles all of the resulting C source files into the source
+distribution. At the time of the installation on the end user's machine, the
+appropriate set of C source files is selected that matches the user's
+environment! 🙂
+
+For binary distributions, this process just skips to the one set of C source
+files that matches the host's environment. One binary distribution per
+supported platform must then be built.
+
+This might sound complicated but Nimporter accomplishes this by requesting that
+the `setup.py` contain 1 line of code to find, compile, and bundle all of the C
+files necessary to be portable across platform, architecture, and C compilers.
 
 ## Computers Actually Exist
 
