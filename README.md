@@ -7,8 +7,8 @@
 ![Latest Release](https://img.shields.io/github/v/release/Pebaz/nimporter?sort=semver&color=EB7590)
 ![Lines of Code](https://img.shields.io/tokei/lines/github/Pebaz/Nimporter?label=lines%20of%20code&color=C8488A)
 ![Downloads each Month](https://img.shields.io/pypi/dm/Nimporter?label=pypi%20downloads&color=872E93)
-![GitHub Repository Star Count](https://img.shields.io/github/stars/Pebaz/Nimporter?label=github%20stars&color=3A1353)
-![GitHub Sponsor Count](https://img.shields.io/github/sponsors/Pebaz?label=github%20sponsors&color=581D7F)
+![GitHub Repository Star Count](https://img.shields.io/github/stars/Pebaz/Nimporter?label=github%20stars&color=581D7F)
+![GitHub Sponsor Count](https://img.shields.io/github/sponsors/Pebaz?label=github%20sponsors&color=3A1353)
 
 # Nimporter
 
@@ -23,14 +23,18 @@ seamlessly package them for distribution in **1 line of code.***
     <img src=misc/Nimporter-Setup.py.png>
 </p>
 
-## 🍱 Possible Benefits
+## 🍱 Benefits
 
 * **🐆 Performance**: Nim compiles to C
+
 * **🚚 Distribution**: Packaging Nimporter libraries is the primary use case
+
 * **📦 Invisible**: End users do not need to install Nim for source or binary
-distributions
-* **♻️ Ecosystem**: Leverage [Python](https://pypi.org/) libraries for breadth and
-    [Nim](https://nimble.directory/) libraries for performance.
+    distributions
+
+* **♻️ Ecosystem**: Leverage [Python](https://pypi.org/) libraries for breadth
+    and [Nim](https://nimble.directory/) libraries for performance.
+
 * **🧣 Seamless**: Integration with existing Nim code uses the
     [Nimpy](https://github.com/yglukhov/nimpy) library.
 
@@ -65,37 +69,31 @@ Users of Nimporter libraries only need Nimporter! 🎉
 
 ## 📚 Documentation
 
+To get started, first look at the [Nimpy](https://github.com/yglukhov/nimpy)
+project as that is how Nim libraries are created that can be imported into
+Python. During development, Python can directly import the Nim file and build
+the public user-facing Python API in tandem with the Nim library extension. For
+assistance with the Nim language, look at
+[Nim For Python Programmers](https://github.com/nim-lang/Nim/wiki/Nim-for-Python-Programmers#table-of-contents)
+as it is a great resource for getting up to speed quickly with Nim. Finally,
+Nimporter's unit tests all make use of a
+[reference project](https://github.com/Pebaz/nimporter/tree/master/tests/data)
+that was designed to use each of Nimporter's features.
+
 * 🦔 [Nim For Python Programmers](https://github.com/nim-lang/Nim/wiki/Nim-for-Python-Programmers#table-of-contents)
 * 🦊 [Nimpy](https://github.com/yglukhov/nimpy)
 * 🔅 [Reference Project](https://github.com/Pebaz/nimporter/tree/master/tests/data)
 
-## 🚶 Getting Started
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
-asdf
-
 ## 📋 Features
 
-* Caching is supported for both Extension Modules & Extension Libraries.
-* Removes the `@s` thing that the Nim compiler does to get around the 260
-    character path length limit on Windows.
+* Directly import Nim Extension Modules & Extension Libraries using Nimpy
+* Cache build artifacts for quicker subsequent runs
+* Invalidate cache using hash files
+* Stores artifacts and hash files in `__pycache__` to not clutter project
+* Build Source & Binary Distributions using Nimporer with 1 line of code
+* Command Line Interface for introspecting, initializing, and compiling
+    projects
+* Nimporter does not require that library end-users install a Nim compiler
 
 ## 🛠️ Usage
 
@@ -108,14 +106,18 @@ Nimpy libraries to ease the burden on library maintainers and end users so that
 they do not have to even have knowledge of Nim in order to use the library.
 
 Nimpy is a complete library by itself. For information on how to integrate Nim
-and Python, look at the [Nimpy documentation](https://github.com/yglukhov/nimpy)
-as it will be the Nim day-to-day development experience. Nimporter's role comes
-into play when a library is ready to be distributed. **Nimporter handles the
-entire packaging for source and binary distributions in 1 line of code.**
+and Python, look at the
+[Nimpy documentation](https://github.com/yglukhov/nimpy) as it will be the Nim
+day-to-day development experience. Nimporter's role comes into play when a
+library is ready to be distributed. **Nimporter handles the entire packaging
+for source and binary distributions in 1 line of code.**
 
 ### 🎻 Instrumentation
 
-It is
+To enable Nimporter debug traces, define `NIMPORTER_INSTRUMENT` in the
+environment and Nimporter will use
+[IceCream](https://github.com/gruns/icecream) to show output from Nim and other
+interesting bits necessary for debugging any issues that could arise.
 
 ### 🦓 Extension Modules & Extension Libraries
 
@@ -194,7 +196,7 @@ Although these restrictions limit the number of possible use cases for the
 integration of Nim & Python, portability, compatibility, and stability were
 chosen as the guiding principles for Nimporter.
 
-## Distribution
+## 📦 Distribution
 
 There are a few ways to use Nimporter to integrate Nim & Python code:
 
@@ -245,7 +247,7 @@ from nimporter import get_nim_extensions, WINDOWS, MACOS, LINUX
 
 setuptools.setup(
     name='calculatorlib',
-  	install_requires=['nimporter']
+    install_requires=['nimporter']
     py_modules=['calculatorlib.py'],
     ext_modules=get_nim_extensions(platforms=[WINDOWS, LINUX, MACOS])
 )
@@ -291,19 +293,20 @@ $ python setup.py bdist_wheel  # Contains a single supported platform, etc.
 For a dead-simple way to publish Windows, MacOS, and Linux packages to PyPi
 automatically, use the `github_actions_template.yml` template found in the
 `examples/` directory. This template integrates with your repository's GitHub
-Actions runner to build, package, and deploy your library on Windows, MacOS, and
-Linux automatically when you create a new "Release" is created.
+Actions runner to build, package, and deploy your library on Windows, MacOS,
+and Linux automatically when you create a new "Release" is created.
 
 ## 💽 Computer Hardware Actually Exists
 
-Naturally, when integrating with native code, there are limitations to what is
-possible to accomplish in certain situations. On Windows, a DLL that has been
-loaded into a process cannot be deleted while it is in use. Additionally,
-Windows has a path length limit of 260 characters by default (and therefore
-relying on the user having disabled this limit in the system registry is not
-possible). This severely limits how deep a Nim extension can be placed into a
-Python package hierarchy. Furthermore, generously-named Nim extensions may fail
-to compile with a message that resembles:
+Dynamic, safe programming languages are great, but naturally, when integrating
+with native code, there are limitations to what is possible to accomplish in
+certain situations. On Windows, a DLL that has been loaded into a process
+cannot be deleted while it is in use. Additionally, Windows has a path length
+limit of 260 characters by default (and therefore relying on the user having
+disabled this limit in the system registry is not possible). This severely
+limits how deep a Nim extension can be placed into a Python package hierarchy.
+Furthermore, generously-named Nim extensions may fail to compile with a message
+that resembles:
 
 ```
 failed to open compiler generated file: ''
@@ -363,7 +366,7 @@ properly setup.
 $ nimporter list
 ```
 
-## Usage with Docker
+## ⚓ Usage with Docker
 
 Nimporter can easily be used within a Docker container. To prevent the need for
 a Nim compiler toolchain to be installed into the container to run Nim code,
@@ -377,7 +380,7 @@ is roughly as follows:
    Nimporter hash files to prevent a recompilation (which would fail without a
    Nim & C compiler installed in the container).
 
-## Running The Tests
+## 🧪 Running The Tests
 
 To run Nimporter's test suite on your local machine, you will need to install a
 Nim compiler. This example will assume you are cloning the GitHub repository.
@@ -390,7 +393,7 @@ $ pip install .  # Nimporter is needed for the integration tests
 $ pytest --cov=. --cov-report=html tests
 ```
 
-## How Does Nimporter Work?
+## ❓ How Does Nimporter Work?
 
 Nimporter provides essentially two capabilities:
 
@@ -453,7 +456,7 @@ Feel free to [open an issue](https://github.com/Pebaz/nimporter/issues) if
 something seems to be broken but please look through the README first if time
 allows.
 
-## Special Thanks
+## 👏 Special Thanks
 
 Nimporter would not be possible without
 [Nimpy](https://github.com/yglukhov/nimpy). Thank you
