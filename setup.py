@@ -1,3 +1,4 @@
+import io
 from setuptools import setup
 
 setup(
@@ -5,7 +6,7 @@ setup(
     version='2.0.0',
     license='MIT',
     description='Compile Nim extensions for Python when imported!',
-    long_description=open('README.md').read(),
+    long_description=io.open('README.md', encoding='utf-8').read(),
     long_description_content_type='text/markdown',
     author='http://github.com/Pebaz',
     url='http://github.com/Pebaz/Nimporter',
