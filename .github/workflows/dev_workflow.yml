@@ -37,5 +37,8 @@ jobs:
           python -m pip install setuptools wheel
           python -m pip install .
           python -m pip install -r requirements_dev.txt
+
       - name: Test
         run: pytest --cov=. tests
+        env:
+          NIMPORTER_INSTRUMENT: 1

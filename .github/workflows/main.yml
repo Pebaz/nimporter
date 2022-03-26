@@ -36,3 +36,5 @@ jobs:
 
       - name: Test
         run: pytest --cov=. tests
+        env:
+          NIMPORTER_INSTRUMENT: 1
