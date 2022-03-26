@@ -50,7 +50,6 @@ ALWAYS_ARGS = [
     'nimble',  # Installs dependencies :)
     'c',
     '--accept',  # Allow installing dependencies
-    '--skipParentCfg',  # Included because it won't be portable otherwise
     '--skipUserCfg',
     '--app:lib',
     '--backend:c',

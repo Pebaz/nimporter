@@ -10,13 +10,6 @@ from distutils.extension import Extension
 
 
 def get_host_extension_bundle(root: Path) -> List[Extension]:
-    # NOTE(pbz): To be clear, it doesn't matter what C
-    # compiler the user wishes to use because if the
-    # C compiler used to compile Python and the C
-    # compiler used to compile the Nim extension do not
-    # match, there will be very difficult to debug ABI
-    # incompatibility issues.
-    # f'--cc:{get_c_compiler_used_to_build_python()}',
     extensions = []
     ext_dir = root / EXT_DIR
 
