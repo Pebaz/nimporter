@@ -193,8 +193,8 @@ def get_host_info() -> Tuple[str, str, str]:
     host_info = platform.uname()
 
     return ic((
-        host_info.system,
-        host_info.machine,
+        host_info.system.lower(),
+        host_info.machine.lower(),
         get_c_compiler_used_to_build_python()
     ))
 
