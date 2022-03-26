@@ -127,6 +127,27 @@ day-to-day development experience. Nimporter's role comes into play when a
 library is ready to be distributed. **Nimporter handles the entire packaging
 for source and binary distributions in 1 line of code.**
 
+**Important Considerations**
+
+Nimporter was designed to help bridge the ecosystem gap between Python and Nim
+while utilizing Nimpy so that library authors could seamlessly develop and
+distribute their libraries. Due to this fact, there are 2 important limitations
+to consider when using Nimporter. They are described below:
+
+1. Importing: Nimporter uses the C compiler that was used to build Python when
+    importing a Nim module/library. This can be overridden in a
+    `<lib name>.nim.cfg` but doing so means that the library will most likely
+    not work on other platforms.
+
+2. Distributing Sources: Nimporter sets the C compiler automatically by
+    iterating through MSVC and GCC for each platform and architecture combo.
+    This means that there will likely be several copies of the generated C
+    source code for each supported platform (given in `get_nim_extensions()`).
+
+3. Distributing Binaries: Nimporter uses the same process described for direct
+    import of Nim code and will use the same C compiler that was used to build
+    Python itself.
+
 ### 🎻 Instrumentation
 
 To enable Nimporter debug traces, define `NIMPORTER_INSTRUMENT` in the

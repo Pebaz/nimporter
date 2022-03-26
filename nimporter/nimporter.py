@@ -69,9 +69,9 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
 
         with cd(compilation_dir) as tmp_cwd:
             cli_args = ALWAYS_ARGS + [
-                # ! Nimporter forces the use of the C compiler that was used to
-                # ! build Python itself to prevent incompatibilities. This is
-                # ! similar to exporting where a matrix of C compilers is used.
+                # ! Nimporter decides the use of the C compiler that was used
+                # ! to build Python itself to prevent incompatibilities. This
+                # ! is similar to exporting where several C compilers are used.
                 f'--cc:{get_c_compiler_used_to_build_python()}',
                 nim_module.name
             ]
@@ -92,7 +92,8 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
                 if debug_file.exists():
                     ic(debug_file).unlink()
 
-        find_ext = '.dll' if sys.platform == 'win32' else '.so'
+        platform = get_host_info()[0]
+        find_ext = {WINDOWS: '.dll', MACOS: '.dylib', LINUX: '.so'}[platform]
 
         # The only way the artifact wouldn't exist is if Nim failed to
         # compile the library but didn't write to the standard error stream
