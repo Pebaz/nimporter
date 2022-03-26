@@ -186,14 +186,13 @@ def get_host_info() -> Tuple[str, str, str]:
     Returns the host platform, architecture, and C compiler used to build the
     running Python process.
     """
-    # host_platform = platform.system().lower()
-    # host_arch = cpuinfo.get_cpu_info()['arch'].lower()
-    # return host_platform, host_arch, get_c_compiler_used_to_build_python()
-    host_info = platform.uname()
+    # Calling get_cpu_info() is expensive
+    if not getattr(get_host_info, 'host_arch', None):
+        get_host_info.host_arch = cpuinfo.get_cpu_info()['arch'].lower()
 
     return ic((
-        host_info.system.lower(),
-        host_info.machine.lower(),
+        platform.system().lower(),
+        get_host_info.host_arch,
         get_c_compiler_used_to_build_python()
     ))
 

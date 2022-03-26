@@ -1,7 +1,5 @@
 import os
 import sys
-import platform
-import cpuinfo
 from typing import *
 from pathlib import Path
 from icecream import ic
