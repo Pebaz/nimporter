@@ -8,16 +8,19 @@ on:
 
 jobs:
 
-  # ----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
   test-all:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false
+      fail-fast: false  # <- Core value-add. See what platforms fail and why
       matrix:
+        # os: [windows-latest, macos-latest, ubuntu-latest]
+        # python-version: ['3.10', 3.9, 3.8, 3.7]
+        # nim-version: [ '1.4.0', 'stable', 'devel' ]
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ['3.10', 3.9, 3.8, 3.7, 3.6]
-        nim-version: [ '1.4.0', 'stable', 'devel' ]
+        python-version: ['3.10']
+        nim-version: ['1.4.0']
 
     steps:
       - uses: actions/checkout@v2
@@ -39,4 +42,6 @@ jobs:
           python -m pip install -r requirements_dev.txt
 
       - name: Test
-        run: pytest --cov=. tests
+        run: pytest --cov=. -s tests
+        env:
+          NIMPORTER_INSTRUMENT: 1

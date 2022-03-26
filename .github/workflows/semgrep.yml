@@ -1,0 +1,35 @@
+name: Semgrep
+
+on:
+  # Scan changed files in PRs, block on new issues only (existing issues ignored)
+  pull_request: {}
+  push:
+    branches: [ switch-the-switches ]
+
+  # Scan all files on branches, block on any issues
+  # push:
+  #   branches: ["master", "main"]
+
+jobs:
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@v2
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+          # # Upload findings to GitHub Advanced Security Dashboard [step 1/2]
+          generateSarif: "1"
+
+      # Upload findings to GitHub Advanced Security Dashboard [step 2/2]
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
