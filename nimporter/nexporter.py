@@ -18,8 +18,9 @@ def get_host_extension_bundle(root: Path) -> List[Extension]:
     # incompatibility issues.
     # f'--cc:{get_c_compiler_used_to_build_python()}',
     extensions = []
+    ext_dir = root / EXT_DIR
 
-    for extension_root in (root / EXT_DIR).iterdir():
+    for extension_root in ext_dir.iterdir():
         platform, arch, cc = get_host_info()
         host_info = f'{platform}-{arch}-{cc}'
         host_extension = extension_root / host_info
@@ -28,6 +29,7 @@ def get_host_extension_bundle(root: Path) -> List[Extension]:
 
         assert host_extension.exists(), (
             f'No extension found for host platform/arch: {host_info}.\n'
+            f'Bundled extensions: {[i.name for i in ext_dir.iterdir()]}\n'
             f'Perhaps run "nimporter clean"?'
         )
 
