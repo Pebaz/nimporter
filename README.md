@@ -131,7 +131,7 @@ for source and binary distributions in 1 line of code.**
 
 Nimporter was designed to help bridge the ecosystem gap between Python and Nim
 while utilizing Nimpy so that library authors could seamlessly develop and
-distribute their libraries. Due to this fact, there are 2 important limitations
+distribute their libraries. Due to this fact, there are important limitations
 to consider when using Nimporter. They are described below:
 
 1. Importing: Nimporter uses the C compiler that was used to build Python when
