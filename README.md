@@ -38,7 +38,7 @@ seamlessly package them for distribution in **1 line of code.***
 * **🧣 Seamless**: Integration with existing Nim code uses the
     [Nimpy](https://github.com/yglukhov/nimpy) library.
 
-* **🪨 Simple**: Nimporter barely has a user interface at all
+* **🎈 Simple**: Nimporter barely has a user interface at all
 
 ## 🐣 Installation
 
