@@ -262,7 +262,7 @@ from nimporter import get_nim_extensions, WINDOWS, MACOS, LINUX
 
 setuptools.setup(
     name='calculatorlib',
-    install_requires=['nimporter']
+    install_requires=['nimporter'],
     py_modules=['calculatorlib.py'],
     ext_modules=get_nim_extensions(platforms=[WINDOWS, LINUX, MACOS])
 )
