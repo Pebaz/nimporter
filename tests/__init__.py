@@ -9,7 +9,7 @@ from nimporter.lib import run_process, PYTHON
 def temporarily_install_nimporter():
     try:
         code, _, _ = run_process(
-            shlex.split(f'{PYTHON} setup.py install'),
+            shlex.split(f'{PYTHON} setup.py install --force'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
 

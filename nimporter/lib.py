@@ -19,13 +19,13 @@ PYTHON = 'python' if sys.platform == 'win32' else 'python3'
 PIP = 'pip' if shutil.which('pip') else 'pip3'
 PYTHON_LIB_EXT = sysconfig.get_config_var('EXT_SUFFIX')
 WINDOWS = 'windows'
-MACOS = 'macos'
+MACOS = 'darwin'
 LINUX = 'linux'
 EXT_DIR = 'nim-extensions'
 
 PLATFORM_TABLE = {  # Keys are known to Python and values are Nim-understood
     'windows': 'Windows',
-    'macos': 'MacOSX',
+    'darwin': 'MacOSX',
     'linux': 'Linux',
 }
 
@@ -50,7 +50,6 @@ ALWAYS_ARGS = [
     'nimble',  # Installs dependencies :)
     'c',
     '--accept',  # Allow installing dependencies
-    '--skipParentCfg',  # Included because it won't be portable otherwise
     '--skipUserCfg',
     '--app:lib',
     '--backend:c',
@@ -187,9 +186,15 @@ def get_host_info() -> Tuple[str, str, str]:
     Returns the host platform, architecture, and C compiler used to build the
     running Python process.
     """
-    host_platform = platform.system().lower()
-    host_arch = cpuinfo.get_cpu_info()['arch'].lower()
-    return host_platform, host_arch, get_c_compiler_used_to_build_python()
+    # Calling get_cpu_info() is expensive
+    if not getattr(get_host_info, 'host_arch', None):
+        get_host_info.host_arch = cpuinfo.get_cpu_info()['arch'].lower()
+
+    return ic((
+        platform.system().lower(),
+        get_host_info.host_arch,
+        get_c_compiler_used_to_build_python()
+    ))
 
 
 def ensure_nimpy() -> None:

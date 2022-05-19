@@ -68,7 +68,14 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
         ic(nim_module)
 
         with cd(compilation_dir) as tmp_cwd:
-            cli_args = ALWAYS_ARGS + [nim_module.name]
+            cli_args = ALWAYS_ARGS + [
+                # ! Nimporter decides the use of the C compiler that was used
+                # ! to build Python itself to prevent incompatibilities. This
+                # ! is similar to exporting where several C compilers are used.
+                f'--cc:{get_c_compiler_used_to_build_python()}',
+                nim_module.name
+            ]
+
             ic(cli_args)
 
             code, _, stderr = run_process(
@@ -79,13 +86,20 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
             if code:
                 raise CompilationFailedException(stderr)
 
-        find_ext = '.dll' if sys.platform == 'win32' else '.so'
+            # Remove Windows debugging symbols if using MSVC on Win32
+            for debug_ext in ['.exp', '.lib']:
+                debug_file = compilation_dir / (ext.symbol + debug_ext)
+                if debug_file.exists():
+                    ic(debug_file).unlink()
+
+        platform = get_host_info()[0]
+        find_ext = {WINDOWS: '.dll', MACOS: '.dylib', LINUX: '.so'}[platform]
 
         # The only way the artifact wouldn't exist is if Nim failed to
         # compile the library but didn't write to the standard error stream
         # which is currently not how the Nim compiler behaves.
         # This shouldn't fail.
-        tmp_build_artifact, = tmp_cwd.glob(f'*{find_ext}')
+        (tmp_build_artifact,) = tmp_cwd.glob(f'*{find_ext}')
 
         shutil.move(tmp_build_artifact, ext.build_artifact)
 
