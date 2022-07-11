@@ -53,6 +53,7 @@ ALWAYS_ARGS = [
     '--skipUserCfg',
     '--app:lib',
     '--backend:c',
+    '--threads:on',
     '--warning[ProveInit]:off',  # https://github.com/Pebaz/nimporter/issues/41
 ]
 
