@@ -7,7 +7,7 @@ ic.configureOutput(
     prefix=f'{colorama.Fore.CYAN}ic|{colorama.Fore.RESET} ',
 
     # https://github.com/gruns/icecream/issues/35#issuecomment-908730426
-    outputFunction=lambda *args: print(*args, file=sys.stderr)
+    outputFunction=lambda *args: print(*args)
 )
 
 ic.enabled = 'NIMPORTER_INSTRUMENT' in os.environ
