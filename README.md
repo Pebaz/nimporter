@@ -112,6 +112,8 @@ contains code examples on these topics:
 
 ## 🛠️ Usage
 
+![Nimporter Structure](misc/NimporterStructure.png)
+
 Nimporter is a library that allows the seamless import & packaging of Nim
 extensions for Python built with [Nimpy](https://github.com/yglukhov/nimpy).
 Nimpy is a library that is used on the Nim side for iteroperability with
