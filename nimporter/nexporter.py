@@ -128,17 +128,7 @@ def find_nim_std_lib() -> Optional[Path]:
 
 
 def copy_headers(build_dir_relative: Path) -> Path:
-    """
-
-    Args:
-        build_dir_relative(Path): path to build directory relative to the
-            project root.
-
-    Returns:
-        Path: Returns the path to nimbase.
-
-    """
-    # Copy over needed header(s)
+    "Can't compile without nimbase.h"
     NIMBASE = 'nimbase.h'
     nimbase = find_nim_std_lib() / NIMBASE
     nimbase_dest = build_dir_relative / NIMBASE
