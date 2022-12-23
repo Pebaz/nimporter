@@ -268,6 +268,8 @@ class NimCompiler:
         """
         process = subprocess.run(
             nim_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        ) if sys.platform != 'win32' else subprocess.run(
+            nim_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
         )
         out, err = process.stdout, process.stderr
         out = out.decode(errors='ignore') if out else ''
@@ -348,6 +350,11 @@ class NimCompiler:
         if choosenim_dir.exists:
             try:
                 nim_ver = (subprocess.check_output(['nim', '-v'])
+                    .decode(errors='ignore')
+                    .splitlines()[0]
+                    )
+                if sys.platform == 'win32':
+                    nim_ver = (subprocess.check_output(['nim', '-v'], shell=True)
                     .decode(errors='ignore')
                     .splitlines()[0]
                     )
@@ -982,10 +989,16 @@ class Nimporter:
             py_ver = sys.version.replace('\n', '')
 
             try:
-                nim_ver = (subprocess.check_output(['nim', '-v'])
-                    .decode(errors='ignore')
-                    .splitlines()[0]
-                    )
+                if sys.platform != 'win32':
+                    nim_ver = (subprocess.check_output(['nim', '-v'])
+                        .decode(errors='ignore')
+                        .splitlines()[0]
+                        )
+                else:
+                        nim_ver = (subprocess.check_output(['nim', '-v'], shell=True)
+                        .decode(errors='ignore')
+                        .splitlines()[0]
+                        )
             except:
                 nim_ver = '<Error getting version>'
 
@@ -995,16 +1008,23 @@ class Nimporter:
                 cc = all_ccs[py_cc]
                 try:
                     if py_cc == 'msc':
-                        cc_ver = subprocess.check_output([
+                        cc_ver = (subprocess.check_output([
                             'vccexe',
                             '--vccversion:0',
                             '--printPath',
                             '--noCommand'
-                        ]).decode(errors='ignore').strip()
+                        ] if sys.platform != 'win32' else subprocess.check_output([
+                            'vccexe',
+                            '--vccversion:0',
+                            '--printPath',
+                            '--noCommand'], shell=True))).decode(errors='ignore').strip()
                     else:
-                        cc_ver = (subprocess.check_output([cc.stem])
-                                  .decode(errors='ignore')
-                                  )
+                        if sys.platform != 'win32':
+                            cc_ver = subprocess.check_output([cc.stem]).decode(errors='ignore')
+
+                        else:
+                            cc_ver = subprocess.check_output([cc.stem], shell=True).decode(errors='ignore')
+
                 except:
                     cc_ver = '<Error getting version>'
             else:
