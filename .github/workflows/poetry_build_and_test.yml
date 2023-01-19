@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest ]
-        python-version: ['3.10', 3.9 ]
-        nim-version: [ 'stable', 'devel' ]
+        python-version: ['3.11', '3.10', 3.9 ]
+        nim-version: [ 'stable']
 
     steps:
       - uses: actions/checkout@v2
