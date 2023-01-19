@@ -17,14 +17,14 @@ jobs:
         python-version: ['3.11', '3.10', 3.9, 3.8, 3.7]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: jiro4989/setup-nim-action@v1.3
+      - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: 'stable'
 
