@@ -117,7 +117,7 @@ def get_import_path(path: Path, root: Path) -> str:
 
 
 @contextmanager
-def convert_to_lib_if_needed(path: Union[Path, str]) -> Iterator[Path]:
+def convert_to_lib_if_needed(path: Path) -> Iterator[Path]:
     with tempfile.TemporaryDirectory() as compilation_dir:
         if path.is_file():
             shutil.copy(path, compilation_dir)
@@ -138,7 +138,7 @@ def convert_to_lib_if_needed(path: Union[Path, str]) -> Iterator[Path]:
 def run_process(
     process_args: List[str],
     show_output: bool = False,
-) -> Tuple[int, str, str]:
+) -> Tuple[int, Union[bytes, str], Union[bytes, str]]:
     """
     Invokes the compiler (or any executable) and returns the output.
 
