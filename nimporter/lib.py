@@ -138,7 +138,7 @@ def convert_to_lib_if_needed(path: Path) -> Iterator[Path]:
 def run_process(
     process_args: List[str],
     show_output: bool = False,
-) -> Tuple[int, Union[bytes, str], Union[bytes, str]]:
+) -> Tuple[int, Union[bytes, Text], Union[bytes, Text]]:
     """
     Invokes the compiler (or any executable) and returns the output.
 
@@ -266,7 +266,7 @@ def hash_extension(module_path: Path) -> bytes:
                 buf = file.read(block_size)
 
     else:
-        def walk_folder(path: Path) -> Ierator[Path]:
+        def walk_folder(path: Path) -> Iterator[Path]:
             for item in path.iterdir():
                 if item.is_dir():
                     if item.stem == '__pycache__':
