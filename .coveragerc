@@ -1,6 +1,6 @@
 [run]
 omit =
     tests/*
-    nimporter_cli.py
+    nimporter/cli.py
     setup.py
     conftest.py

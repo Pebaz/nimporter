@@ -1,4 +1,4 @@
-name: Type Checking & Poetry Build
+name: Nim devel version Type Checking & Poetry Build
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest ]
         python-version: ['3.11', '3.10', 3.9 ]
-        nim-version: [ 'stable']
+        nim-version: [ 'devel']
 
     steps:
       - uses: actions/checkout@v3
@@ -51,7 +51,7 @@ jobs:
       - name: Build Package
         run: poetry build
       - name: Run Type Checker
-        # continue-on-error: true
+        continue-on-error: true
         run: |
           poetry run pip install types-setuptools
           poetry run mypy

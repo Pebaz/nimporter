@@ -4,25 +4,23 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "nimporter"
-version = "1.1.0"
+version = "2.0.0"
 description = "Compile Nim extensions for Python when imported!"
 authors = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
 license = "MIT"
 keywords = ["nim", "python", "compiler", "import", "performance", "cython", "transpiler", "nimpy", "cython-alternative", "nim-source", "nim-compiler", "nimporter-library"]
-classifiers = ["Development Status :: 5 - Production/Stable", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Utilities", "Intended Audience :: Developers", "Intended Audience :: End Users/Desktop", "Intended Audience :: Education", "Intended Audience :: Science/Research", "License :: OSI Approved :: MIT License", "Natural Language :: English", "Operating System :: OS Independent", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.6", "Programming Language :: Python :: 3.7", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10",]
+classifiers = ["Development Status :: 5 - Production/Stable", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Utilities", "Intended Audience :: Developers", "Intended Audience :: End Users/Desktop", "Intended Audience :: Education", "Intended Audience :: Science/Research", "License :: OSI Approved :: MIT License", "Natural Language :: English", "Operating System :: OS Independent", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.7", "Programming Language :: Python :: 3.8", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11",]
 homepage = "https://github.com/Pebaz/nimporter"
 repository = "https://github.com/Pebaz/nimporter"
 documentation = "https://pebaz.github.io/nimporter/index.html"
 maintainers = ["Pebaz <https://github.com/Pebaz>", "SekouDiaoNlp <diao.sekou.nlp@gmail.com>"]
 readme = "README.md"
 packages = [
-    { include = 'nimporter.py' },
-    { include = 'nimporter_cli.py' },
+    { include = 'nimporter' },
     { include = 'tests', format = 'sdist' },
 ]
 include = [
     { path = 'README.md', format = 'sdist' },
-    { path = 'docs/*.*', format = 'sdist' },
     { path = 'LICENSE', format = 'sdist' },
     { path = 'requirements_dev.txt', format = 'sdist' },
     { path = 'conftest.py', format = 'sdist' },
@@ -34,23 +32,33 @@ exclude = [
 ]
 
 [tool.poetry.scripts]
-nimporter = 'nimporter_cli:main'
+nimporter = 'nimporter.cli:main'
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
+py-cpuinfo = "^9.0.0"  # Auto-detect user architecture
+icecream = "^2.1.3"  # Instrumentation
+cookiecutter = "^2.1.1"  # Folder structure
+
 
 [tool.poetry.dev-dependencies]
-wheel = "^0.37.0"
-pytest = "^6.2.5"
-pytest-cov = "^3.0.0"
-pytest-integration = "^0.2.2"
-pytest-timeout = "^2.0.1"
-pytest-xdist = "^2.4.0"
-mypy = "^0.910"
+wheel = "^0.38.4"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+pytest-integration = "^0.2.3"
+pytest-timeout = "^2.1.0"
+pytest-xdist = "^3.1.0"
+mypy = "^0.991"
 
 [tool.mypy]
 warn_unused_configs = true
 strict = true
 ignore_missing_imports = true
 show_error_codes = true
-files = ["nimporter.py", "nimporter_cli.py"]
+warn_return_any = false
+files = [
+    "nimporter/lib.py",
+    "nimporter/nimporter.py",
+    "nimporter/nexporter.py",
+    "nimporter/cli.py"
+]

@@ -3,18 +3,21 @@ name: Publish New Release To PyPI
 on:
   release:
     types:
-      - published
+      # This used to be `published` but `released` makes sure not to run when a
+      # `prerelease` version has been created.
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#release
+      - released
 
 jobs:
   upload-to-pypi:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
