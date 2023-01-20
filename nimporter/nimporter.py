@@ -233,7 +233,7 @@ def nimport(
         return spec
 
 
-def register_importer(list_position: int, importer: Callable) -> None:
+def register_importer(list_position: int, importer: Callable) -> None: # type: ignore[type-arg]
     "Convenience function to insert importers into Python's import machinery."
     sys.meta_path.insert(list_position, SimpleNamespace(find_spec=importer))
 
