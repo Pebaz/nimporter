@@ -7,6 +7,7 @@ from nimporter.lib import *
 from distutils.extension import Extension
 import shlex
 import shutil
+import subprocess
 
 
 def get_host_extension_bundle(root: Path) -> List[Extension]:
