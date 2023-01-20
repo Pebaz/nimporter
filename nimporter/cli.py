@@ -17,7 +17,7 @@ from nimporter.lib import *
 from nimporter.nimporter import *
 
 # TODO(pbz): Need to move this to a doc/tutorial
-SETUPPY_TEMPLATE = f'''
+SETUPPY_TEMPLATE: str = f'''
 # Setup.py tutorial:
 # https://github.com/navdeep-G/setup.py
 # Edit `packages=` to fit your requirements
@@ -38,7 +38,7 @@ class NoSuffixBuilder(build_ext):
         The artifact: `module.linux-x86_64.cpython.3.8.5.so`
         Becomes: `module.so`
     """
-    def get_ext_filename(self, ext_name):
+    def get_ext_filename(self, ext_name: str) -> str:
         filename = super().get_ext_filename(ext_name)
         ext_suffix = sysconfig.get_config_var('EXT_SUFFIX')
         return filename.replace(ext_suffix, '') + pathlib.Path(filename).suffix
@@ -56,6 +56,7 @@ setuptools.setup(
 def nimporter_list() -> None:
     for extension in find_extensions(Path()):
         print(extension)
+        return
 
 
 def nimporter_clean(path: Path) -> None:
@@ -83,6 +84,7 @@ def nimporter_clean(path: Path) -> None:
 
             else:
                 nimporter_clean(item)
+    return
 
 
 def nimporter_init(extension_type: str, extension_name: str) -> None:
@@ -105,6 +107,7 @@ def nimporter_init(extension_type: str, extension_name: str) -> None:
         raise ValueError(
             f'Extension is not one of [`mod`, `lib`], got: {extension_type}'
         )
+    return
 
 
 def nimporter_compile() -> None:
@@ -131,6 +134,7 @@ def nimporter_compile() -> None:
         (current_time_ms() - overall_start) / 1000.0,
         'seconds'
     )
+    return
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -177,7 +181,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(cli_args: Optional[List[str]] = None) -> None:
+def main(cli_args: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(cli_args or sys.argv[1:])
 
     if args.cmd == 'list':
