@@ -110,7 +110,7 @@ def nimporter_init(extension_type: str, extension_name: str) -> None:
 
 
 def nimporter_compile() -> None:
-    def current_time_ms() -> None:
+    def current_time_ms() -> float:
         return round(time.time() * 1000)
 
     overall_start = current_time_ms()
