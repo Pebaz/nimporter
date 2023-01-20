@@ -331,5 +331,5 @@ class ExtLib:
     def __repr__(self) -> str:
         return str(self)
 
-    def __format__(self, *args, **kwargs) -> None:
+    def __format__(self, *args, **kwargs) -> str:
         return str(self)
