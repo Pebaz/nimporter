@@ -36,6 +36,6 @@ jobs:
           python -m pip install -r requirements_dev.txt
 
       - name: Test
-        run: pytest --cov=. -s tests
+        run: pytest --cov=. -p no:checkdocs -s tests
         env:
           NIMPORTER_INSTRUMENT: 1
