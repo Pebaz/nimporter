@@ -51,7 +51,7 @@ jobs:
       - name: Build Package
         run: poetry build
       - name: Run Type Checker
-        continue-on-error: true
+        # continue-on-error: true
         run: |
           poetry run pip install types-setuptools
           poetry run mypy
