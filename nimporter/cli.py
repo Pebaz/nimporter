@@ -192,8 +192,8 @@ def main(cli_args: Optional[List[str]] = None) -> int:
         # clean(cwd)
         nimporter_clean(Path().resolve().absolute())
 
-    elif args.cmd == 'bundle':
-        nimporter_bundle(args.exp)
+    # elif args.cmd == 'bundle': # nimporter_bundle has nit been defined yet.
+        # nimporter_bundle(args.exp)
 
     elif args.cmd == 'compile':
         nimporter_compile()
