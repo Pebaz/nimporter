@@ -9,11 +9,14 @@ on:
 jobs:
   test-all:
     runs-on: ${{ matrix.os }}
+    defaults:
+            run:
+                shell: bash
 
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest ]
+        os: [macos-latest, ubuntu-latest, windows-latest ]
         python-version: ['3.11', '3.10', 3.9 ]
         nim-version: [ 'stable']
 
@@ -48,6 +51,9 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Install Package
         run: poetry install --no-interaction
+      - run: |
+                  source $VENV
+                  pytest --version
       - name: Build Package
         run: poetry build
       - name: Run Type Checker
