@@ -133,7 +133,7 @@ def find_nim_std_lib() -> Optional[Path]:
 def copy_headers(build_dir_relative: Path) -> Path:
     "Can't compile without nimbase.h"
     NIMBASE = 'nimbase.h'
-    nimbase = find_nim_std_lib() / NIMBASE
+    nimbase = find_nim_std_lib() / NIMBASE # type: ignore[operator]
     nimbase_dest = build_dir_relative / NIMBASE
     shutil.copyfile(nimbase, nimbase_dest)
     assert nimbase_dest.exists()
