@@ -160,8 +160,8 @@ def run_process(
     )
 
     code, out, err = process.returncode, process.stdout, process.stderr
-    out = out.decode(errors='ignore') if out else ''
-    err = err.decode(errors='ignore') if err else ''
+    out = out.decode(errors='ignore') if out else '' # type: ignore[assignment]
+    err = err.decode(errors='ignore') if err else '' # type: ignore[assignment]
 
     return code, out, err
 
