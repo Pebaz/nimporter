@@ -15,21 +15,21 @@ from icecream import ic
 
 PathParts = Union[Tuple[str, str, str], Tuple[str], Tuple[str, str]]
 
-PYTHON = 'python' if sys.platform == 'win32' else 'python3'
-PIP = 'pip' if shutil.which('pip') else 'pip3'
-PYTHON_LIB_EXT = sysconfig.get_config_var('EXT_SUFFIX')
-WINDOWS = 'windows'
-MACOS = 'darwin'
-LINUX = 'linux'
-EXT_DIR = 'nim-extensions'
+PYTHON: str = 'python' if sys.platform == 'win32' else 'python3'
+PIP: str = 'pip' if shutil.which('pip') else 'pip3'
+PYTHON_LIB_EXT: str = sysconfig.get_config_var('EXT_SUFFIX')
+WINDOWS: str = 'windows'
+MACOS: str = 'darwin'
+LINUX: str = 'linux'
+EXT_DIR: str = 'nim-extensions'
 
-PLATFORM_TABLE = {  # Keys are known to Python and values are Nim-understood
+PLATFORM_TABLE: Dict[str, str] = {  # Keys are known to Python and values are Nim-understood
     'windows': 'Windows',
     'darwin': 'MacOSX',
     'linux': 'Linux',
 }
 
-ARCH_TABLE = {  # Keys are known to Python and values are Nim-understood
+ARCH_TABLE: Dict[str, str] = {  # Keys are known to Python and values are Nim-understood
     'x86_32': 'i386',
     'x86_64': 'amd64',
 
@@ -46,7 +46,7 @@ ARCH_TABLE = {  # Keys are known to Python and values are Nim-understood
     # 'riscv_64': 'riscv64',
 }
 
-ALWAYS_ARGS = [
+ALWAYS_ARGS: List['str'] = [
     'nimble',  # Installs dependencies :)
     'c',
     '--accept',  # Allow installing dependencies
@@ -220,22 +220,26 @@ def ensure_nimpy() -> None:
 
         if code:
             raise CompilationFailedException(stderr)
+    return
 
 
 class NimporterException(Exception):
     "Base exception for Nimporter's exception hierarchy."
+    pass
 
 
 class CompilationFailedException(NimporterException):
-    def __init__(self, stderr):
+    def __init__(self, stderr: str) -> None:
         super().__init__(
             f'Nim Compilation Failed. Rerun with NIMPORTER_INSTRUMENT for'
             f' full Nim output: {stderr}'
         )
+        return
 
 
 class ImportFailedException(NimporterException):
     "Custom exception for when compilation succeeds but importing fails."
+    pass
 
 
 def hash_extension(module_path: Path) -> bytes:
@@ -285,7 +289,7 @@ class ExtLib:
     All extensions are assumed to be libraries only. Modules are convert to
     libraries as needed.
     """
-    def __init__(self, path: Path, root: Path, library_hint: bool):
+    def __init__(self, path: Path, root: Path, library_hint: bool) -> None:
         """
         Args:
             path(str): the relative path to the Nim file (for both lib & mod).
@@ -319,12 +323,13 @@ class ExtLib:
         self.build_artifact = (
             self.pycache / f'{self.symbol}{PYTHON_LIB_EXT}'
         )
+        return
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'<ExtLib {self.import_namespace}>'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
-    def __format__(self, *args, **kwargs):
+    def __format__(self, *args, **kwargs) -> None:
         return str(self)
