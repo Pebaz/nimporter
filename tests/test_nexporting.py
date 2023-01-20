@@ -4,6 +4,7 @@ from zipfile import ZipFile
 from tests import temporarily_install_nimporter
 from nimporter.lib import *
 from nimporter.nexporter import *
+from icecream import ic
 
 
 def test_sdist_all_targets_builds_correctly():
@@ -16,6 +17,9 @@ def test_sdist_all_targets_builds_correctly():
             'NIMPORTER_INSTRUMENT' in os.environ
         )
 
+        if code:
+            ic((stdout, stderr))
+        
         assert code == 0
 
         dist = Path('dist')
@@ -64,6 +68,9 @@ def test_bdist_wheel_all_targets_installs_correctly():
                 'NIMPORTER_INSTRUMENT' in os.environ
             )
 
+            if code:
+                ic((stdout, stderr))
+            
             assert code == 0
 
             (target,) = Path('dist').glob('test_nimporter*.whl')
@@ -115,6 +122,9 @@ def test_sdist_all_targets_installs_correctly():
                 'NIMPORTER_INSTRUMENT' in os.environ
             )
 
+            if code:
+                ic((stdout, stderr))
+            
             assert code == 0
 
             (target,) = Path('dist').glob('test_nimporter*.tar.gz')
@@ -166,6 +176,9 @@ def test_setup_py_all_targets_installs_correctly():
                 'NIMPORTER_INSTRUMENT' in os.environ
             )
 
+            if code:
+                ic((stdout, stderr))
+            
             assert code == 0, f'{stdout}\n\n\n{stderr}'
 
         sys.modules.pop('ext_mod_basic', None)
