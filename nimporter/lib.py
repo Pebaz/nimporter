@@ -194,7 +194,7 @@ def get_host_info() -> Tuple[str, str, str]:
 
     return ic((
         platform.system().lower(),
-        get_host_info.host_arch,
+        get_host_info.host_arch, # type: ignore[attr-defined]
         get_c_compiler_used_to_build_python()
     ))
 
