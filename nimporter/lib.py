@@ -189,7 +189,8 @@ def get_host_info() -> Tuple[str, str, str]:
     """
     # Calling get_cpu_info() is expensive
     if not getattr(get_host_info, 'host_arch', None):
-        get_host_info.host_arch = cpuinfo.get_cpu_info()['arch'].lower()
+        setattr(get_host_info, 'host_arch', cpuinfo.get_cpu_info()['arch'].lower())
+        # get_host_info.host_arch = cpuinfo.get_cpu_info()['arch'].lower()
 
     return ic((
         platform.system().lower(),
