@@ -1,4 +1,4 @@
-name: Type Checking & Poetry Build
+name: Manual Windows
 
 on: [workflow_dispatch]
 
