@@ -34,11 +34,13 @@ def compile_extensions_to_lib(root: Path) -> None:
             continue
 
         compile_extension_to_lib(extension_path)
+    return
 
 
 def write_hash(ext: ExtLib) -> None:
     ext.hash_filename.parent.mkdir(parents=True, exist_ok=True)
     ext.hash_filename.write_bytes(hash_extension(ext.relative_path))
+    return
 
 
 def hash_changed(ext: ExtLib) -> bool:
@@ -104,6 +106,7 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
         shutil.move(tmp_build_artifact, ext.build_artifact)
 
         write_hash(ext)
+    return
 
 
 def validate_spec(spec: ModuleSpec) -> None:
@@ -159,6 +162,7 @@ def validate_spec(spec: ModuleSpec) -> None:
             https://github.com/Pebaz/nimporter/issues/new
         '''
         raise ImportFailedException(msg)
+    return
 
 
 def nimport(
@@ -236,6 +240,7 @@ def register_importer(list_position: int, importer: Callable) -> None:
     # Ensure that Nim files won't be passed up because of other Importers.
     sys.path_importer_cache.clear()
     importlib.invalidate_caches()
+    return
 
 
 """
