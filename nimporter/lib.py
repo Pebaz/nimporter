@@ -266,7 +266,7 @@ def hash_extension(module_path: Path) -> bytes:
                 buf = file.read(block_size)
 
     else:
-        def walk_folder(path: Path) -> Path:
+        def walk_folder(path: Path) -> Ierator[Path]:
             for item in path.iterdir():
                 if item.is_dir():
                     if item.stem == '__pycache__':
@@ -332,5 +332,5 @@ class ExtLib:
     def __repr__(self) -> str:
         return str(self)
 
-    def __format__(self, *args, **kwargs) -> str:
+    def __format__(self, *args, **kwargs) -> str: # type: ignore[no-untyped-def]
         return str(self)
