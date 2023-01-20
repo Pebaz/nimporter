@@ -167,7 +167,7 @@ def run_process(
 
 
 @contextmanager
-def cd(path: Union[Path, str]) -> Iterator[Union[Path, str]]:
+def cd(path: Union[Path, str]) -> Iterator[Path]:
     "Convenience function to step in and out of a directory temporarily."
     cwd = os.getcwd()
     os.chdir(path)
