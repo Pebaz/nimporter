@@ -86,11 +86,11 @@ def find_nim_std_lib() -> Optional[Path]:
     """
     # If Nim is not installed there's nothing to be done
     if not shutil.which('nim'):
-        return
+        return # type: ignore[return-value]
 
     # Installed via choosenim_install Pypi package
     choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
-    if choosenim_dir.exists:
+    if choosenim_dir.exists: # type: ignore[truthy-function]
         try:
             nim_ver = (subprocess.check_output(['nim', '-v'])
                 .decode(errors='ignore')
@@ -112,14 +112,14 @@ def find_nim_std_lib() -> Optional[Path]:
         )
 
         (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
-        toolchain = Path(choosenim.split('Path:').pop().strip())
+        toolchain = Path(choosenim.split('Path:').pop().strip()) # type: ignore[arg-type]
         stdlib = toolchain / 'lib'
 
         if (stdlib / 'system.nim').exists():
             return stdlib.resolve().absolute()
 
     # Installed manually
-    nimexe = Path(nimexe)
+    nimexe: Path = Path(nimexe)
     result = nimexe.parent / '../lib'
     if not (result / 'system.nim').exists():
         result = nimexe.resolve().parent / '../lib'
@@ -275,7 +275,7 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
     That's a lot less characters!
     """
 
-    def is_valid_identifier(string: str) -> bool:
+    def is_valid_identifier(string: str) -> Union[Match[str], None, bool]:
         import re
         match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
         return match and len(match.string) == len(string)
