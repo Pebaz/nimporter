@@ -229,7 +229,7 @@ class NimporterException(Exception):
 
 
 class CompilationFailedException(NimporterException):
-    def __init__(self, stderr: str) -> None:
+    def __init__(self, stderr: Union[bytes, str]) -> None:
         super().__init__(
             f'Nim Compilation Failed. Rerun with NIMPORTER_INSTRUMENT for'
             f' full Nim output: {stderr}'
