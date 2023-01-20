@@ -231,6 +231,7 @@ def nimport(
         validate_spec(spec)
 
         return spec
+    return
 
 
 def register_importer(list_position: int, importer: Callable) -> None: # type: ignore[type-arg]
