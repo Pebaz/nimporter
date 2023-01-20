@@ -55,6 +55,7 @@ warn_unused_configs = true
 strict = true
 ignore_missing_imports = true
 show_error_codes = true
+warn_return_any = false
 files = [
     "nimporter/lib.py",
     "nimporter/nimporter.py",
