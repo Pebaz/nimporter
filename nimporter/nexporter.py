@@ -251,6 +251,7 @@ def compile_extensions_to_c(platforms: List[str], root: Path) -> None:
                         raise CompilationFailedException(stderr)
 
                     prevent_win32_max_path_length_error(out_dir)
+    return
 
 
 def prevent_win32_max_path_length_error(path: Path) -> None:
@@ -310,3 +311,4 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
 
             new_name = ic(f'NIMPORTER@{mod_name}')
             item.replace(item.with_name(new_name))
+    return
