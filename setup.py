@@ -14,8 +14,10 @@ setup(
     install_requires=[
         'py-cpuinfo>=9.0.0',  # Auto-detect user architecture
         'icecream>=2.1.3',  # Instrumentation
-        'cookiecutter>=2.1.1'  # Project template
     ],
+    extras_require={
+        "dev": ["cookiecutter>=2.1.1",],
+    },
     entry_points={
         'console_scripts' : [
             'nimporter=nimporter.cli:main'
