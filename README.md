@@ -66,6 +66,7 @@ to generate the binaries for their library.
 # 🐍 From Pypi:
 $ pip install nimporter
 $ pip install nimporter[cli]
+
 # ⚙️ From GitHub:
 $ pip install git+https://github.com/Pebaz/Nimporter
 $ pip install git+https://github.com/Pebaz/Nimporter[cli]
