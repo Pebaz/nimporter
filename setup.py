@@ -16,7 +16,7 @@ setup(
         'icecream>=2.1.3',  # Instrumentation
     ],
     extras_require={
-        "dev": ["cookiecutter>=2.1.1",],
+        "cli": ["cookiecutter>=2.1.1",],
     },
     entry_points={
         'console_scripts' : [
