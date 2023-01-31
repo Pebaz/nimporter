@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-root
       - name: Install Package
-        run: poetry install --no-interaction
+        run: poetry install -E dev --no-interaction
       - run: |
                   source $VENV
                   pytest --version

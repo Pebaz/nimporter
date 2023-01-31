@@ -38,7 +38,6 @@ nimporter = 'nimporter.cli:main'
 python = "^3.7"
 py-cpuinfo = "^9.0.0"  # Auto-detect user architecture
 icecream = "^2.1.3"  # Instrumentation
-cookiecutter = "^2.1.1"  # Folder structure
 
 
 [tool.poetry.dev-dependencies]
@@ -49,6 +48,12 @@ pytest-integration = "^0.2.3"
 pytest-timeout = "^2.1.0"
 pytest-xdist = "^3.1.0"
 mypy = "^0.991"
+
+# Optional dependencies for library authors
+cookiecutter = { version = "^2.1.1", optional = true }
+
+[tool.poetry.extras]
+dev = ["cookiecutter"]
 
 [tool.mypy]
 warn_unused_configs = true
