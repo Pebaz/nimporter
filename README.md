@@ -59,6 +59,18 @@ $ pip install git+https://github.com/Pebaz/Nimporter
  3. [Nimporter library](https://github.com/Pebaz/nimporter) (distributed
     libraries will need access to Nimporter).
 
+Library authors must install the optional dependencies needed to use the cli
+to generate the binaries for their library.
+
+```bash
+# 🐍 From Pypi:
+$ pip install nimporter
+$ pip install nimporter[cli]
+# ⚙️ From GitHub:
+$ pip install git+https://github.com/Pebaz/Nimporter
+$ pip install git+https://github.com/Pebaz/Nimporter[cli]
+```
+
 Nimporter can work seamlessly when Nim is installed via
 [Choosenim](https://nim-lang.org/install_unix.html#installation-using-choosenim)
 or manually. No additional configuration is necessary once installed since
