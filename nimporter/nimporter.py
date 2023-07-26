@@ -119,7 +119,7 @@ def validate_spec(spec: ModuleSpec) -> None:
     it's better to have good error messages than to be fast in this case.
 
     Args:
-        spec(Spec): the spec to validate if its module can be imported.
+        spec: the spec to validate if its module can be imported.
 
     Raises:
         A NimporterException if the spec cannot be used to import the given
@@ -178,9 +178,9 @@ def nimport(
     capabilities.
 
     Args:
-        fullname(str): the name given when importing the module in Python.
-        path(list): additional search paths.
-        library(bool): indicates whether or not to compile as a library.
+        fullname: the name given when importing the module in Python.
+        path: additional search paths.
+        library: indicates whether or not to compile as a library.
 
     Returns:
         A Spec object that can be used to import the (now compiled) Nim
