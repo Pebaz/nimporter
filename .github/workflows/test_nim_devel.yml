@@ -1,0 +1,59 @@
+name: Nim devel version Type Checking & Poetry Build
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-all:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest ]
+        python-version: ['3.11', '3.10', 3.9 ]
+        nim-version: [ 'devel']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: ${{ matrix.nim-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      #            -   name: Clear corrupted cache
+      #                run: poetry cache clear pypi --all --no-interaction
+      #                if: ${{ matrix.os == 'ubuntu-latest' }} # Clear Linux cache
+      - name: Load cached venv
+        id: cached-pip-wheels
+        uses: actions/cache@v2
+#       if: ${{ matrix.os != 'ubuntu-latest' }} # Linux cache seems to be corrupted
+        with:
+          path: ~/.cache
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+      - name: Install Package
+        run: poetry install --no-interaction
+      - name: Build Package
+        run: poetry build
+      - name: Run Type Checker
+        continue-on-error: true
+        run: |
+          poetry run pip install types-setuptools
+          poetry run mypy
+      - name: Run Pytest with coverage
+        run: poetry run pytest --cov=.

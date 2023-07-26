@@ -1,3 +1,0 @@
-import fallacy
-
-echo fallacy

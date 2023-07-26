@@ -1,0 +1,5 @@
+wheel
+pytest
+pytest-cov
+pytest-timeout
+pytest-xdist

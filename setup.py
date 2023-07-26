@@ -1,48 +1,24 @@
-"""
-Usage:
-	pip install nimporter
-
-Upload to PyPi:
-	python3 setup.py sdist
-	twine upload dist/<archive>
-
-Please note: In order to use Nimporter, you must have both Nim installed as well
-as the [Nimpy](https://github.com/yglukhov/nimpy) library.
-
-Libraries distributed using Nimporter have no restriction.
-
-Make sure to star it on GitHub as well while you're up there. ;)
-"""
-
-import sys, shutil
+import io
 from setuptools import setup
 
-"""
-Computer with Nim Installed
-
-    pip install meowhash-nim                           # Works (Doesn't run Nim)
-    pip install git+https://github.com/Pebaz/test-nim  # Works (Runs Nim)
-
-Computer without Nim Installed
-
-    pip install meowhash-nim                           # Works (Runs Nim)
-    pip install git+https://github.com/Pebaz/test-nim  # Fails (Cannot run Nim)
-
-"""
-
 setup(
-	name='nimporter',
-	version='0.1.5',
-	license="MIT",
-	description='Compile Nim extensions for Python when imported!',
-	long_description=open('README.md').read(),
-	long_description_content_type='text/markdown',
-	author='http://github.com/Pebaz',
-	url='http://github.com/Pebaz/Nimporter',
-    py_modules=['nimporter', 'nimporter_cli'],
-	entry_points={
-		'console_scripts' : [
-			'nimporter=nimporter_cli:main'
-		]
-	}
+    name='nimporter',
+    version='2.0.0',
+    license='MIT',
+    description='Compile Nim extensions for Python when imported!',
+    long_description=io.open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
+    author='http://github.com/Pebaz',
+    url='http://github.com/Pebaz/Nimporter',
+    packages=['nimporter'],
+    install_requires=[
+        'py-cpuinfo>=9.0.0',  # Auto-detect user architecture
+        'icecream>=2.1.3',  # Instrumentation
+        'cookiecutter>=2.1.1'  # Project template
+    ],
+    entry_points={
+        'console_scripts' : [
+            'nimporter=nimporter.cli:main'
+        ]
+    }
 )

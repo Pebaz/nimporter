@@ -1,6 +1,0 @@
-wheel
-pytest
-pytest-cov
-pytest-integration
-pytest-timeout
-pytest-xdist
