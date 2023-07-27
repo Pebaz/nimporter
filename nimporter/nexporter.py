@@ -87,11 +87,11 @@ def find_nim_std_lib() -> Optional[Path]:
     """
     # If Nim is not installed there's nothing to be done
     if not shutil.which('nim'):
-        return # type: ignore[return-value]
+        return  # type: ignore[return-value]
 
     # Installed via choosenim_install Pypi package
     choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
-    if choosenim_dir.exists: # type: ignore[truthy-function]
+    if choosenim_dir.exists:  # type: ignore[truthy-function]
         try:
             nim_ver = (subprocess.check_output(['nim', '-v'])
                 .decode(errors='ignore')
@@ -113,7 +113,7 @@ def find_nim_std_lib() -> Optional[Path]:
         )
 
         (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
-        toolchain = Path(choosenim.split('Path:').pop().strip()) # type: ignore[arg-type]
+        toolchain = Path(choosenim.split('Path:').pop().strip())  # type: ignore[arg-type]
         stdlib = toolchain / 'lib'
 
         if (stdlib / 'system.nim').exists():
@@ -134,7 +134,7 @@ def find_nim_std_lib() -> Optional[Path]:
 def copy_headers(build_dir_relative: Path) -> Path:
     "Can't compile without nimbase.h"
     NIMBASE = 'nimbase.h'
-    nimbase = find_nim_std_lib() / NIMBASE # type: ignore[operator]
+    nimbase = find_nim_std_lib() / NIMBASE  # type: ignore[operator]
     nimbase_dest = build_dir_relative / NIMBASE
     shutil.copyfile(nimbase, nimbase_dest)
     assert nimbase_dest.exists()
@@ -278,7 +278,8 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
 
     def _is_valid_identifier(string: str) -> bool:
         match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
-        return match and len(match.string) == len(string)
+        result = match and len(match.string) == len(string)
+        return result  # type: ignore[return-value]
 
     def _is_semver(string: str) -> bool:
         try:
