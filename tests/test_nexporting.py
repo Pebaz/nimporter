@@ -1,4 +1,5 @@
 import sys
+import time
 import shlex
 from zipfile import ZipFile
 from tests import temporarily_install_nimporter
@@ -104,6 +105,7 @@ def test_bdist_wheel_all_targets_installs_correctly():
             shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
+        time.sleep(5)
 
 
 def test_sdist_all_targets_installs_correctly():
@@ -155,6 +157,7 @@ def test_sdist_all_targets_installs_correctly():
             shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
+        time.sleep(5)
 
 
 def test_setup_py_all_targets_installs_correctly():
@@ -194,3 +197,4 @@ def test_setup_py_all_targets_installs_correctly():
             shlex.split(f'{PYTHON} -m pip uninstall test_nimporter -y'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
+        time.sleep(5)
