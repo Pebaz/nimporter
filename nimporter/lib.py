@@ -218,7 +218,7 @@ def ensure_nimpy() -> None:
     ic()
 
     try:
-        run_process('nimble')
+        run_process(['nimble'])
     except FileNotFoundError as e:
         error = CompilationFailedException('Nim not installed or not on path')
         raise error from e
