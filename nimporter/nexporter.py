@@ -276,7 +276,7 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
     That's a lot less characters!
     """
 
-    def _is_valid_identifier(string: str) -> Union[re.Match[str], None, bool]:
+    def _is_valid_identifier(string: str) -> bool:
         match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
         return match and len(match.string) == len(string)
 
