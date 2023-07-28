@@ -2,9 +2,9 @@ name: Nim devel version Type Checking & Poetry Build
 
 on:
   push:
-    branches: [ dev ]
+    branches: [dev]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   test-all:
@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest ]
-        python-version: ['3.11', '3.10', 3.9 ]
-        nim-version: [ 'devel']
+        os: [macos-latest, ubuntu-latest]
+        python-version: ['3.11', '3.10', 3.9]
+        nim-version: ['devel']
 
     steps:
       - uses: actions/checkout@v3
