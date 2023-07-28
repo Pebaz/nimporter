@@ -313,6 +313,6 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
                         mod_name = '@'.join(segments[index:])
                         break
 
-            new_name = ic(f'NIMPORTER@{mod_name}')
+            new_name = f'NIMPORTER@{mod_name}'
             item.replace(item.with_name(new_name))
     return

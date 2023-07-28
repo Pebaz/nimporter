@@ -12,12 +12,14 @@ def temporarily_install_nimporter():
     time.sleep(5)
 
     try:
-        code, _, _ = run_process(
+        code, out, err = run_process(
             shlex.split(f'{PYTHON} setup.py install --force'),
             'NIMPORTER_INSTRUMENT' in os.environ
         )
 
-        assert code == 0, 'Nimporter failed to install'
+        assert code == 0, (
+            f'Nimporter failed to install:\nstdout: {out}\nstderr: {err}'
+        )
 
         yield
     finally:
