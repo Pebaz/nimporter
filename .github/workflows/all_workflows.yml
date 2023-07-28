@@ -1,4 +1,8 @@
-name: Run All Tests
+# All workflows were merged into one. Development branch is no longer the Git
+# workflow and feature branches are now in use. PRs will run all requisite
+# checks but they are now dependent on each other for better concurrency using
+# `needs`.
+name: Feature Branch Pull Request Workflow
 
 on:
   push:
@@ -102,7 +106,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: ['3.11']
 
-    steps: &test_using_matrix
+    steps:
       - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -139,5 +143,26 @@ jobs:
         os: [windows-latest, macos-latest, ubuntu-latest]
         python-version: ['3.11', '3.10', 3.9, 3.8, 3.7]
 
-    # No need to repeat the same testing steps
-    steps: *test_using_matrix
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: 'stable'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel
+          python -m pip install .
+          python -m pip install -r requirements_dev.txt
+
+      - name: Test
+        run: pytest --cov=. -s tests
+        env:
+          NIMPORTER_INSTRUMENT: 1
