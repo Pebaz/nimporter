@@ -103,7 +103,7 @@ def compile_extension_to_lib(ext: ExtLib) -> None:
         # This shouldn't fail.
         (tmp_build_artifact,) = tmp_cwd.glob(f'*{find_ext}')
 
-        shutil.move(tmp_build_artifact, ext.build_artifact)
+        shutil.move(str(tmp_build_artifact), ext.build_artifact)
 
         write_hash(ext)
     return
