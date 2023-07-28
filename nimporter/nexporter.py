@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from typing import *
 from pathlib import Path
@@ -86,11 +87,11 @@ def find_nim_std_lib() -> Optional[Path]:
     """
     # If Nim is not installed there's nothing to be done
     if not shutil.which('nim'):
-        return # type: ignore[return-value]
+        return  # type: ignore[return-value]
 
     # Installed via choosenim_install Pypi package
     choosenim_dir = Path('~/.choosenim/toolchains').expanduser().absolute()
-    if choosenim_dir.exists: # type: ignore[truthy-function]
+    if choosenim_dir.exists:  # type: ignore[truthy-function]
         try:
             nim_ver = (subprocess.check_output(['nim', '-v'])
                 .decode(errors='ignore')
@@ -112,7 +113,7 @@ def find_nim_std_lib() -> Optional[Path]:
         )
 
         (choosenim,) = [i for i in o.splitlines() if 'Path:' in i]
-        toolchain = Path(choosenim.split('Path:').pop().strip()) # type: ignore[arg-type]
+        toolchain = Path(choosenim.split('Path:').pop().strip())  # type: ignore[arg-type]
         stdlib = toolchain / 'lib'
 
         if (stdlib / 'system.nim').exists():
@@ -133,7 +134,7 @@ def find_nim_std_lib() -> Optional[Path]:
 def copy_headers(build_dir_relative: Path) -> Path:
     "Can't compile without nimbase.h"
     NIMBASE = 'nimbase.h'
-    nimbase = find_nim_std_lib() / NIMBASE # type: ignore[operator]
+    nimbase = find_nim_std_lib() / NIMBASE  # type: ignore[operator]
     nimbase_dest = build_dir_relative / NIMBASE
     shutil.copyfile(nimbase, nimbase_dest)
     assert nimbase_dest.exists()
@@ -257,27 +258,6 @@ def compile_extensions_to_c(platforms: List[str], root: Path) -> None:
     return
 
 
-def _is_valid_identifier(string: str) -> Union[Match[str], None, bool]:
-        import re
-        match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
-        return match and len(match.string) == len(string)
-
-
-def _is_semver(string: str) -> bool:
-    try:
-        lib_name, lib_version = string.rsplit('-', maxsplit=1)
-        assert _is_valid_identifier(lib_name)
-
-        major, minor, patch = lib_version.split('.')
-        assert major.isdigit()
-        assert minor.isdigit()
-        assert patch.isdigit()
-
-        return True
-    except:
-        return False
-
-
 def prevent_win32_max_path_length_error(path: Path) -> None:
     """
     Nim generates C files that contain `@` symbols to encode the original path
@@ -295,6 +275,25 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
 
     That's a lot less characters!
     """
+
+    def _is_valid_identifier(string: str) -> bool:
+        match = re.search('^[A-Za-z_][A-Z-a-z0-9_\\-]*', string)
+        result = match and len(match.string) == len(string)
+        return result  # type: ignore[return-value]
+
+    def _is_semver(string: str) -> bool:
+        try:
+            lib_name, lib_version = string.rsplit('-', maxsplit=1)
+            assert _is_valid_identifier(lib_name)
+
+            major, minor, patch = lib_version.split('.')
+            assert major.isdigit()
+            assert minor.isdigit()
+            assert patch.isdigit()
+
+            return True
+        except:
+            return False
 
     for item in path.iterdir():
         if item.is_file() and item.name.startswith('@m'):
@@ -314,6 +313,6 @@ def prevent_win32_max_path_length_error(path: Path) -> None:
                         mod_name = '@'.join(segments[index:])
                         break
 
-            new_name = ic(f'NIMPORTER@{mod_name}')
+            new_name = f'NIMPORTER@{mod_name}'
             item.replace(item.with_name(new_name))
     return

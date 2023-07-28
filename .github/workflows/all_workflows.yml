@@ -1,0 +1,168 @@
+# All workflows were merged into one. Development branch is no longer the Git
+# workflow and feature branches are now in use. PRs will run all requisite
+# checks but they are now dependent on each other for better concurrency using
+# `needs`.
+name: Feature Branch Pull Request Workflow
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Runs a quick type checking job on all supported Python versions prior to any
+  # other checks just in case a type was missed.
+  type-check:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest]  # Type checking is cross-platform
+        python-version: ['3.11', '3.10', 3.9, 3.8, 3.7]
+        nim-version: [
+          'stable',
+          # 'devel'  # Not supporting Nim development versions for now
+        ]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: ${{ matrix.nim-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-pip-wheels
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Install Package
+        run: poetry install --no-interaction
+
+      - name: Build Package
+        run: poetry build
+
+      - name: Run Type Checker
+        run: |
+          poetry run pip install types-setuptools
+          poetry run mypy
+
+  # ----------------------------------------------------------------------------
+  # Code scanning can run concurrently to type-check but before the other stages
+  semgrep:
+    name: Scan
+    runs-on: ubuntu-latest
+
+    # Skip any PR created by dependabot to avoid permission issues
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@v2
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+          # # Upload findings to GitHub Advanced Security Dashboard [step 1/2]
+          generateSarif: "1"
+
+      # Upload findings to GitHub Advanced Security Dashboard [step 2/2]
+      - name: Upload SARIF file for GitHub Advanced Security Dashboard
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
+
+  # ----------------------------------------------------------------------------
+  # Designed to test latest Python on latest Ubuntu prior to any other platforms
+  # so that time isn't spent on pipelines that are guaranteed to fail.
+  # * NOTE: Latest Python and latest Ubuntu will be retested in test-all but
+  # * that is ok since it's better to fail fast and not waste time on the rest
+  fail-fast-tests:
+    needs: [type-check, semgrep]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        # The OS-Python matrix only contains a single configuration
+        os: [ubuntu-latest]
+        python-version: ['3.11']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: 'stable'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel
+          python -m pip install .
+          python -m pip install -r requirements_dev.txt
+
+      - name: Test
+        run: pytest --cov=. -s tests
+        env:
+          NIMPORTER_INSTRUMENT: 1
+
+  # ----------------------------------------------------------------------------
+  # Runs the rest of the tests per platform
+  test-all:
+    needs: fail-fast-tests
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false  # Needed for seeing what platforms are in bad shape
+      matrix:
+        # The OS-Python matrix is complete here
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python-version: ['3.11', '3.10', 3.9, 3.8, 3.7]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: 'stable'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel
+          python -m pip install .
+          python -m pip install -r requirements_dev.txt
+
+      - name: Test
+        run: pytest --cov=. -s tests
+        env:
+          NIMPORTER_INSTRUMENT: 1

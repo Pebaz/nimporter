@@ -23,13 +23,13 @@ MACOS: str = 'darwin'
 LINUX: str = 'linux'
 EXT_DIR: str = 'nim-extensions'
 
-PLATFORM_TABLE: Dict[str, str] = {  # Keys are known to Python and values are Nim-understood
+PLATFORM_TABLE = {  # Keys are known to Python and values are Nim-understood
     'windows': 'Windows',
     'darwin': 'MacOSX',
     'linux': 'Linux',
 }
 
-ARCH_TABLE: Dict[str, str] = {  # Keys are known to Python and values are Nim-understood
+ARCH_TABLE = {  # Keys are known to Python and values are Nim-understood
     'x86_32': 'i386',
     'x86_64': 'amd64',
 
@@ -46,7 +46,7 @@ ARCH_TABLE: Dict[str, str] = {  # Keys are known to Python and values are Nim-un
     # 'riscv_64': 'riscv64',
 }
 
-ALWAYS_ARGS: List['str'] = [
+ALWAYS_ARGS = [
     'nimble',  # Installs dependencies :)
     'c',
     '--accept',  # Allow installing dependencies
@@ -89,10 +89,8 @@ def get_import_path(path: Path, root: Path) -> str:
     Coerce proper import path using root path
 
     Args:
-        library(bool): hint as to how to treat the `module_path` parameter.
-        module_name(str): name of nim module.
-        module_path(Path): path to nim module.
-        root(Path): path to project root.
+        library: hint as to how to treat the `module_path` parameter.
+        root: path to project root.
 
     Returns:
         str: Returns the path of the nim module.
@@ -147,17 +145,25 @@ def run_process(
     of being mainly targeted as a Nim compiler invoker.
 
     Args:
-        process_args(list): the arg being the executable and the rest are args.
+        process_args: the arg being the executable and the rest are args.
+        show_output: if True, prints and does not return process output.
 
     Returns:
         A tuple containing any errors, warnings, or hints from the
         compilation process.
+
+    Raises:
+        FileNotFoundError: only if the binary to run doesn't exist.
     """
-    process = subprocess.run(
-        process_args,
-        stdout=None if show_output else subprocess.PIPE,
-        stderr=None if show_output else subprocess.PIPE,
-    )
+    try:
+        process = subprocess.run(
+            process_args,
+            stdout=None if show_output else subprocess.PIPE,
+            stderr=None if show_output else subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        ic(f'Binary not found. CLI: {process_args}')
+        raise
 
     code, out, err = process.returncode, process.stdout, process.stderr
     out = out.decode(errors='ignore') if out else '' # type: ignore[assignment]
@@ -201,7 +207,7 @@ def get_host_info() -> Tuple[str, str, str]:
 
 def ensure_nimpy() -> None:
     """
-    Makes sure that the Nimpy Nim library is installed.
+    Makes sure that the Nim and the Nimpy Nim library is installed.
 
     Verifies that the [Nimpy Library](https://github.com/yglukhov/nimpy) is
     installed and installs it otherwise.
@@ -210,6 +216,12 @@ def ensure_nimpy() -> None:
     Yuriy Glukhov for making this project possible!
     """
     ic()
+
+    try:
+        run_process(['nimble'])
+    except FileNotFoundError as e:
+        error = CompilationFailedException('Nim not installed or not on path')
+        raise error from e
 
     show_output = 'NIMPORTER_INSTRUMENT' in os.environ
     code, *_ = run_process(shlex.split('nimble path nimpy'), show_output)
@@ -226,21 +238,19 @@ def ensure_nimpy() -> None:
 
 class NimporterException(Exception):
     "Base exception for Nimporter's exception hierarchy."
-    pass
 
 
 class CompilationFailedException(NimporterException):
     def __init__(self, stderr: Union[bytes, str]) -> None:
         super().__init__(
-            f'Nim Compilation Failed. Rerun with NIMPORTER_INSTRUMENT for'
-            f' full Nim output: {stderr}' # type: ignore[str-bytes-safe]
+            f'Nim Compilation Failed. Rerun '  # type: ignore[str-bytes-safe]
+            f'with NIMPORTER_INSTRUMENT for full Nim output: {stderr}'
         )
         return
 
 
 class ImportFailedException(NimporterException):
     "Custom exception for when compilation succeeds but importing fails."
-    pass
 
 
 def hash_extension(module_path: Path) -> bytes:
@@ -248,7 +258,7 @@ def hash_extension(module_path: Path) -> bytes:
     Convenience function to hash an extension module or extension library.
 
     Args:
-        module_path(Path): the file to hash.
+        module_path: the file to hash.
 
     Returns:
         The hash bytes of the Nim file.
@@ -293,7 +303,9 @@ class ExtLib:
     def __init__(self, path: Path, root: Path, library_hint: bool) -> None:
         """
         Args:
-            path(str): the relative path to the Nim file (for both lib & mod).
+            path: the relative path to the Nim file (for both lib & mod).
+            root: entire project root containing potentially many extensions.
+            library_hint: denotes either Extension Library or Extension Module.
         """
         self.library = all((
             any(path.parent.glob(f'{path.stem}.nim')),
